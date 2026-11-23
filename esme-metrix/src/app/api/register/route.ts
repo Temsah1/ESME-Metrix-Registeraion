@@ -4,7 +4,7 @@ import { isAllowedPhotoUrl } from "@/lib/validations/photo-url";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateRegistrationId } from "@/lib/registration-id";
 import { signQrPayload } from "@/lib/qr";
-import { buildConfirmationEmail } from "@/lib/email/confirmation";
+import { buildConfirmationEmail, sendConfirmationEmail } from "@/lib/email/confirmation";
 import QRCode from "qrcode";
 import crypto from "crypto";
 

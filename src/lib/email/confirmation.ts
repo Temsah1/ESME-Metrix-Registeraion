@@ -29,9 +29,9 @@ function escapeHtml(value: string): string {
 
 export function buildConfirmationEmail(input: ConfirmationEmailInput): ConfirmationEmail {
   const from = process.env.RESEND_FROM_EMAIL || "ESME Metrix <onboarding@resend.dev>";
-  const eventDate = process.env.EVENT_DATE || "To be announced";
-  const eventVenue = process.env.EVENT_VENUE || "To be announced";
-  const eventTime = process.env.EVENT_TIME || "To be announced";
+  const eventDate = process.env.EVENT_DATE || "12 December 2026";
+  const eventVenue = process.env.EVENT_VENUE || "Cairo University";
+  const eventTime = process.env.EVENT_TIME || "Saturday 12 / 12 / 2026";
 
   const name = escapeHtml(input.fullName);
   const university = escapeHtml(input.university);
@@ -45,7 +45,7 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
     <div style="font-family: Arial, sans-serif; background-color: #15304B; color: #F8FAFC; padding: 30px; border-radius: 12px; max-width: 600px; margin: 0 auto; border: 1px solid #D97706;">
       <div style="text-align: center; margin-bottom: 24px;">
         <h1 style="color: #D97706; font-size: 26px; margin: 0; font-weight: bold;">ESME METRIX 2026</h1>
-        <p style="color: #CBD5E1; font-size: 13px; margin-top: 4px;">Cairo University Student Chapter</p>
+        <p style="color: #CBD5E1; font-size: 13px; margin-top: 4px;">ESME METRIX — ESME Cairo University Student Chapter</p>
       </div>
 
       <div style="background-color: #10B981; color: #FFFFFF; font-weight: bold; font-size: 13px; padding: 6px 14px; border-radius: 20px; display: inline-block; margin-bottom: 12px;">
@@ -66,7 +66,7 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
       <div style="color: #E5E7EB; font-size: 14px; margin-bottom: 24px; line-height: 1.8;">
         <strong>Attendee:</strong> ${name}<br />
         <strong>Institution:</strong> ${university}<br />
-        <strong>Event:</strong> ESME Metrix 2026<br />
+        <strong>Event:</strong> ESME Metrix 2026 — Materials Engineering Event<br />
         <strong>Date:</strong> ${escapeHtml(eventDate)}<br />
         <strong>Venue:</strong> ${escapeHtml(eventVenue)}<br />
         <strong>Time:</strong> ${escapeHtml(eventTime)}
@@ -74,7 +74,8 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
 
       <p style="color: #CBD5E1; font-size: 13px; border-top: 1px solid rgba(217, 119, 6, 0.2); padding-top: 16px; text-align: center;">
         Please keep this QR code ready on your mobile device during entrance verification.<br />
-        <span style="color: #D97706; font-weight: bold; letter-spacing: 1px;">BE POSITIVE VALUABLE.</span>
+        <span style="color: #D97706; font-weight: bold; letter-spacing: 1px;">BE POSITIVE VALUABLE.</span><br />
+        <span style="color: #94A3B8; font-size: 11px;">ESME METRIX — ESME Cairo University Student Chapter</span>
       </p>
     </div>
   `;
@@ -94,12 +95,12 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
     "Keep it ready on your mobile device during entrance verification.",
     "",
     "BE POSITIVE VALUABLE.",
-    "ESME Cairo University Student Chapter",
+    "ESME METRIX — ESME Cairo University Student Chapter",
   ].join("\n");
 
   return {
     from,
-    subject: "You're registered — ESME Metrix 2026",
+    subject: "You're registered — ESME METRIX 2026",
     html,
     text,
     attachments: [
@@ -111,4 +112,73 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
       },
     ],
   };
+}
+
+export async function sendConfirmationEmail(to: string, emailContent: ConfirmationEmail): Promise<void> {
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+
+  // 1. Primary: Try nodemailer Gmail SMTP if configured
+  if (smtpUser && smtpPass) {
+    try {
+      const nodemailer = await import("nodemailer");
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: smtpUser,
+          pass: smtpPass,
+        },
+      });
+
+      const attachments = emailContent.attachments.map((a) => ({
+        filename: a.filename,
+        content: Buffer.from(a.content, "base64"),
+        cid: a.contentId,
+        contentType: a.contentType,
+      }));
+
+      await transporter.sendMail({
+        from: emailContent.from,
+        to,
+        subject: emailContent.subject,
+        html: emailContent.html,
+        text: emailContent.text,
+        attachments,
+      });
+
+      console.log(`Confirmation email sent via Gmail SMTP to ${to}`);
+      return;
+    } catch (smtpErr) {
+      console.error("Gmail SMTP dispatch failed, attempting Resend fallback:", smtpErr);
+    }
+  }
+
+  // 2. Secondary fallback: Resend API
+  const resendApiKey = process.env.RESEND_API_KEY;
+  if (resendApiKey) {
+    try {
+      const { Resend } = await import("resend");
+      const resend = new Resend(resendApiKey);
+      const { error: sendError } = await resend.emails.send({
+        from: emailContent.from,
+        to,
+        subject: emailContent.subject,
+        html: emailContent.html,
+        text: emailContent.text,
+        attachments: emailContent.attachments,
+      });
+
+      if (sendError) {
+        console.error("Confirmation email rejected by Resend:", sendError);
+      } else {
+        console.log(`Confirmation email sent via Resend to ${to}`);
+      }
+      return;
+    } catch (resendErr) {
+      console.error("Resend dispatch failed:", resendErr);
+      return;
+    }
+  }
+
+  console.warn("Neither SMTP_USER/SMTP_PASS nor RESEND_API_KEY configured; confirmation email skipped.");
 }

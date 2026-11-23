@@ -6,6 +6,7 @@ import { Search, Download, Eye, X, AlertCircle, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import * as XLSX from "xlsx";
 import { Registrant } from "@/types/database";
+import { getAdminPhotoUrl } from "@/lib/utils";
 
 export default function RegistrantsPage() {
   const [registrants, setRegistrants] = useState<Registrant[]>([]);

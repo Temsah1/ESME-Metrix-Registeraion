@@ -9,6 +9,7 @@ export interface Registrant {
   city: string;
   job_title: string;
   company?: string | null;
+  avatar_url?: string | null;
   id_photo_url: string;
   karnet_photo_url: string;
   qr_code: string;
@@ -36,6 +37,7 @@ export interface RegistrationFormData {
   academicYear: string;
   jobTitle: string;
   company?: string;
+  avatarUrl?: string;
   idPhotoUrl: string;
   karnetPhotoUrl: string;
   termsAccepted: boolean;
@@ -46,4 +48,13 @@ export interface QRPayload {
   registrant_id: string;
   event: string;
   hash: string;
+}
+
+export interface SiteContent {
+  key: string;
+  value: string;
+  label: string;
+  category: string;
+  field_type: string;
+  updated_at: string;
 }
