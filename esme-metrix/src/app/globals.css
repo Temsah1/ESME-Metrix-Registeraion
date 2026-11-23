@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0A0F14;
+  --foreground: #F8FAFC;
+  --card: #111820;
+  --card-hover: #1A2435;
+  --border: rgba(0, 201, 167, 0.18);
+  --teal: #00C9A7;
+  --teal-dim: #007A65;
+  --teal-glow: rgba(0, 201, 167, 0.15);
+}
+
+@theme {
+  --color-esme-bg: #0A0F14;
+  --color-esme-card: #111820;
+  --color-esme-card2: #1A2435;
+  --color-esme-border: rgba(0, 201, 167, 0.18);
+  --color-esme-teal: #00C9A7;
+  --color-esme-teal2: #007A65;
+  --color-esme-glow: rgba(0, 201, 167, 0.15);
+}
+
+body {
+  background-color: #0A0F14;
+  color: #F8FAFC;
+  font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading, var(--font-sans, system-ui));
+}
+
+code, pre, .font-mono {
+  font-family: var(--font-mono, ui-monospace, monospace);
+}
+
+/* Custom background tech grid */
+.tech-grid {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(0, 201, 167, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 201, 167, 0.04) 1px, transparent 1px);
+}
+
+/* Shimmer animation for loading states */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, #111820 25%, #1A2435 50%, #111820 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0A0F14;
+}
+::-webkit-scrollbar-thumb {
+  background: #1A2435;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #007A65;
+}
