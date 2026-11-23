@@ -72,7 +72,8 @@ export default function HeroParticles() {
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 pointer-events-none z-0 opacity-60"
+      className="fixed inset-0 pointer-events-none z-0 opacity-60"
+      style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}
     />
   );
 }
