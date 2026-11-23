@@ -136,7 +136,7 @@ export default function AdminSearchPage() {
       {/* Search Input Bar */}
       <form onSubmit={handleSearch} className="flex gap-2">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
+          <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
           <input
             type="text"
             required
@@ -144,13 +144,13 @@ export default function AdminSearchPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Enter Phone (01XXXXXXXXX), Name, or MX8-XXXXXX"
-            className="w-full h-11 pl-10 pr-3.5 rounded-xl bg-[#111820] border border-[#00C9A7]/30 text-white placeholder-slate-500 focus:outline-none focus:border-[#00C9A7] text-xs sm:text-sm font-mono"
+            className="w-full h-11 pl-10 pr-3.5 rounded-xl bg-[#0F243A] border border-[#D97706]/30 text-white placeholder-slate-400 focus:outline-none focus:border-[#D97706] text-xs sm:text-sm font-mono"
           />
         </div>
         <button
           type="submit"
           disabled={loading}
-          className="px-6 h-11 rounded-xl bg-[#00C9A7] text-[#0A0F14] font-bold text-xs sm:text-sm hover:bg-[#2DD4BF] transition-all flex items-center gap-1.5 shadow-[0_0_15px_rgba(0,201,167,0.25)] shrink-0 disabled:opacity-50"
+          className="px-6 h-11 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold text-xs sm:text-sm hover:brightness-110 transition-all flex items-center gap-1.5 shadow-[0_0_15px_rgba(217,119,6,0.3)] shrink-0 disabled:opacity-50"
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
           SEARCH
@@ -166,11 +166,11 @@ export default function AdminSearchPage() {
       {searched && (
         <>
           {result ? (
-            <div className="p-6 rounded-2xl bg-[#111820] border border-[#00C9A7]/30 shadow-xl space-y-6 animate-in fade-in duration-300">
+            <div className="p-6 rounded-2xl bg-[#0F243A] border border-[#D97706]/30 shadow-xl space-y-6 animate-in fade-in duration-300">
               {/* Profile Card Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
                 <div>
-                  <span className="font-mono text-xs font-bold text-[#00C9A7] px-2 py-0.5 rounded bg-[#00C9A7]/10">
+                  <span className="font-mono text-xs font-bold text-[#F59E0B] px-2 py-0.5 rounded bg-[#F59E0B]/10">
                     {result.registrant.registration_id}
                   </span>
                   <h2 className="text-xl font-bold text-white mt-1">
@@ -196,20 +196,20 @@ export default function AdminSearchPage() {
               </div>
 
               {/* Detailed Contact & Academic Credentials */}
-              <div className="grid grid-cols-2 gap-3 text-xs font-mono bg-[#0A0F14] p-4 rounded-xl border border-slate-800 text-slate-300">
-                <div><span className="text-slate-500">Phone:</span> {result.registrant.phone}</div>
-                <div><span className="text-slate-500">Email:</span> {result.registrant.email}</div>
-                <div><span className="text-slate-500">City:</span> {result.registrant.city}</div>
-                <div><span className="text-slate-500">Year:</span> {result.registrant.academic_year}</div>
-                <div><span className="text-slate-500">Job Title:</span> {result.registrant.job_title}</div>
-                <div><span className="text-slate-500">Company:</span> {result.registrant.company || "None"}</div>
+              <div className="grid grid-cols-2 gap-3 text-xs font-mono bg-[#15304B] p-4 rounded-xl border border-slate-800 text-slate-300">
+                <div><span className="text-slate-400">Phone:</span> {result.registrant.phone}</div>
+                <div><span className="text-slate-400">Email:</span> {result.registrant.email}</div>
+                <div><span className="text-slate-400">City:</span> {result.registrant.city}</div>
+                <div><span className="text-slate-400">Year:</span> {result.registrant.academic_year}</div>
+                <div><span className="text-slate-400">Job Title:</span> {result.registrant.job_title}</div>
+                <div><span className="text-slate-400">Company:</span> {result.registrant.company || "None"}</div>
               </div>
 
               {/* Verification Photos */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <div className="text-xs font-semibold text-slate-400 mb-1">National ID Photo:</div>
-                  <div className="relative w-full h-40 rounded-xl bg-[#0A0F14] border border-slate-800 overflow-hidden">
+                  <div className="text-xs font-semibold text-slate-300 mb-1">National ID Photo:</div>
+                  <div className="relative w-full h-40 rounded-xl bg-[#15304B] border border-slate-800 overflow-hidden">
                     <Image
                       src={result.registrant.id_photo_url || "/esme_logo.png"}
                       alt="National ID"
@@ -221,8 +221,8 @@ export default function AdminSearchPage() {
                 </div>
 
                 <div>
-                  <div className="text-xs font-semibold text-slate-400 mb-1">Student Karnet Card:</div>
-                  <div className="relative w-full h-40 rounded-xl bg-[#0A0F14] border border-slate-800 overflow-hidden">
+                  <div className="text-xs font-semibold text-slate-300 mb-1">Student Karnet Card:</div>
+                  <div className="relative w-full h-40 rounded-xl bg-[#15304B] border border-slate-800 overflow-hidden">
                     <Image
                       src={result.registrant.karnet_photo_url || "/esme_logo.png"}
                       alt="Karnet Card"
@@ -245,7 +245,7 @@ export default function AdminSearchPage() {
                   <button
                     onClick={handleManualCheckIn}
                     disabled={checkingIn}
-                    className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#00C9A7] to-[#007A65] text-[#0A0F14] font-extrabold text-xs sm:text-sm hover:brightness-110 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,201,167,0.3)] disabled:opacity-50"
+                    className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-extrabold text-xs sm:text-sm hover:brightness-110 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(217,119,6,0.35)] disabled:opacity-50"
                   >
                     {checkingIn ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -258,8 +258,8 @@ export default function AdminSearchPage() {
               )}
             </div>
           ) : (
-            <div className="p-8 rounded-2xl bg-[#111820] border border-slate-800 text-center text-slate-400 text-sm">
-              <XCircle className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+            <div className="p-8 rounded-2xl bg-[#0F243A] border border-slate-800 text-center text-slate-400 text-sm">
+              <XCircle className="w-8 h-8 text-slate-500 mx-auto mb-2" />
               No matching attendee registration found for &quot;<span className="text-white font-mono">{query}</span>&quot;.
             </div>
           )}

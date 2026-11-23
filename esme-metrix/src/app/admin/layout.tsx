@@ -49,9 +49,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex-1 flex flex-col md:flex-row min-h-[calc(100vh-4rem)]">
       {/* Mobile Header Bar */}
-      <div className="md:hidden flex items-center justify-between p-4 bg-[#111820] border-b border-[#00C9A7]/20">
+      <div className="md:hidden flex items-center justify-between p-4 bg-[#0F243A] border-b border-[#D97706]/20">
         <div className="flex items-center gap-2">
-          <ShieldAlert className="w-5 h-5 text-[#00C9A7]" />
+          <ShieldAlert className="w-5 h-5 text-[#D97706]" />
           <span className="text-sm font-bold text-white">METRIX ADMIN CONSOLE</span>
         </div>
         <button
@@ -66,15 +66,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside
         className={`${
           mobileMenuOpen ? "block" : "hidden"
-        } md:block w-full md:w-64 bg-[#111820]/95 border-r border-[#00C9A7]/15 p-4 flex flex-col shrink-0`}
+        } md:block w-full md:w-64 bg-[#0F243A]/95 border-r border-[#D97706]/20 p-4 flex flex-col shrink-0`}
       >
         <div className="hidden md:flex items-center gap-3 px-3 py-4 border-b border-slate-800 mb-6">
-          <div className="w-8 h-8 rounded-lg bg-[#00C9A7]/15 border border-[#00C9A7]/30 flex items-center justify-center p-1">
+          <div className="w-8 h-8 rounded-lg bg-[#D97706]/15 border border-[#D97706]/35 flex items-center justify-center p-1">
             <Image src="/esme_logo.png" alt="Logo" width={28} height={28} className="object-contain" />
           </div>
           <div>
             <div className="text-xs font-bold text-white tracking-wider">ADMIN PANEL</div>
-            <div className="text-[10px] text-[#00C9A7] font-mono">ESME CU CHAPTER</div>
+            <div className="text-[10px] text-[#F59E0B] font-mono">ESME CU CHAPTER</div>
           </div>
         </div>
 
@@ -90,8 +90,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 onClick={() => setMobileMenuOpen(false)}
                 className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                   isActive
-                    ? "bg-[#00C9A7] text-[#0A0F14] font-bold shadow-[0_0_15px_rgba(0,201,167,0.25)]"
-                    : "text-slate-400 hover:text-white hover:bg-[#1A2435]"
+                    ? "bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold shadow-[0_0_15px_rgba(217,119,6,0.3)]"
+                    : "text-slate-300 hover:text-white hover:bg-[#1D3046]"
                 }`}
               >
                 <Icon className="w-4 h-4 shrink-0" />
@@ -113,7 +113,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main Workspace Area */}
-      <section className="flex-1 p-4 sm:p-6 lg:p-8 bg-[#0A0F14] overflow-x-auto">
+      <section className="flex-1 p-4 sm:p-6 lg:p-8 bg-[#15304B] overflow-x-auto">
         {children}
       </section>
     </div>

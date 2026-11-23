@@ -23,7 +23,7 @@ import {
 } from "recharts";
 import { createClient } from "@/lib/supabase/client";
 
-const PIE_COLORS = ["#00C9A7", "#2DD4BF", "#007A65", "#14B8A6", "#0F766E"];
+const PIE_COLORS = ["#D97706", "#F59E0B", "#B45309", "#E11D48", "#10B981"];
 
 interface Stats {
   totalRegistered: number;
@@ -180,10 +180,10 @@ export default function AdminDashboardPage() {
         </div>
         <div className="flex items-center gap-2">
           <span className="flex h-2.5 w-2.5 relative">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00C9A7] opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#00C9A7]"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#10B981]"></span>
           </span>
-          <span className="text-xs font-mono text-[#00C9A7] uppercase font-semibold">
+          <span className="text-xs font-mono text-[#10B981] uppercase font-semibold">
             Supabase Realtime Synchronized
           </span>
         </div>
@@ -203,10 +203,10 @@ export default function AdminDashboardPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 rounded-2xl bg-[#111820] border border-[#00C9A7]/20 flex flex-col justify-between">
+        <div className="p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/20 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider font-mono">Total Registrants</span>
-            <Users className="w-4 h-4 text-[#00C9A7]" />
+            <Users className="w-4 h-4 text-[#D97706]" />
           </div>
           <div className="text-3xl font-extrabold text-white font-mono tracking-tight">
             {loading ? <Loader2 className="w-6 h-6 animate-spin text-slate-600" /> : stats.totalRegistered}
@@ -216,12 +216,12 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-[#111820] border border-[#00C9A7]/20 flex flex-col justify-between">
+        <div className="p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/20 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider font-mono">Present / Checked-In</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <CheckCircle2 className="w-4 h-4 text-[#10B981]" />
           </div>
-          <div className="text-3xl font-extrabold text-emerald-400 font-mono tracking-tight">
+          <div className="text-3xl font-extrabold text-[#10B981] font-mono tracking-tight">
             {loading ? <Loader2 className="w-6 h-6 animate-spin text-slate-600" /> : stats.totalAttended}
           </div>
           <div className="text-[11px] text-slate-400 mt-2 font-mono">
@@ -229,23 +229,23 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-[#111820] border border-[#00C9A7]/20 flex flex-col justify-between">
+        <div className="p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/20 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider font-mono">Attendance Rate</span>
-            <Percent className="w-4 h-4 text-[#2DD4BF]" />
+            <Percent className="w-4 h-4 text-[#F59E0B]" />
           </div>
-          <div className="text-3xl font-extrabold text-[#2DD4BF] font-mono tracking-tight">
+          <div className="text-3xl font-extrabold text-[#F59E0B] font-mono tracking-tight">
             {loading ? <Loader2 className="w-6 h-6 animate-spin text-slate-600" /> : `${stats.attendanceRate}%`}
           </div>
           <div className="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
             <div
-              className="bg-[#00C9A7] h-full transition-all duration-500"
+              className="bg-gradient-to-r from-[#F59E0B] to-[#D97706] h-full transition-all duration-500"
               style={{ width: `${stats.attendanceRate}%` }}
             />
           </div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-[#111820] border border-[#00C9A7]/20 flex flex-col justify-between">
+        <div className="p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/20 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider font-mono">LinkedIn Shares</span>
             <Share2 className="w-4 h-4 text-[#0077B5]" />
@@ -261,12 +261,12 @@ export default function AdminDashboardPage() {
 
       {/* Visual Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 p-5 rounded-2xl bg-[#111820] border border-[#00C9A7]/20">
+        <div className="lg:col-span-2 p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/20">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
               University Distribution
             </h2>
-            <Activity className="w-4 h-4 text-[#00C9A7]" />
+            <Activity className="w-4 h-4 text-[#D97706]" />
           </div>
 
           <div className="h-64 w-full">
@@ -281,21 +281,21 @@ export default function AdminDashboardPage() {
                   <YAxis stroke="#64748B" fontSize={11} tickLine={false} allowDecimals={false} />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "#0A0F14",
-                      borderColor: "#00C9A7",
+                      backgroundColor: "#0F243A",
+                      borderColor: "#D97706",
                       borderRadius: "8px",
                       color: "#FFFFFF",
                       fontSize: "12px",
                     }}
                   />
-                  <Bar dataKey="count" fill="#00C9A7" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="count" fill="#D97706" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
           </div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-[#111820] border border-[#00C9A7]/20 flex flex-col justify-between">
+        <div className="p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/20 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
               City Demographics
@@ -325,8 +325,8 @@ export default function AdminDashboardPage() {
                   </Pie>
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "#0A0F14",
-                      borderColor: "#00C9A7",
+                      backgroundColor: "#0F243A",
+                      borderColor: "#D97706",
                       borderRadius: "8px",
                       color: "#FFFFFF",
                       fontSize: "12px",
@@ -352,12 +352,12 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Recent Registrations Feed */}
-      <div className="p-5 rounded-2xl bg-[#111820] border border-[#00C9A7]/20">
+      <div className="p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/20">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
             Recent Registration Pipeline
           </h2>
-          <span className="text-xs text-[#00C9A7] font-mono">Live Activity</span>
+          <span className="text-xs text-[#F59E0B] font-mono">Live Activity</span>
         </div>
 
         {recentRegistrations.length === 0 ? (
@@ -369,7 +369,7 @@ export default function AdminDashboardPage() {
             {recentRegistrations.map((item) => (
               <div key={item.id} className="py-3 flex items-center justify-between text-xs sm:text-sm">
                 <div className="flex items-center gap-3">
-                  <div className="font-mono text-xs font-bold text-[#00C9A7] px-2 py-0.5 rounded bg-[#00C9A7]/10">
+                  <div className="font-mono text-xs font-bold text-[#F59E0B] px-2 py-0.5 rounded bg-[#F59E0B]/10">
                     {item.id}
                   </div>
                   <div>
@@ -377,8 +377,8 @@ export default function AdminDashboardPage() {
                     <div className="text-[11px] text-slate-400">{item.university}</div>
                   </div>
                 </div>
-                <div className="text-[11px] text-slate-500 font-mono flex items-center gap-1">
-                  {item.time} <ArrowUpRight className="w-3.5 h-3.5 text-slate-600" />
+                <div className="text-[11px] text-slate-400 font-mono flex items-center gap-1">
+                  {item.time} <ArrowUpRight className="w-3.5 h-3.5 text-slate-500" />
                 </div>
               </div>
             ))}

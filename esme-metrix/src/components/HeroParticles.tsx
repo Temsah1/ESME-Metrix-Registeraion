@@ -27,8 +27,9 @@ export default function HeroParticles() {
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReducedMotion) return;
 
-    // Generate 60 floating particles
+    // Generate 60 floating particles in brand Golden and Orange shades
     const particleCount = 60;
+    const colorBases = ["rgba(217, 119, 6, ", "rgba(245, 158, 11, "];
     const particles = Array.from({ length: particleCount }).map(() => ({
       x: Math.random() * width,
       y: Math.random() * height,
@@ -36,6 +37,7 @@ export default function HeroParticles() {
       speedX: (Math.random() - 0.5) * 0.4,
       speedY: (Math.random() - 0.5) * 0.4,
       opacity: Math.random() * 0.4 + 0.1,
+      colorBase: colorBases[Math.floor(Math.random() * colorBases.length)],
     }));
 
     const render = () => {
@@ -52,7 +54,7 @@ export default function HeroParticles() {
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(0, 201, 167, ${p.opacity})`;
+        ctx.fillStyle = `${p.colorBase}${p.opacity})`;
         ctx.fill();
       });
 

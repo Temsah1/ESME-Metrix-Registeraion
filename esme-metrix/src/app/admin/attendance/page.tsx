@@ -120,16 +120,16 @@ export default function AttendanceFeedPage() {
           </p>
         </div>
 
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#00C9A7]/10 border border-[#00C9A7]/30 text-[#00C9A7] font-mono text-xs">
-          <Radio className="w-4 h-4 animate-pulse" />
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#10B981]/10 border border-[#10B981]/30 text-[#10B981] font-mono text-xs font-semibold">
+          <Radio className="w-4 h-4 animate-pulse text-[#10B981]" />
           <span>LIVE STREAM ACTIVE ({items.length} Checked In)</span>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-[#00C9A7]/20 bg-[#111820] overflow-hidden">
+      <div className="rounded-2xl border border-[#D97706]/20 bg-[#0F243A] overflow-hidden">
         <div className="p-4 border-b border-slate-800 font-mono text-xs font-bold text-slate-400 flex items-center justify-between">
           <span>EVENT DAY CHECK-INS</span>
-          <span className="text-[#00C9A7]">AUTOMATICALLY UPDATING</span>
+          <span className="text-[#F59E0B]">AUTOMATICALLY UPDATING</span>
         </div>
 
         <div className="divide-y divide-slate-800">
@@ -140,18 +140,18 @@ export default function AttendanceFeedPage() {
           )}
           {loading ? (
             <div className="p-10 text-center text-slate-400 text-xs">
-              <Loader2 className="w-5 h-5 animate-spin inline-block mr-2 text-[#00C9A7]" />
+              <Loader2 className="w-5 h-5 animate-spin inline-block mr-2 text-[#D97706]" />
               Loading check-in history...
             </div>
           ) : items.length === 0 ? (
-            <div className="p-10 text-center text-slate-500 text-xs">
+            <div className="p-10 text-center text-slate-400 text-xs">
               No check-ins yet. Verified gate admissions will stream here in real time.
             </div>
           ) : (
             items.map((entry, index) => (
             <div
               key={entry.id || index}
-              className="p-4 flex items-center justify-between hover:bg-[#1A2435]/50 transition-all text-xs sm:text-sm animate-in fade-in slide-in-from-top-2 duration-300"
+              className="p-4 flex items-center justify-between hover:bg-[#1D3046]/60 transition-all text-xs sm:text-sm animate-in fade-in slide-in-from-top-2 duration-300"
             >
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
@@ -160,19 +160,19 @@ export default function AttendanceFeedPage() {
                 <div>
                   <div className="font-bold text-white flex items-center gap-2">
                     {entry.name}
-                    <span className="text-[11px] font-mono text-[#00C9A7] font-normal px-1.5 py-0.5 rounded bg-[#00C9A7]/10">
+                    <span className="text-[11px] font-mono text-[#F59E0B] font-normal px-1.5 py-0.5 rounded bg-[#F59E0B]/10">
                       {entry.registration_id}
                     </span>
                   </div>
-                  <div className="text-[11px] text-slate-400">{entry.university}</div>
+                  <div className="text-[11px] text-slate-300">{entry.university}</div>
                 </div>
               </div>
 
               <div className="text-right">
                 <div className="font-mono text-xs font-semibold text-slate-300 flex items-center gap-1 justify-end">
-                  <Clock className="w-3.5 h-3.5 text-slate-500" /> {entry.scanned_at}
+                  <Clock className="w-3.5 h-3.5 text-slate-400" /> {entry.scanned_at}
                 </div>
-                <div className="text-[10px] text-slate-500 font-mono">
+                <div className="text-[10px] text-slate-400 font-mono">
                   By: {entry.scanned_by}
                 </div>
               </div>

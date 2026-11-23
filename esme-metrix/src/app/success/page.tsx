@@ -53,7 +53,7 @@ export default function SuccessPage() {
         particleCount: 80,
         spread: 70,
         origin: { y: 0.6 },
-        colors: ["#00C9A7", "#2DD4BF", "#F59A16", "#FFFFFF"],
+        colors: ["#D97706", "#F59E0B", "#10B981", "#FFFFFF"],
       });
     }
   }, [data]);
@@ -72,16 +72,16 @@ export default function SuccessPage() {
     canvas.width = 1200;
     canvas.height = 630;
 
-    // Background gradient (Dark Teal & Emerald)
+    // Background gradient (Brand Dark Blue & Navy)
     const gradient = ctx.createLinearGradient(0, 0, 1200, 630);
-    gradient.addColorStop(0, "#0A0F14");
-    gradient.addColorStop(0.5, "#0F2826");
-    gradient.addColorStop(1, "#0A0F14");
+    gradient.addColorStop(0, "#15304B");
+    gradient.addColorStop(0.5, "#0F243A");
+    gradient.addColorStop(1, "#15304B");
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, 1200, 630);
 
     // Decorative grid pattern
-    ctx.strokeStyle = "rgba(0, 201, 167, 0.08)";
+    ctx.strokeStyle = "rgba(217, 119, 6, 0.08)";
     ctx.lineWidth = 1;
     for (let x = 0; x < 1200; x += 40) {
       ctx.beginPath();
@@ -97,21 +97,21 @@ export default function SuccessPage() {
     }
 
     // Glowing border
-    ctx.strokeStyle = "#00C9A7";
+    ctx.strokeStyle = "#D97706";
     ctx.lineWidth = 6;
     ctx.strokeRect(20, 20, 1160, 590);
 
     // Sub-border
-    ctx.strokeStyle = "rgba(0, 201, 167, 0.3)";
+    ctx.strokeStyle = "rgba(217, 119, 6, 0.3)";
     ctx.lineWidth = 1;
     ctx.strokeRect(30, 30, 1140, 570);
 
     // Header Tagline
-    ctx.fillStyle = "#00C9A7";
+    ctx.fillStyle = "#F59E0B";
     ctx.font = "bold 20px monospace";
     ctx.fillText("ESME CAIRO UNIVERSITY STUDENT CHAPTER", 60, 80);
 
-    ctx.fillStyle = "#94A3B8";
+    ctx.fillStyle = "#D97706";
     ctx.font = "bold 16px monospace";
     ctx.fillText("• ATTENDING PROUDLY •", 60, 115);
 
@@ -121,27 +121,27 @@ export default function SuccessPage() {
     ctx.fillText("ESME METRIX 2026", 60, 200);
 
     // Decorative accent bar
-    ctx.fillStyle = "#00C9A7";
+    ctx.fillStyle = "#D97706";
     ctx.fillRect(60, 225, 200, 6);
 
     // Attendee Name
-    ctx.fillStyle = "#F8FAFC";
+    ctx.fillStyle = "#FFFFFF";
     ctx.font = "bold 44px sans-serif";
     ctx.fillText(data.full_name || "Engineer", 60, 310);
 
     // Registration ID & University
-    ctx.fillStyle = "#2DD4BF";
+    ctx.fillStyle = "#F59E0B";
     ctx.font = "bold 24px monospace";
     ctx.fillText(`ID: ${data.registration_id} | ${data.university || "Cairo University"}`, 60, 360);
 
     // Event Information
-    ctx.fillStyle = "#94A3B8";
+    ctx.fillStyle = "#E5E7EB";
     ctx.font = "20px sans-serif";
     ctx.fillText("📅 November 2026 Season", 60, 440);
     ctx.fillText("📍 Cairo University Campus", 60, 475);
 
     // Hashtag & Motto
-    ctx.fillStyle = "#00C9A7";
+    ctx.fillStyle = "#D97706";
     ctx.font = "bold 22px monospace";
     ctx.fillText("#ESMEMetrix #BE_POSITIVE_VALUABLE", 60, 545);
 
@@ -151,8 +151,8 @@ export default function SuccessPage() {
       qrImg.onload = () => {
         if (cancelled) return;
         // Draw card placeholder box
-        ctx.fillStyle = "#111820";
-        ctx.strokeStyle = "rgba(0, 201, 167, 0.4)";
+        ctx.fillStyle = "#0F243A";
+        ctx.strokeStyle = "rgba(217, 119, 6, 0.4)";
         ctx.lineWidth = 2;
         ctx.fillRect(860, 150, 260, 260);
         ctx.strokeRect(860, 150, 260, 260);
@@ -160,7 +160,7 @@ export default function SuccessPage() {
         // Draw image
         ctx.drawImage(qrImg, 880, 170, 220, 220);
 
-        ctx.fillStyle = "#00C9A7";
+        ctx.fillStyle = "#10B981";
         ctx.font = "bold 14px monospace";
         ctx.textAlign = "center";
         ctx.fillText("VERIFIED METRIX CREDENTIAL", 990, 440);
@@ -211,24 +211,24 @@ export default function SuccessPage() {
   if (!data) {
     return (
       <div className="max-w-xl mx-auto w-full px-4 py-16 flex flex-col items-center text-center">
-        <div className="w-14 h-14 rounded-2xl bg-[#111820] border border-[#00C9A7]/30 flex items-center justify-center text-[#00C9A7] mb-5">
+        <div className="w-14 h-14 rounded-2xl bg-[#0F243A] border border-[#D97706]/35 flex items-center justify-center text-[#D97706] mb-5">
           <QrCode className="w-7 h-7" />
         </div>
         <h1 className="text-2xl font-bold text-white mb-2">No Registration Found</h1>
-        <p className="text-slate-400 text-sm mb-8">
+        <p className="text-slate-300 text-sm mb-8">
           This page shows your badge right after you register. If you already registered, check
           your email for the confirmation and QR code.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
           <Link
             href="/register"
-            className="px-6 py-3 rounded-xl bg-[#00C9A7] text-[#0A0F14] font-bold text-xs sm:text-sm hover:bg-[#2DD4BF] transition-all"
+            className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold text-xs sm:text-sm hover:brightness-110 shadow-[0_0_15px_rgba(217,119,6,0.3)] transition-all"
           >
             REGISTER NOW
           </Link>
           <Link
             href="/"
-            className="px-6 py-3 rounded-xl border border-slate-700 text-slate-400 hover:text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-colors"
+            className="px-6 py-3 rounded-xl border border-slate-700 text-slate-300 hover:text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-colors"
           >
             Back to Home <ArrowRight className="w-4 h-4" />
           </Link>
@@ -240,29 +240,29 @@ export default function SuccessPage() {
   return (
     <div className="max-w-4xl mx-auto w-full px-4 py-8 sm:py-14 flex flex-col items-center text-center">
       {/* Animated Checkmark Badge */}
-      <div className="w-16 h-16 rounded-2xl bg-[#00C9A7]/15 border-2 border-[#00C9A7] flex items-center justify-center text-[#00C9A7] mb-6 shadow-[0_0_30px_rgba(0,201,167,0.3)] animate-bounce">
+      <div className="w-16 h-16 rounded-2xl bg-[#10B981]/15 border-2 border-[#10B981] flex items-center justify-center text-[#10B981] mb-6 shadow-[0_0_30px_rgba(16,185,129,0.3)] animate-bounce">
         <CheckCircle2 className="w-9 h-9" />
       </div>
 
-      <div className="inline-block px-3 py-1 rounded-full border border-[#00C9A7]/30 bg-[#111820] text-[#00C9A7] font-mono text-xs mb-3">
+      <div className="inline-block px-3.5 py-1 rounded-full border border-[#D97706]/35 bg-[#0F243A] text-[#F59E0B] font-mono text-xs mb-3 font-semibold">
         CONFIRMED & ISSUED
       </div>
 
       <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mb-2">
         Welcome to ESME Metrix 2026!
       </h1>
-      <p className="text-slate-400 text-sm sm:text-base max-w-xl mb-10">
-        Congratulations <span className="text-[#00C9A7] font-semibold">{data.full_name}</span>.
+      <p className="text-slate-300 text-sm sm:text-base max-w-xl mb-10">
+        Congratulations <span className="text-[#D97706] font-semibold">{data.full_name}</span>.
         Your digital admission badge has been minted and linked to your identity.
       </p>
 
       {/* Main Grid: QR Card & Info */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full text-left mb-10">
         {/* Digital QR Card */}
-        <div className="p-6 rounded-2xl bg-gradient-to-br from-[#111820] to-[#0A0F14] border border-[#00C9A7]/30 flex flex-col items-center text-center shadow-xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[#00C9A7]/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="p-6 rounded-2xl bg-gradient-to-br from-[#0F243A] to-[#15304B] border border-[#D97706]/35 flex flex-col items-center text-center shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#D97706]/10 rounded-full blur-2xl pointer-events-none" />
 
-          <div className="text-[11px] font-mono text-[#00C9A7] tracking-wider uppercase mb-1">
+          <div className="text-[11px] font-mono text-[#F59E0B] tracking-wider uppercase mb-1 font-bold">
             DIGITAL ADMISSION BADGE
           </div>
           <h3 className="text-xl font-bold text-white mb-4">
@@ -270,7 +270,7 @@ export default function SuccessPage() {
           </h3>
 
           {/* QR Image Display */}
-          <div className="w-56 h-56 rounded-xl bg-white p-3 flex items-center justify-center mb-4 shadow-lg border-2 border-[#00C9A7]/40">
+          <div className="w-56 h-56 rounded-xl bg-white p-3 flex items-center justify-center mb-4 shadow-lg border-2 border-[#D97706]/40">
             {data.qr_code ? (
               <Image
                 src={data.qr_code}
@@ -285,7 +285,7 @@ export default function SuccessPage() {
             )}
           </div>
 
-          <div className="font-mono text-sm font-bold text-[#00C9A7] tracking-wider mb-2">
+          <div className="font-mono text-sm font-bold text-[#F59E0B] tracking-wider mb-2">
             ID: {data.registration_id}
           </div>
           <p className="text-xs text-slate-400 max-w-xs">
@@ -294,26 +294,26 @@ export default function SuccessPage() {
         </div>
 
         {/* Instructions & Next Steps */}
-        <div className="flex flex-col justify-between p-6 rounded-2xl bg-[#111820]/90 border border-[#00C9A7]/20">
+        <div className="flex flex-col justify-between p-6 rounded-2xl bg-[#0F243A]/90 border border-[#D97706]/20">
           <div>
             <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-[#00C9A7]" /> Event Access Checklist
+              <ShieldCheck className="w-5 h-5 text-[#D97706]" /> Event Access Checklist
             </h3>
 
             <div className="space-y-4 text-xs sm:text-sm text-slate-300">
               <div className="flex items-start gap-3">
-                <div className="w-5 h-5 rounded-full bg-[#00C9A7]/20 text-[#00C9A7] flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
+                <div className="w-5 h-5 rounded-full bg-[#D97706]/20 text-[#F59E0B] flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
                   1
                 </div>
                 <div>
                   <strong>Confirmation Email:</strong> A copy of your badge is being sent to{" "}
-                  <span className="text-[#00C9A7]">{data.email}</span>. If it doesn&apos;t arrive
+                  <span className="text-[#F59E0B] font-semibold">{data.email}</span>. If it doesn&apos;t arrive
                   within a few minutes, use the download button below.
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="w-5 h-5 rounded-full bg-[#00C9A7]/20 text-[#00C9A7] flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
+                <div className="w-5 h-5 rounded-full bg-[#D97706]/20 text-[#F59E0B] flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
                   2
                 </div>
                 <div>
@@ -322,7 +322,7 @@ export default function SuccessPage() {
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="w-5 h-5 rounded-full bg-[#00C9A7]/20 text-[#00C9A7] flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
+                <div className="w-5 h-5 rounded-full bg-[#D97706]/20 text-[#F59E0B] flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
                   3
                 </div>
                 <div>
@@ -333,9 +333,9 @@ export default function SuccessPage() {
           </div>
 
           {/* Social Amplification Callout */}
-          <div className="mt-6 p-4 rounded-xl bg-[#0A0F14] border border-[#00C9A7]/20">
+          <div className="mt-6 p-4 rounded-xl bg-[#15304B] border border-[#D97706]/20">
             <div className="flex items-center gap-2 text-xs font-semibold text-white mb-1">
-              <Share2 className="w-4 h-4 text-[#00C9A7]" /> Celebrate on LinkedIn
+              <Share2 className="w-4 h-4 text-[#D97706]" /> Celebrate on LinkedIn
             </div>
             <p className="text-[11px] text-slate-400">
               Download your personalized certificate card below and announce your attendance to your professional network.
@@ -347,9 +347,9 @@ export default function SuccessPage() {
       {/* LinkedIn Attendance Card Canvas (Hidden offscreen or responsive preview) */}
       <div className="w-full mb-8">
         <div className="text-left text-sm font-bold text-white mb-3 flex items-center gap-2">
-          <Share2 className="w-4 h-4 text-[#00C9A7]" /> Generated Attendance Card (1200 x 630)
+          <Share2 className="w-4 h-4 text-[#D97706]" /> Generated Attendance Card (1200 x 630)
         </div>
-        <div className="w-full rounded-2xl overflow-hidden border border-[#00C9A7]/30 shadow-2xl bg-[#0A0F14]">
+        <div className="w-full rounded-2xl overflow-hidden border border-[#D97706]/30 shadow-2xl bg-[#15304B]">
           <canvas
             ref={canvasRef}
             className="w-full h-auto"
@@ -362,9 +362,9 @@ export default function SuccessPage() {
         <button
           onClick={handleDownloadCard}
           disabled={!cardReady}
-          className="px-6 py-3 rounded-xl bg-[#111820] border border-[#00C9A7]/40 text-slate-200 font-semibold text-xs sm:text-sm hover:border-[#00C9A7] hover:text-white flex items-center gap-2 transition-all shadow-md disabled:opacity-50"
+          className="px-6 py-3 rounded-xl bg-[#0F243A] border border-[#D97706]/40 text-slate-200 font-semibold text-xs sm:text-sm hover:border-[#D97706] hover:text-white hover:bg-[#1D3046] flex items-center gap-2 transition-all shadow-md disabled:opacity-50"
         >
-          <Download className="w-4 h-4 text-[#00C9A7]" />
+          <Download className="w-4 h-4 text-[#D97706]" />
           {cardReady ? "DOWNLOAD ATTENDANCE CARD" : "PREPARING CARD..."}
         </button>
 
@@ -378,7 +378,7 @@ export default function SuccessPage() {
 
         <Link
           href="/"
-          className="px-6 py-3 rounded-xl border border-slate-700 text-slate-400 hover:text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-colors"
+          className="px-6 py-3 rounded-xl border border-slate-700 text-slate-300 hover:text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-colors"
         >
           Back to Home <ArrowRight className="w-4 h-4" />
         </Link>

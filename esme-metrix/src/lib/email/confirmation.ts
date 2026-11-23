@@ -42,24 +42,28 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
     : input.qrDataUrl;
 
   const html = `
-    <div style="font-family: Arial, sans-serif; background-color: #0A0F14; color: #F8FAFC; padding: 30px; border-radius: 12px; max-width: 600px; margin: 0 auto; border: 1px solid #00C9A7;">
+    <div style="font-family: Arial, sans-serif; background-color: #15304B; color: #F8FAFC; padding: 30px; border-radius: 12px; max-width: 600px; margin: 0 auto; border: 1px solid #D97706;">
       <div style="text-align: center; margin-bottom: 24px;">
-        <h1 style="color: #00C9A7; font-size: 26px; margin: 0;">ESME METRIX 2026</h1>
-        <p style="color: #94A3B8; font-size: 13px; margin-top: 4px;">Cairo University Student Chapter</p>
+        <h1 style="color: #D97706; font-size: 26px; margin: 0; font-weight: bold;">ESME METRIX 2026</h1>
+        <p style="color: #CBD5E1; font-size: 13px; margin-top: 4px;">Cairo University Student Chapter</p>
       </div>
 
-      <h2 style="color: #FFFFFF; font-size: 20px;">Congratulations, ${name}!</h2>
-      <p style="color: #CBD5E1; font-size: 15px; line-height: 1.6;">
+      <div style="background-color: #10B981; color: #FFFFFF; font-weight: bold; font-size: 13px; padding: 6px 14px; border-radius: 20px; display: inline-block; margin-bottom: 12px;">
+        &#10003; REGISTRATION CONFIRMED
+      </div>
+
+      <h2 style="color: #FFFFFF; font-size: 20px; margin-top: 8px;">Congratulations, ${name}!</h2>
+      <p style="color: #E5E7EB; font-size: 15px; line-height: 1.6;">
         Your registration for ESME Metrix 2026 has been successfully confirmed.
       </p>
 
-      <div style="background-color: #111820; padding: 20px; border-radius: 10px; margin: 24px 0; text-align: center; border: 1px solid rgba(0, 201, 167, 0.2);">
-        <div style="font-size: 13px; color: #94A3B8; margin-bottom: 8px;">YOUR DIGITAL ADMISSION BADGE</div>
-        <img src="cid:metrix-qr" alt="ESME Metrix QR Code" width="220" height="220" style="width: 220px; height: 220px; border-radius: 8px; margin: 0 auto; display: block;" />
-        <p style="font-family: monospace; font-size: 16px; font-weight: bold; color: #00C9A7; margin-top: 12px;">ID: ${registrationId}</p>
+      <div style="background-color: #0F243A; padding: 20px; border-radius: 10px; margin: 24px 0; text-align: center; border: 1px solid rgba(217, 119, 6, 0.3);">
+        <div style="font-size: 12px; color: #CBD5E1; letter-spacing: 1px; margin-bottom: 10px; font-weight: bold;">YOUR DIGITAL ADMISSION BADGE</div>
+        <img src="cid:metrix-qr" alt="ESME Metrix QR Code" width="220" height="220" style="width: 220px; height: 220px; border-radius: 8px; margin: 0 auto; display: block; border: 2px solid #D97706;" />
+        <p style="font-family: monospace; font-size: 16px; font-weight: bold; color: #F59E0B; margin-top: 12px; letter-spacing: 1px;">ID: ${registrationId}</p>
       </div>
 
-      <div style="color: #CBD5E1; font-size: 14px; margin-bottom: 24px; line-height: 1.8;">
+      <div style="color: #E5E7EB; font-size: 14px; margin-bottom: 24px; line-height: 1.8;">
         <strong>Attendee:</strong> ${name}<br />
         <strong>Institution:</strong> ${university}<br />
         <strong>Event:</strong> ESME Metrix 2026<br />
@@ -68,9 +72,9 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
         <strong>Time:</strong> ${escapeHtml(eventTime)}
       </div>
 
-      <p style="color: #94A3B8; font-size: 13px; border-top: 1px solid rgba(0, 201, 167, 0.2); padding-top: 16px; text-align: center;">
+      <p style="color: #CBD5E1; font-size: 13px; border-top: 1px solid rgba(217, 119, 6, 0.2); padding-top: 16px; text-align: center;">
         Please keep this QR code ready on your mobile device during entrance verification.<br />
-        <span style="color: #00C9A7; font-weight: bold;">BE POSITIVE VALUABLE.</span>
+        <span style="color: #D97706; font-weight: bold; letter-spacing: 1px;">BE POSITIVE VALUABLE.</span>
       </p>
     </div>
   `;

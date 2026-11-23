@@ -40,9 +40,9 @@ export default function AdminLoginPage() {
 
   return (
     <div className="flex-1 flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md p-6 sm:p-8 rounded-2xl bg-[#111820]/90 border border-[#00C9A7]/25 backdrop-blur-md shadow-2xl">
+      <div className="w-full max-w-md p-6 sm:p-8 rounded-2xl bg-[#0F243A]/90 border border-[#D97706]/25 backdrop-blur-md shadow-2xl">
         <div className="flex flex-col items-center text-center mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-[#00C9A7]/10 border border-[#00C9A7]/30 flex items-center justify-center p-2 mb-3">
+          <div className="w-14 h-14 rounded-2xl bg-[#D97706]/10 border border-[#D97706]/30 flex items-center justify-center p-2 mb-3">
             <Image src="/esme_logo.png" alt="ESME Logo" width={42} height={42} className="object-contain" />
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Admin Console Login</h1>
@@ -61,7 +61,7 @@ export default function AdminLoginPage() {
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-              <Mail className="w-3.5 h-3.5 text-[#00C9A7]" /> Admin Email
+              <Mail className="w-3.5 h-3.5 text-[#D97706]" /> Admin Email
             </label>
             <input
               type="email"
@@ -69,13 +69,13 @@ export default function AdminLoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="admin@esme-cu.com"
-              className="w-full h-11 px-3.5 rounded-xl bg-[#0A0F14] border border-[#00C9A7]/20 text-white placeholder-slate-600 focus:outline-none focus:border-[#00C9A7] text-sm"
+              className="w-full h-11 px-3.5 rounded-xl bg-[#15304B] border border-[#D97706]/20 text-white placeholder-slate-500 focus:outline-none focus:border-[#D97706] text-sm"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-              <Lock className="w-3.5 h-3.5 text-[#00C9A7]" /> Password
+              <Lock className="w-3.5 h-3.5 text-[#D97706]" /> Password
             </label>
             <input
               type="password"
@@ -83,14 +83,14 @@ export default function AdminLoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••••••"
-              className="w-full h-11 px-3.5 rounded-xl bg-[#0A0F14] border border-[#00C9A7]/20 text-white placeholder-slate-600 focus:outline-none focus:border-[#00C9A7] text-sm"
+              className="w-full h-11 px-3.5 rounded-xl bg-[#15304B] border border-[#D97706]/20 text-white placeholder-slate-500 focus:outline-none focus:border-[#D97706] text-sm"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-11 rounded-xl bg-gradient-to-r from-[#00C9A7] to-[#007A65] text-[#0A0F14] font-bold text-xs sm:text-sm hover:brightness-110 transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,201,167,0.3)] disabled:opacity-50 mt-2"
+            className="w-full h-11 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold text-xs sm:text-sm hover:brightness-110 transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(217,119,6,0.35)] disabled:opacity-50 mt-2"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Shield className="w-4 h-4" />}
             SIGN IN TO DASHBOARD

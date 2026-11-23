@@ -127,7 +127,7 @@ export default function QRScannerPage() {
       {/* Header */}
       <div className="text-center">
         <h1 className="text-2xl font-bold text-white tracking-tight flex items-center justify-center gap-2">
-          <Camera className="w-6 h-6 text-[#00C9A7]" /> Live Admission QR Scanner
+          <Camera className="w-6 h-6 text-[#D97706]" /> Live Admission QR Scanner
         </h1>
         <p className="text-xs text-slate-400 font-mono mt-1">
           Rear-camera priority. Point lens at attendee&apos;s mobile screen or printed badge.
@@ -135,7 +135,7 @@ export default function QRScannerPage() {
       </div>
 
       {/* Operator Identity Note */}
-      <div className="flex items-center justify-between p-3 rounded-xl bg-[#111820] border border-slate-800 text-xs">
+      <div className="flex items-center justify-between p-3 rounded-xl bg-[#0F243A] border border-slate-800 text-xs">
         <span className="text-slate-400 font-mono">Check-ins are recorded under your signed-in admin account.</span>
       </div>
 
@@ -146,7 +146,7 @@ export default function QRScannerPage() {
       )}
 
       {/* Camera Viewport Container */}
-      <div className="relative rounded-2xl border-2 border-[#00C9A7]/40 bg-[#0A0F14] overflow-hidden shadow-2xl min-h-[380px] flex items-center justify-center">
+      <div className="relative rounded-2xl border-2 border-[#D97706]/40 bg-[#15304B] overflow-hidden shadow-2xl min-h-[380px] flex items-center justify-center">
         {/* html5-qrcode DOM Target */}
         <div id="metrix-qr-reader" className="w-full h-full" />
 
@@ -154,16 +154,16 @@ export default function QRScannerPage() {
         {scanState === "SCANNING" && (
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
             {/* Viewport Frame */}
-            <div className="relative w-64 h-64 border border-[#00C9A7]/30 rounded-xl overflow-hidden">
+            <div className="relative w-64 h-64 border border-[#D97706]/35 rounded-xl overflow-hidden">
               {/* Corner Accents */}
-              <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-[#00C9A7]" />
-              <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-[#00C9A7]" />
-              <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-[#00C9A7]" />
-              <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-[#00C9A7]" />
+              <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-[#D97706]" />
+              <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-[#D97706]" />
+              <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-[#D97706]" />
+              <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-[#D97706]" />
 
-              {/* Sweeping Laser Line */}
+              {/* Sweeping Laser Line (Secondary Orange Highlight) */}
               <div
-                className="w-full h-0.5 bg-gradient-to-r from-transparent via-red-500 to-transparent shadow-[0_0_12px_#EF4444]"
+                className="w-full h-0.5 bg-gradient-to-r from-transparent via-[#F59E0B] to-transparent shadow-[0_0_12px_#F59E0B]"
                 style={{
                   animation: "scanLaser 2s linear infinite",
                 }}
@@ -174,7 +174,7 @@ export default function QRScannerPage() {
 
         {/* GREEN FEEDBACK OVERLAY (SUCCESS) */}
         {scanState === "SUCCESS" && (
-          <div className="absolute inset-0 bg-emerald-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-in zoom-in-95 duration-200">
+          <div className="absolute inset-0 bg-emerald-950/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-in zoom-in-95 duration-200">
             <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 border-2 border-emerald-400 text-emerald-400 flex items-center justify-center mb-3">
               <ShieldCheck className="w-10 h-10" />
             </div>
@@ -198,7 +198,7 @@ export default function QRScannerPage() {
             <div className="text-xs font-mono text-emerald-300 mt-1">
               ID: {scannedResult?.registrant?.registration_id} | {scannedResult?.registrant?.university}
             </div>
-            <div className="text-[11px] text-slate-400 mt-2 font-mono">
+            <div className="text-[11px] text-slate-300 mt-2 font-mono">
               Scanned at {formatTime(scannedResult?.scanned_at)}
             </div>
           </div>

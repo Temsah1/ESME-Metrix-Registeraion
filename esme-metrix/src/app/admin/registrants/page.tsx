@@ -90,22 +90,22 @@ export default function RegistrantsPage() {
 
         <button
           onClick={handleExportExcel}
-          className="px-4 py-2 rounded-xl bg-[#00C9A7] text-[#0A0F14] font-bold text-xs flex items-center gap-2 hover:bg-[#2DD4BF] transition-all shadow-[0_0_15px_rgba(0,201,167,0.25)]"
+          className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold text-xs flex items-center gap-2 hover:brightness-110 transition-all shadow-[0_0_15px_rgba(217,119,6,0.3)]"
         >
           <Download className="w-4 h-4" /> EXPORT TO EXCEL (.XLSX)
         </button>
       </div>
 
       {/* Filter Toolbar */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-[#111820] border border-[#00C9A7]/20">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-[#0F243A] border border-[#D97706]/20">
         <div className="relative">
-          <Search className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
+          <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by name, phone, email, or ID..."
-            className="w-full h-10 pl-9 pr-3 rounded-lg bg-[#0A0F14] border border-slate-800 text-white placeholder-slate-600 focus:outline-none focus:border-[#00C9A7] text-xs"
+            className="w-full h-10 pl-9 pr-3 rounded-lg bg-[#15304B] border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:border-[#D97706] text-xs"
           />
         </div>
 
@@ -113,7 +113,7 @@ export default function RegistrantsPage() {
           <select
             value={selectedUniversity}
             onChange={(e) => setSelectedUniversity(e.target.value)}
-            className="w-full h-10 px-3 rounded-lg bg-[#0A0F14] border border-slate-800 text-slate-300 focus:outline-none focus:border-[#00C9A7] text-xs"
+            className="w-full h-10 px-3 rounded-lg bg-[#15304B] border border-slate-700 text-slate-200 focus:outline-none focus:border-[#D97706] text-xs"
           >
             <option value="ALL">All Universities</option>
             <option value="Cairo University">Cairo University</option>
@@ -126,7 +126,7 @@ export default function RegistrantsPage() {
           <select
             value={selectedCity}
             onChange={(e) => setSelectedCity(e.target.value)}
-            className="w-full h-10 px-3 rounded-lg bg-[#0A0F14] border border-slate-800 text-slate-300 focus:outline-none focus:border-[#00C9A7] text-xs"
+            className="w-full h-10 px-3 rounded-lg bg-[#15304B] border border-slate-700 text-slate-200 focus:outline-none focus:border-[#D97706] text-xs"
           >
             <option value="ALL">All Cities</option>
             <option value="Cairo">Cairo</option>
@@ -150,11 +150,11 @@ export default function RegistrantsPage() {
           </button>
         </div>
       )}
-      <div className="rounded-xl border border-[#00C9A7]/20 bg-[#111820] overflow-hidden">
+      <div className="rounded-xl border border-[#D97706]/20 bg-[#0F243A] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-800 bg-[#0A0F14]/70 font-mono text-slate-400">
+              <tr className="border-b border-slate-800 bg-[#15304B]/80 font-mono text-slate-400">
                 <th className="p-3.5">REG ID</th>
                 <th className="p-3.5">NAME</th>
                 <th className="p-3.5">PHONE</th>
@@ -169,13 +169,13 @@ export default function RegistrantsPage() {
               {loading ? (
                 <tr>
                   <td colSpan={8} className="p-10 text-center text-slate-400">
-                    <Loader2 className="w-5 h-5 animate-spin inline-block mr-2 text-[#00C9A7]" />
+                    <Loader2 className="w-5 h-5 animate-spin inline-block mr-2 text-[#D97706]" />
                     Loading registrants...
                   </td>
                 </tr>
               ) : filteredRegistrants.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="p-10 text-center text-slate-500">
+                  <td colSpan={8} className="p-10 text-center text-slate-400">
                     {registrants.length === 0
                       ? "No registrants yet. Records will appear here after real registrations."
                       : "No records match the current search or filters."}
@@ -183,8 +183,8 @@ export default function RegistrantsPage() {
                 </tr>
               ) : (
                 filteredRegistrants.map((item) => (
-                <tr key={item.id} className="hover:bg-[#1A2435]/50 transition-colors">
-                  <td className="p-3.5 font-mono font-bold text-[#00C9A7]">
+                <tr key={item.id} className="hover:bg-[#1D3046]/60 transition-colors">
+                  <td className="p-3.5 font-mono font-bold text-[#F59E0B]">
                     {item.registration_id}
                   </td>
                   <td className="p-3.5 font-semibold text-white">{item.full_name}</td>
@@ -206,9 +206,9 @@ export default function RegistrantsPage() {
                   <td className="p-3.5 text-right">
                     <button
                       onClick={() => setSelectedRegistrant(item)}
-                      className="px-2.5 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:text-white hover:border-[#00C9A7] transition-colors inline-flex items-center gap-1.5"
+                      className="px-2.5 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:text-white hover:border-[#D97706] transition-colors inline-flex items-center gap-1.5"
                     >
-                      <Eye className="w-3.5 h-3.5 text-[#00C9A7]" /> View
+                      <Eye className="w-3.5 h-3.5 text-[#D97706]" /> View
                     </button>
                   </td>
                 </tr>
@@ -221,11 +221,11 @@ export default function RegistrantsPage() {
 
       {/* Profile Detail Drawer / Modal */}
       {selectedRegistrant && (
-        <div className="fixed inset-0 z-50 bg-[#0A0F14]/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl rounded-2xl bg-[#111820] border border-[#00C9A7]/40 p-6 shadow-2xl flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-[#15304B]/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl rounded-2xl bg-[#0F243A] border border-[#D97706]/40 p-6 shadow-2xl flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div>
-                <span className="font-mono text-xs text-[#00C9A7] font-bold">
+                <span className="font-mono text-xs text-[#F59E0B] font-bold">
                   {selectedRegistrant.registration_id}
                 </span>
                 <h2 className="text-xl font-bold text-white mt-0.5">
@@ -240,22 +240,22 @@ export default function RegistrantsPage() {
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 text-xs font-mono text-slate-300 bg-[#0A0F14] p-4 rounded-xl border border-slate-800">
-              <div><strong className="text-slate-500">Phone:</strong> {selectedRegistrant.phone}</div>
-              <div><strong className="text-slate-500">Email:</strong> {selectedRegistrant.email}</div>
-              <div><strong className="text-slate-500">University:</strong> {selectedRegistrant.university}</div>
-              <div><strong className="text-slate-500">Faculty:</strong> {selectedRegistrant.faculty}</div>
-              <div><strong className="text-slate-500">Year:</strong> {selectedRegistrant.academic_year}</div>
-              <div><strong className="text-slate-500">City:</strong> {selectedRegistrant.city}</div>
-              <div><strong className="text-slate-500">Job Title:</strong> {selectedRegistrant.job_title}</div>
-              <div><strong className="text-slate-500">Company:</strong> {selectedRegistrant.company || "None"}</div>
+            <div className="grid grid-cols-2 gap-3 text-xs font-mono text-slate-300 bg-[#15304B] p-4 rounded-xl border border-slate-800">
+              <div><strong className="text-slate-400">Phone:</strong> {selectedRegistrant.phone}</div>
+              <div><strong className="text-slate-400">Email:</strong> {selectedRegistrant.email}</div>
+              <div><strong className="text-slate-400">University:</strong> {selectedRegistrant.university}</div>
+              <div><strong className="text-slate-400">Faculty:</strong> {selectedRegistrant.faculty}</div>
+              <div><strong className="text-slate-400">Year:</strong> {selectedRegistrant.academic_year}</div>
+              <div><strong className="text-slate-400">City:</strong> {selectedRegistrant.city}</div>
+              <div><strong className="text-slate-400">Job Title:</strong> {selectedRegistrant.job_title}</div>
+              <div><strong className="text-slate-400">Company:</strong> {selectedRegistrant.company || "None"}</div>
             </div>
 
             {/* Document Photos Display */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
               <div>
                 <div className="text-xs font-semibold text-slate-300 mb-1.5">National ID Photo:</div>
-                <div className="relative w-full h-44 rounded-xl border border-slate-800 bg-[#0A0F14] overflow-hidden">
+                <div className="relative w-full h-44 rounded-xl border border-slate-800 bg-[#15304B] overflow-hidden">
                   <Image
                     src={selectedRegistrant.id_photo_url}
                     alt="National ID"
@@ -268,7 +268,7 @@ export default function RegistrantsPage() {
 
               <div>
                 <div className="text-xs font-semibold text-slate-300 mb-1.5">Student Karnet Card:</div>
-                <div className="relative w-full h-44 rounded-xl border border-slate-800 bg-[#0A0F14] overflow-hidden">
+                <div className="relative w-full h-44 rounded-xl border border-slate-800 bg-[#15304B] overflow-hidden">
                   <Image
                     src={selectedRegistrant.karnet_photo_url}
                     alt="Karnet"
