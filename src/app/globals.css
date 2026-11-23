@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+:root {
+  --background: #15304B;
+  --foreground: #F8FAFC;
+  --card: #0F243A;
+  --card-hover: #1D3046;
+  --border: rgba(217, 119, 6, 0.18);
+  --accent: #D97706;
+  --accent-secondary: #F59E0B;
+  --accent-glow: rgba(217, 119, 6, 0.15);
+  --success: #10B981;
+}
+
+@theme {
+  --color-esme-bg: #15304B;
+  --color-esme-card: #0F243A;
+  --color-esme-card2: #1D3046;
+  --color-esme-border: rgba(217, 119, 6, 0.18);
+  --color-esme-teal: #D97706;
+  --color-esme-teal2: #B45309;
+  --color-esme-accent: #D97706;
+  --color-esme-orange: #F59E0B;
+  --color-esme-emerald: #10B981;
+  --color-esme-glow: rgba(217, 119, 6, 0.15);
+}
+
+body {
+  background-color: #15304B;
+  color: #F8FAFC;
+  font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading, var(--font-sans, system-ui));
+}
+
+code, pre, .font-mono {
+  font-family: var(--font-mono, ui-monospace, monospace);
+}
+
+/* Custom background tech grid */
+.tech-grid {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(217, 119, 6, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(217, 119, 6, 0.04) 1px, transparent 1px);
+}
+
+/* Shimmer animation for loading states */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, #0F243A 25%, #1D3046 50%, #0F243A 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #15304B;
+}
+::-webkit-scrollbar-thumb {
+  background: #1D3046;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #D97706;
+}
+
+/* Browser autofill styling for dark theme */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #15304B inset !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+  caret-color: #FFFFFF !important;
+  transition: background-color 5000s ease-in-out 0s;
+}

@@ -28,7 +28,7 @@ function escapeHtml(value: string): string {
 }
 
 export function buildConfirmationEmail(input: ConfirmationEmailInput): ConfirmationEmail {
-  const from = process.env.RESEND_FROM_EMAIL || "ESME Metrix <noreply@esme-cu.com>";
+  const from = process.env.RESEND_FROM_EMAIL || "ESME Metrix <onboarding@resend.dev>";
   const eventDate = process.env.EVENT_DATE || "To be announced";
   const eventVenue = process.env.EVENT_VENUE || "To be announced";
   const eventTime = process.env.EVENT_TIME || "To be announced";
