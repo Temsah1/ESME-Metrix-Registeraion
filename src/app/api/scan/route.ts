@@ -6,7 +6,7 @@ import { verifyQrPayload } from "@/lib/qr";
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const REGISTRANT_FIELDS =
-  "id, full_name, university, faculty, academic_year, registration_id, id_photo_url";
+  "id, full_name, national_id, university, faculty, academic_year, graduation_year, registration_id, id_photo_url";
 
 export async function POST(request: NextRequest) {
   try {

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { buildConfirmationEmail } from "@/lib/email/confirmation";
+import { buildConfirmationEmail, CONFIRMATION_SUBJECT, maskNationalId } from "@/lib/email/confirmation";
 
 const input = {
   fullName: "Omar Hassan",
@@ -35,6 +35,56 @@ describe("QR-07/08 email template uses CID attachment, not data URI", () => {
     const email = buildConfirmationEmail(input);
     expect(email.text.length).toBeGreaterThan(50);
     expect(email.text).toContain("BE POSITIVE VALUABLE");
+  });
+});
+
+describe("prompt spec: subject, greeting, instructions, tagline", () => {
+  it("uses the subject from the build prompt", () => {
+    expect(buildConfirmationEmail(input).subject).toBe(CONFIRMATION_SUBJECT);
+    expect(CONFIRMATION_SUBJECT).toBe("✅ You're registered — ESME Metrix 2026");
+  });
+
+  it("greets the attendee by name with 'Congratulations'", () => {
+    const email = buildConfirmationEmail(input);
+    expect(email.html).toContain("Congratulations, Omar Hassan!");
+    expect(email.text).toContain("Congratulations, Omar Hassan!");
+  });
+
+  it("includes QR usage instructions and the tagline", () => {
+    const email = buildConfirmationEmail(input);
+    expect(email.html).toContain("How to use your QR on event day");
+    expect(email.html).toContain("BE POSITIVE VALUABLE");
+  });
+});
+
+describe("branding and social links come from configuration", () => {
+  afterEach(() => {
+    delete process.env.NEXT_PUBLIC_APP_URL;
+    delete process.env.ESME_INSTAGRAM_URL;
+  });
+
+  it("shows the logo only when NEXT_PUBLIC_APP_URL is an https URL", () => {
+    expect(buildConfirmationEmail(input).html).not.toContain("esme_logo.png");
+    process.env.NEXT_PUBLIC_APP_URL = "https://esme-metrix.example.com/";
+    expect(buildConfirmationEmail(input).html).toContain('src="https://esme-metrix.example.com/esme_logo.png"');
+  });
+
+  it("renders configured social links and ignores unsafe ones", () => {
+    process.env.ESME_INSTAGRAM_URL = "https://instagram.com/esme";
+    expect(buildConfirmationEmail(input).html).toContain('href="https://instagram.com/esme"');
+    process.env.ESME_INSTAGRAM_URL = "javascript:alert(1)";
+    expect(buildConfirmationEmail(input).html).not.toContain("javascript:");
+  });
+});
+
+describe("National ID is masked in the email", () => {
+  it("shows only the last 4 digits", () => {
+    const email = buildConfirmationEmail({ ...input, nationalId: "29912010101234" });
+    expect(email.html).not.toContain("29912010101234");
+    expect(email.text).not.toContain("29912010101234");
+    expect(email.html).toContain("1234");
+    expect(maskNationalId("29912010101234")).toBe("••••••••••1234");
+    expect(maskNationalId(null)).toBe("N/A");
   });
 });
 

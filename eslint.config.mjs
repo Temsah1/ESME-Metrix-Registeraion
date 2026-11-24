@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Deno code (Supabase Edge Function), not part of the Next.js build:
+    "**/supabase/functions/send-confirmation/**",
   ]),
 ]);
 

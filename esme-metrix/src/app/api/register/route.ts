@@ -4,7 +4,7 @@ import { isAllowedPhotoUrl } from "@/lib/validations/photo-url";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateRegistrationId, REGISTRATION_ID_REGEX } from "@/lib/registration-id";
 import { signQrPayload } from "@/lib/qr";
-import { buildConfirmationEmail, sendConfirmationEmail } from "@/lib/email/confirmation";
+import { buildConfirmationEmail, dispatchConfirmationEmail } from "@/lib/email/confirmation";
 import QRCode from "qrcode";
 import crypto from "crypto";
 
@@ -50,28 +50,39 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = createAdminClient();
+    const email = data.email.toLowerCase();
+    // phone and nationalId are digits-only after Zod validation, so they are
+    // safe to place inside the PostgREST `or` filter.
+    const nationalId = data.nationalId;
+    const graduationYear = data.graduationYear;
 
-    const { data: existingUser } = await supabase
+    const { data: existingUsers, error: duplicateCheckError } = await supabase
       .from("registrants")
-      .select("id, phone, email")
-      .or(`phone.eq.${data.phone},email.eq.${data.email.toLowerCase()}`)
-      .limit(1)
-      .maybeSingle();
+      .select("id, phone, email, national_id")
+      .or(`phone.eq.${data.phone},email.eq.${email},national_id.eq.${nationalId}`)
+      .limit(3);
 
-    if (existingUser) {
-      const isPhoneDuplicate = existingUser.phone === data.phone;
+    if (duplicateCheckError) {
+      console.error("Supabase duplicate check failed:", duplicateCheckError);
       return NextResponse.json(
-        {
-          error: isPhoneDuplicate
-            ? "A registration already exists with this phone number."
-            : "A registration already exists with this email address.",
-        },
+        { error: "Could not verify your registration right now. Please try again." },
+        { status: 500 }
+      );
+    }
+
+    if (existingUsers && existingUsers.length > 0) {
+      const duplicateField = existingUsers.some((u) => u.national_id === nationalId)
+        ? "National ID"
+        : existingUsers.some((u) => u.phone === data.phone)
+          ? "phone number"
+          : "email address";
+      return NextResponse.json(
+        { error: `A registration already exists with this ${duplicateField}.` },
         { status: 409 }
       );
     }
 
     const registrantUuid = crypto.randomUUID();
-    const email = data.email.toLowerCase();
 
     let insertError: { code?: string; message?: string } | null = null;
     let registrationId = "";
@@ -94,8 +105,8 @@ export async function POST(request: NextRequest) {
           full_name: data.fullName,
           phone: data.phone,
           email,
-          national_id: data.nationalId || null,
-          graduation_year: data.graduationYear || null,
+          national_id: nationalId,
+          graduation_year: graduationYear,
           university: data.university,
           faculty: data.faculty,
           academic_year: data.academicYear,
@@ -122,10 +133,23 @@ export async function POST(request: NextRequest) {
         if (error.message?.includes("registration_id")) {
           continue;
         }
-        const field = error.message?.includes("phone") ? "phone number" : "email address";
+        const field = error.message?.includes("national_id")
+          ? "National ID"
+          : error.message?.includes("phone")
+            ? "phone number"
+            : "email address";
         return NextResponse.json(
           { error: `A registration already exists with this ${field}.` },
           { status: 409 }
+        );
+      }
+
+      // 23514 = check_violation (registrants_*_format_chk from migration 0006)
+      if (error.code === "23514") {
+        const field = error.message?.includes("graduation_year") ? "graduation year" : "National ID";
+        return NextResponse.json(
+          { error: `The ${field} you entered is not in a valid format.` },
+          { status: 400 }
         );
       }
 
@@ -146,14 +170,14 @@ export async function POST(request: NextRequest) {
       university: data.university,
       faculty: data.faculty,
       academicYear: data.academicYear,
-      graduationYear: data.graduationYear,
-      nationalId: data.nationalId,
+      graduationYear,
+      nationalId,
       qrDataUrl: qrBase64,
     });
 
     after(async () => {
       try {
-        await sendConfirmationEmail(email, emailContent);
+        await dispatchConfirmationEmail(email, registrationId, emailContent);
       } catch (emailErr) {
         console.error("Confirmation email dispatch failed:", emailErr);
       }
