@@ -3,15 +3,17 @@ export interface Registrant {
   full_name: string;
   phone: string;
   email: string;
+  national_id?: string | null;
+  graduation_year?: string | null;
   university: string;
   faculty: string;
   academic_year: string;
   city: string;
   job_title: string;
   company?: string | null;
-  avatar_url?: string | null;
   id_photo_url: string;
   karnet_photo_url: string;
+  avatar_url?: string | null;
   qr_code: string;
   registration_id: string;
   linkedin_shared: boolean;
@@ -31,15 +33,17 @@ export interface RegistrationFormData {
   fullName: string;
   phone: string;
   email: string;
+  nationalId: string;
+  graduationYear: string;
   city: string;
   university: string;
   faculty: string;
   academicYear: string;
   jobTitle: string;
   company?: string;
-  avatarUrl?: string;
   idPhotoUrl: string;
   karnetPhotoUrl: string;
+  avatarUrl?: string;
   termsAccepted: boolean;
 }
 
@@ -48,13 +52,4 @@ export interface QRPayload {
   registrant_id: string;
   event: string;
   hash: string;
-}
-
-export interface SiteContent {
-  key: string;
-  value: string;
-  label: string;
-  category: string;
-  field_type: string;
-  updated_at: string;
 }

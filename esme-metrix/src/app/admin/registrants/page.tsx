@@ -15,8 +15,8 @@ export default function RegistrantsPage() {
   const [selectedUniversity, setSelectedUniversity] = useState("ALL");
   const [selectedCity, setSelectedCity] = useState("ALL");
   const [selectedRegistrant, setSelectedRegistrant] = useState<Registrant | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -47,6 +47,7 @@ export default function RegistrantsPage() {
     const matchesSearch =
       r.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       r.phone.includes(searchTerm) ||
+      (r.national_id && r.national_id.includes(searchTerm)) ||
       r.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       r.registration_id.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -60,11 +61,13 @@ export default function RegistrantsPage() {
     const exportData = filteredRegistrants.map((r) => ({
       "Registration ID": r.registration_id,
       "Full Name": r.full_name,
+      "National ID": r.national_id || "N/A",
       Phone: r.phone,
       Email: r.email,
       University: r.university,
       Faculty: r.faculty,
       "Academic Year": r.academic_year,
+      "Graduation Year": r.graduation_year || "N/A",
       City: r.city,
       "Job Title": r.job_title,
       Company: r.company || "N/A",
@@ -105,7 +108,7 @@ export default function RegistrantsPage() {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by name, phone, email, or ID..."
+            placeholder="Search by name, National ID, phone, email, or ID..."
             className="w-full h-10 pl-9 pr-3 rounded-lg bg-[#15304B] border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:border-[#D97706] text-xs"
           />
         </div>
@@ -158,12 +161,12 @@ export default function RegistrantsPage() {
               <tr className="border-b border-slate-800 bg-[#15304B]/80 font-mono text-slate-400">
                 <th className="p-3.5">REG ID</th>
                 <th className="p-3.5">NAME</th>
+                <th className="p-3.5">NATIONAL ID</th>
                 <th className="p-3.5">PHONE</th>
-                <th className="p-3.5">UNIVERSITY</th>
+                <th className="p-3.5">DEPARTMENT</th>
                 <th className="p-3.5">YEAR</th>
-                <th className="p-3.5">CITY</th>
                 <th className="p-3.5 text-center">LINKEDIN</th>
-                <th className="p-3.5 text-right">ACTION</th>
+                <th className="p-3.5 text-right">ACTIONS</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 font-sans text-slate-200">
@@ -184,35 +187,44 @@ export default function RegistrantsPage() {
                 </tr>
               ) : (
                 filteredRegistrants.map((item) => (
-                <tr key={item.id} className="hover:bg-[#1D3046]/60 transition-colors">
-                  <td className="p-3.5 font-mono font-bold text-[#F59E0B]">
-                    {item.registration_id}
-                  </td>
-                  <td className="p-3.5 font-semibold text-white">{item.full_name}</td>
-                  <td className="p-3.5 font-mono text-slate-400">{item.phone}</td>
-                  <td className="p-3.5 text-slate-300">{item.university}</td>
-                  <td className="p-3.5 font-mono">{item.academic_year}</td>
-                  <td className="p-3.5 text-slate-400">{item.city}</td>
-                  <td className="p-3.5 text-center">
-                    {item.linkedin_shared ? (
-                      <span className="inline-block px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px] font-bold">
-                        Shared
-                      </span>
-                    ) : (
-                      <span className="inline-block px-2 py-0.5 rounded bg-slate-800 text-slate-500 text-[10px]">
-                        Pending
-                      </span>
-                    )}
-                  </td>
-                  <td className="p-3.5 text-right">
-                    <button
-                      onClick={() => setSelectedRegistrant(item)}
-                      className="px-2.5 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:text-white hover:border-[#D97706] transition-colors inline-flex items-center gap-1.5"
-                    >
-                      <Eye className="w-3.5 h-3.5 text-[#D97706]" /> View
-                    </button>
-                  </td>
-                </tr>
+                  <tr key={item.id} className="hover:bg-[#1D3046]/60 transition-colors">
+                    <td className="p-3.5 font-mono font-bold text-[#F59E0B]">
+                      {item.registration_id}
+                    </td>
+                    <td className="p-3.5 font-semibold text-white">{item.full_name}</td>
+                    <td className="p-3.5 font-mono text-slate-300">
+                      {item.national_id || "—"}
+                    </td>
+                    <td className="p-3.5 font-mono text-slate-400">{item.phone}</td>
+                    <td className="p-3.5 text-slate-300 max-w-[180px] truncate" title={item.faculty}>
+                      {item.faculty}
+                    </td>
+                    <td className="p-3.5 font-mono">
+                      {item.academic_year} {item.graduation_year ? `(${item.graduation_year})` : ""}
+                    </td>
+                    <td className="p-3.5 text-center">
+                      {item.linkedin_shared ? (
+                        <span className="inline-block px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px] font-bold">
+                          Shared
+                        </span>
+                      ) : (
+                        <span className="inline-block px-2 py-0.5 rounded bg-slate-800 text-slate-500 text-[10px]">
+                          Pending
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-3.5 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => setSelectedRegistrant(item)}
+                          className="px-2 py-1 rounded-lg border border-slate-700 text-slate-300 hover:text-white hover:border-[#D97706] transition-colors inline-flex items-center gap-1 text-[11px]"
+                          title="View Profile"
+                        >
+                          <Eye className="w-3.5 h-3.5 text-[#D97706]" /> View
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
                 ))
               )}
             </tbody>
@@ -242,14 +254,17 @@ export default function RegistrantsPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-xs font-mono text-slate-300 bg-[#15304B] p-4 rounded-xl border border-slate-800">
+              <div><strong className="text-slate-400">National ID:</strong> {selectedRegistrant.national_id || "N/A"}</div>
               <div><strong className="text-slate-400">Phone:</strong> {selectedRegistrant.phone}</div>
               <div><strong className="text-slate-400">Email:</strong> {selectedRegistrant.email}</div>
               <div><strong className="text-slate-400">University:</strong> {selectedRegistrant.university}</div>
-              <div><strong className="text-slate-400">Faculty:</strong> {selectedRegistrant.faculty}</div>
+              <div className="col-span-2"><strong className="text-slate-400">Department:</strong> {selectedRegistrant.faculty}</div>
               <div><strong className="text-slate-400">Year:</strong> {selectedRegistrant.academic_year}</div>
+              <div><strong className="text-slate-400">Graduation Year:</strong> {selectedRegistrant.graduation_year || "N/A"}</div>
               <div><strong className="text-slate-400">City:</strong> {selectedRegistrant.city}</div>
               <div><strong className="text-slate-400">Job Title:</strong> {selectedRegistrant.job_title}</div>
               <div><strong className="text-slate-400">Company:</strong> {selectedRegistrant.company || "None"}</div>
+              <div><strong className="text-slate-400">LinkedIn Status:</strong> {selectedRegistrant.linkedin_shared ? "Shared" : "Pending"}</div>
             </div>
 
             {/* Document Photos Display */}
@@ -281,7 +296,7 @@ export default function RegistrantsPage() {
               </div>
             </div>
 
-            <div className="border-t border-slate-800 pt-3 flex justify-end">
+            <div className="border-t border-slate-800 pt-3 flex items-center justify-end gap-2">
               <button
                 onClick={() => setSelectedRegistrant(null)}
                 className="px-5 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700"

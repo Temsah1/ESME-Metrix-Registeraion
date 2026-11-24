@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%">
+  <defs>
+    <linearGradient id="certBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F243A"/>
+      <stop offset="50%" stop-color="#15304B"/>
+      <stop offset="100%" stop-color="#0A1929"/>
+    </linearGradient>
+    <linearGradient id="goldRibbon" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#certBg)"/>
+
+  <!-- Ornate certificate border -->
+  <rect x="50" y="50" width="700" height="500" rx="20" fill="#0C1B2B" stroke="#D97706" stroke-width="4"/>
+  <rect x="65" y="65" width="670" height="470" rx="14" fill="none" stroke="#F59E0B" stroke-width="1.5" stroke-dasharray="6 4"/>
+
+  <!-- Seal / Medal graphic -->
+  <circle cx="400" cy="220" r="65" fill="url(#goldRibbon)" stroke="#FEF08A" stroke-width="3"/>
+  <circle cx="400" cy="220" r="52" fill="#0F243A"/>
+  
+  <!-- Medal ribbons -->
+  <polygon points="370,270 350,340 375,325 400,340 380,270" fill="#D97706"/>
+  <polygon points="430,270 420,340 400,325 425,340 420,270" fill="#B45309"/>
+
+  <!-- Star in Seal -->
+  <polygon points="400,195 406,214 425,214 410,225 415,244 400,233 385,244 390,225 375,214 394,214" fill="#F59E0B"/>
+
+  <!-- Text -->
+  <text x="400" y="375" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="900" font-size="28" fill="#FFFFFF" letter-spacing="3">ACCREDITED ATTENDANCE CERTIFICATE</text>
+  <text x="400" y="415" text-anchor="middle" font-family="monospace" font-weight="bold" font-size="16" fill="#F59E0B" letter-spacing="3">OFFICIALLY ISSUED AT EVENT VENUE</text>
+  <text x="400" y="450" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" fill="#CBD5E1">شهادة حضور رسمية معتمدة وموثقة برقم تسجيلك الرقمي</text>
+  <text x="400" y="485" text-anchor="middle" font-family="monospace" font-size="14" fill="#10B981">ESME CAIRO UNIVERSITY STUDENT CHAPTER • 2026</text>
+</svg>

@@ -10,6 +10,7 @@ import {
 
 const validStep1 = {
   fullName: "Omar Hassan El-Sayed",
+  nationalId: "29912010101234",
   phone: "01012345678",
   email: "Omar.Sayed@Gmail.com",
   city: "Cairo",
@@ -19,6 +20,7 @@ const validStep2 = {
   university: "Cairo University",
   faculty: "Faculty of Engineering",
   academicYear: "3rd",
+  graduationYear: "2026",
   jobTitle: "Student",
   company: "",
 };

@@ -120,6 +120,55 @@ Register now: https://esme-metrix-registeration.vercel.app/
     field_type: "image",
     value: "/images/ticket-bg.jpg",
   },
+  // ── HOME PAGE CMS ──
+  {
+    key: "about_text",
+    label: "About the Event (Homepage)",
+    category: "Home Page",
+    field_type: "textarea",
+    value:
+      "ESME METRIX is the flagship Materials Engineering event hosted by the ESME Cairo University Student Chapter. It brings together students, professionals, researchers, and industry leaders to explore cutting-edge innovations in materials science, engineering applications, and emerging technologies.",
+  },
+  {
+    key: "event_agenda",
+    label: "Event Agenda (Format: Time | Title | Icon per line)",
+    category: "Home Page",
+    field_type: "textarea",
+    value: `09:00 AM | Gates Open & Registration Desk | 🚪
+10:00 AM | Opening Ceremony & Keynote Address | 🎤
+12:00 PM | Materials & Petroleum Workshops | ⚡
+02:00 PM | Mechatronics & Industry Exhibition | 🏢
+04:00 PM | Engineering Competitions & Awards | 🏆
+06:00 PM | Certificate Distribution & Gala | 🎓`,
+  },
+  {
+    key: "gallery_image_1",
+    label: "Gallery Photo 1 (URL)",
+    category: "Home Page",
+    field_type: "image",
+    value: "",
+  },
+  {
+    key: "gallery_image_2",
+    label: "Gallery Photo 2 (URL)",
+    category: "Home Page",
+    field_type: "image",
+    value: "",
+  },
+  {
+    key: "gallery_image_3",
+    label: "Gallery Photo 3 (URL)",
+    category: "Home Page",
+    field_type: "image",
+    value: "",
+  },
+  {
+    key: "gallery_image_4",
+    label: "Gallery Photo 4 (URL)",
+    category: "Home Page",
+    field_type: "image",
+    value: "",
+  },
 ];
 
 function aggregate(rows: { university: string | null; city: string | null }[]) {

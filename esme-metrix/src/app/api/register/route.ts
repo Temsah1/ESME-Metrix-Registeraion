@@ -94,6 +94,8 @@ export async function POST(request: NextRequest) {
           full_name: data.fullName,
           phone: data.phone,
           email,
+          national_id: data.nationalId || null,
+          graduation_year: data.graduationYear || null,
           university: data.university,
           faculty: data.faculty,
           academic_year: data.academicYear,
@@ -142,6 +144,10 @@ export async function POST(request: NextRequest) {
       fullName: data.fullName,
       registrationId,
       university: data.university,
+      faculty: data.faculty,
+      academicYear: data.academicYear,
+      graduationYear: data.graduationYear,
+      nationalId: data.nationalId,
       qrDataUrl: qrBase64,
     });
 
