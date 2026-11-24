@@ -138,8 +138,9 @@ ESME_WHATSAPP_URL=
 EMAIL_DELIVERY=
 
 # آخر حل: Gmail SMTP (App Password)
-SMTP_USER=
-SMTP_PASS=
+# الإيميل يُرسل من عنوان Gmail نفسه باسم "ESME Metrix" (حد Gmail حوالي 500 إيميل/يوم)
+SMTP_USER=your.account@gmail.com
+SMTP_PASS=<App Password من 16 حرف>
 ```
 
 ---

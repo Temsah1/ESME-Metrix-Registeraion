@@ -117,8 +117,12 @@ export async function sendConfirmationEmail(
         auth: { user: smtpUser, pass: smtpPass },
       });
 
+      // Gmail only sends as the signed-in account, so keep the display name
+      // ("ESME Metrix") but use the Gmail address itself as the sender.
+      const displayName = emailContent.from.match(/^\s*"?([^"<]+?)"?\s*</)?.[1]?.trim() || "ESME Metrix";
+
       await transporter.sendMail({
-        from: emailContent.from,
+        from: { name: displayName, address: smtpUser },
         to,
         subject: emailContent.subject,
         html: emailContent.html,
