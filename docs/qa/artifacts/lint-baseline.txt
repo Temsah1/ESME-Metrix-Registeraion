@@ -1,0 +1,129 @@
+
+> esme-metrix@0.1.0 lint
+> eslint
+
+
+D:\ESME Metrix Registeration\esme-metrix\src\app\admin\attendance\page.tsx
+  21:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\ESME Metrix Registeration\esme-metrix\src\app\admin\attendance\page.tsx:21:5
+  19 |   useEffect(() => {
+  20 |     // Populate initial items inside useEffect to avoid prerender new Date() error
+> 21 |     setItems([
+     |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  22 |       {
+  23 |         id: "1",
+  24 |         name: "Ahmed Hassan Omar",  react-hooks/set-state-in-effect
+
+D:\ESME Metrix Registeration\esme-metrix\src\app\admin\dashboard\page.tsx
+  36:26  warning  'setUniversityData' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  44:20  warning  'setCityData' is assigned a value but never used             @typescript-eslint/no-unused-vars
+  51:31  warning  'setRecentRegistrations' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\ESME Metrix Registeration\esme-metrix\src\app\admin\registrants\page.tsx
+   5:36  warning  'Filter' is defined but never used            @typescript-eslint/no-unused-vars
+   5:44  warning  'CheckCircle2' is defined but never used      @typescript-eslint/no-unused-vars
+   5:58  warning  'Clock' is defined but never used             @typescript-eslint/no-unused-vars
+  12:10  warning  'loading' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  22:23  warning  'error' is assigned a value but never used    @typescript-eslint/no-unused-vars
+
+D:\ESME Metrix Registeration\esme-metrix\src\app\admin\scanner\page.tsx
+   4:10  warning  'QrCode' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+   4:67  warning  'RefreshCw' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+   5:8   warning  'Image' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+  11:54  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-explicit-any
+  12:10  warning  'errorMessage' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+  14:37  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-explicit-any
+  17:29  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-explicit-any
+  38:13  error    Error: Cannot access variable before it is declared
+
+`handleQRCodeScanned` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+D:\ESME Metrix Registeration\esme-metrix\src\app\admin\scanner\page.tsx:38:13
+  36 |           async (decodedText: string) => {
+  37 |             // Found a QR code
+> 38 |             handleQRCodeScanned(decodedText);
+     |             ^^^^^^^^^^^^^^^^^^^ `handleQRCodeScanned` accessed before it is declared
+  39 |           },
+  40 |           () => {
+  41 |             // Scanning in progress
+
+D:\ESME Metrix Registeration\esme-metrix\src\app\admin\scanner\page.tsx:61:3
+  59 |   }, []);
+  60 |
+> 61 |   const handleQRCodeScanned = async (qrText: string) => {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 62 |     // Avoid double triggering
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 63 |     if (scanState !== "SCANNING") return;
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 95 |     }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 96 |   };
+     | ^^^^^ `handleQRCodeScanned` is declared here
+  97 |
+  98 |   // For testing without camera on desktop
+  99 |   const triggerManualTestScan = (status: "SUCCESS" | "ALREADY_SCANNED" | "INVALID") => {  react-hooks/immutability
+  44:21  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-explicit-any
+  59:6   warning  React Hook useEffect has a missing dependency: 'handleQRCodeScanned'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          react-hooks/exhaustive-deps
+
+D:\ESME Metrix Registeration\esme-metrix\src\app\admin\search\page.tsx
+   5:18  warning  'Phone' is defined but never used                   @typescript-eslint/no-unused-vars
+   5:25  warning  'Mail' is defined but never used                    @typescript-eslint/no-unused-vars
+  11:40  error    Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  13:10  warning  'manualSuccess' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  28:26  warning  'error' is assigned a value but never used          @typescript-eslint/no-unused-vars
+  83:13  warning  'response' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  98:24  error    Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+
+D:\ESME Metrix Registeration\esme-metrix\src\app\page.tsx
+  2:8  warning  'Image' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\ESME Metrix Registeration\esme-metrix\src\app\register\page.tsx
+   9:3   warning  'step1Schema' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+  10:3   warning  'step2Schema' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+  11:3   warning  'step3Schema' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+  12:3   warning  'step4Schema' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+  72:20  warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+D:\ESME Metrix Registeration\esme-metrix\src\app\register\page.tsx:72:20
+  70 |   });
+  71 |
+> 72 |   const formData = watch();
+     |                    ^^^^^ React Hook Form's `useForm()` API returns a `watch()` function which cannot be memoized safely.
+  73 |
+  74 |   const handleNextStep = async () => {
+  75 |     setServerError(null);  react-hooks/incompatible-library
+
+D:\ESME Metrix Registeration\esme-metrix\src\app\success\page.tsx
+  11:3  warning  'Mail' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+  13:3  warning  'Calendar' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+  14:3  warning  'MapPin' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+  47:9  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\ESME Metrix Registeration\esme-metrix\src\app\success\page.tsx:47:9
+  45 |       try {
+  46 |         const parsed = JSON.parse(stored);
+> 47 |         setData(parsed);
+     |         ^^^^^^^ Avoid calling setState() directly within an effect
+  48 |       } catch (e) {
+  49 |         console.error(e);
+  50 |       }  react-hooks/set-state-in-effect
+
+✖ 36 problems (9 errors, 27 warnings)
+

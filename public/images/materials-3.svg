@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%">
+  <defs>
+    <linearGradient id="mechBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0A1929"/>
+      <stop offset="50%" stop-color="#112A45"/>
+      <stop offset="100%" stop-color="#051322"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#mechBg)"/>
+
+  <!-- Circuit traces -->
+  <g stroke="#10B981" stroke-width="2" fill="none" opacity="0.4">
+    <path d="M120,150 L250,150 L300,200 L450,200 L500,160 L680,160"/>
+    <path d="M120,400 L280,400 L320,360 L480,360 L520,410 L680,410"/>
+    <circle cx="120" cy="150" r="5" fill="#10B981"/>
+    <circle cx="680" cy="160" r="5" fill="#10B981"/>
+    <circle cx="120" cy="400" r="5" fill="#10B981"/>
+    <circle cx="680" cy="410" r="5" fill="#10B981"/>
+  </g>
+
+  <!-- Central Microchip Core -->
+  <rect x="330" y="210" width="140" height="140" rx="16" fill="#0F243A" stroke="#10B981" stroke-width="3"/>
+  <rect x="350" y="230" width="100" height="100" rx="8" fill="#15304B" stroke="#D97706" stroke-width="2"/>
+  
+  <!-- Microchip Pins -->
+  <g stroke="#10B981" stroke-width="3">
+    <line x1="355" y1="210" x2="355" y2="190"/><line x1="380" y1="210" x2="380" y2="190"/>
+    <line x1="405" y1="210" x2="405" y2="190"/><line x1="430" y1="210" x2="430" y2="190"/>
+    <line x1="355" y1="350" x2="355" y2="370"/><line x1="380" y1="350" x2="380" y2="370"/>
+    <line x1="405" y1="350" x2="405" y2="370"/><line x1="430" y1="350" x2="430" y2="370"/>
+    <line x1="330" y1="235" x2="310" y2="235"/><line x1="330" y1="260" x2="310" y2="260"/>
+    <line x1="330" y1="285" x2="310" y2="285"/><line x1="330" y1="310" x2="310" y2="310"/>
+    <line x1="470" y1="235" x2="490" y2="235"/><line x1="470" y1="260" x2="490" y2="260"/>
+    <line x1="470" y1="285" x2="490" y2="285"/><line x1="470" y1="310" x2="490" y2="310"/>
+  </g>
+
+  <!-- Center Icon in chip -->
+  <circle cx="400" cy="280" r="22" fill="#10B981" opacity="0.2"/>
+  <text x="400" y="288" text-anchor="middle" font-family="monospace" font-weight="900" font-size="20" fill="#10B981">MCU</text>
+
+  <text x="400" y="475" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="900" font-size="28" fill="#FFFFFF" letter-spacing="3">MECHATRONICS &amp; ROBOTICS</text>
+  <text x="400" y="510" text-anchor="middle" font-family="monospace" font-weight="bold" font-size="16" fill="#10B981" letter-spacing="4">INTELLIGENT EMBEDDED SYSTEMS</text>
+  <text x="400" y="540" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" fill="#94A3B8">HANDS-ON WORKSHOPS &amp; COMPETITIONS</text>
+</svg>

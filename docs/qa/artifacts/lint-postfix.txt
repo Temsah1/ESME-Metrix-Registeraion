@@ -1,0 +1,22 @@
+
+D:\ESME Metrix Registeration\esme-metrix\src\app\register\page.tsx
+   9:3   warning  'step1Schema' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+  10:3   warning  'step2Schema' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+  11:3   warning  'step3Schema' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+  12:3   warning  'step4Schema' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+  72:20  warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+D:\ESME Metrix Registeration\esme-metrix\src\app\register\page.tsx:72:20
+  70 |   });
+  71 |
+> 72 |   const formData = watch();
+     |                    ^^^^^ React Hook Form's `useForm()` API returns a `watch()` function which cannot be memoized safely.
+  73 |
+  74 |   const handleNextStep = async () => {
+  75 |     setServerError(null);  react-hooks/incompatible-library
+
+✖ 5 problems (0 errors, 5 warnings)
+
+LINT_EXIT=0
