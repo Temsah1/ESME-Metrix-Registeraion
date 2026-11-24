@@ -258,7 +258,7 @@ export default function RegistrantsPage() {
                 <div className="text-xs font-semibold text-slate-300 mb-1.5">National ID Photo:</div>
                 <div className="relative w-full h-44 rounded-xl border border-slate-800 bg-[#15304B] overflow-hidden">
                   <Image
-                    src={selectedRegistrant.id_photo_url}
+                    src={getAdminPhotoUrl(selectedRegistrant.id_photo_url)}
                     alt="National ID"
                     fill
                     className="object-contain"
@@ -271,7 +271,7 @@ export default function RegistrantsPage() {
                 <div className="text-xs font-semibold text-slate-300 mb-1.5">Student Karnet Card:</div>
                 <div className="relative w-full h-44 rounded-xl border border-slate-800 bg-[#15304B] overflow-hidden">
                   <Image
-                    src={selectedRegistrant.karnet_photo_url}
+                    src={getAdminPhotoUrl(selectedRegistrant.karnet_photo_url)}
                     alt="Karnet"
                     fill
                     className="object-contain"

@@ -6,6 +6,7 @@ import { Search, CheckCircle2, XCircle, Clock, ShieldCheck, Loader2, AlertCircle
 import { createClient } from "@/lib/supabase/client";
 import { Registrant } from "@/types/database";
 import { REGISTRATION_ID_REGEX } from "@/lib/registration-id";
+import { getAdminPhotoUrl } from "@/lib/utils";
 
 const PHONE_REGEX = /^01[0125][0-9]{8}$/;
 
@@ -211,7 +212,7 @@ export default function AdminSearchPage() {
                   <div className="text-xs font-semibold text-slate-300 mb-1">National ID Photo:</div>
                   <div className="relative w-full h-40 rounded-xl bg-[#15304B] border border-slate-800 overflow-hidden">
                     <Image
-                      src={result.registrant.id_photo_url || "/esme_logo.png"}
+                      src={getAdminPhotoUrl(result.registrant.id_photo_url)}
                       alt="National ID"
                       fill
                       className="object-contain"
@@ -224,7 +225,7 @@ export default function AdminSearchPage() {
                   <div className="text-xs font-semibold text-slate-300 mb-1">Student Karnet Card:</div>
                   <div className="relative w-full h-40 rounded-xl bg-[#15304B] border border-slate-800 overflow-hidden">
                     <Image
-                      src={result.registrant.karnet_photo_url || "/esme_logo.png"}
+                      src={getAdminPhotoUrl(result.registrant.karnet_photo_url)}
                       alt="Karnet Card"
                       fill
                       className="object-contain"

@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { Camera, ShieldCheck, AlertTriangle, AlertCircle } from "lucide-react";
 import Image from "next/image";
+import { getAdminPhotoUrl } from "@/lib/utils";
 import type { Html5Qrcode } from "html5-qrcode";
 
 type ScanState = "SCANNING" | "SUCCESS" | "ALREADY_SCANNED" | "INVALID" | "ERROR";
@@ -184,7 +185,7 @@ export default function QRScannerPage() {
             {scannedResult?.registrant?.id_photo_url && (
               <div className="relative w-20 h-20 rounded-xl overflow-hidden border-2 border-emerald-400/50 mt-2">
                 <Image
-                  src={scannedResult.registrant.id_photo_url}
+                  src={getAdminPhotoUrl(scannedResult.registrant.id_photo_url)}
                   alt="Attendee ID photo"
                   fill
                   className="object-cover"

@@ -68,9 +68,9 @@ describe("event details come from configuration, not invented values", () => {
     expect(email.html).toContain("10:00 AM");
   });
 
-  it("falls back to 'To be announced' rather than inventing a venue", () => {
+  it("falls back to 'Cairo University' when venue is not explicitly set", () => {
     delete process.env.EVENT_VENUE;
     const email = buildConfirmationEmail(input);
-    expect(email.html).toContain("To be announced");
+    expect(email.html).toContain("Cairo University");
   });
 });

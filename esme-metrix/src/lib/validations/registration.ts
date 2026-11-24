@@ -45,6 +45,9 @@ export const step3Schema = z.object({
   karnetPhotoUrl: z
     .string()
     .min(1, "Student Karnet / Academic card photo is required"),
+  avatarUrl: z
+    .string()
+    .optional(),
 });
 
 export const step4Schema = z.object({

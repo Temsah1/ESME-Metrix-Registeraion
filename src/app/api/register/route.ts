@@ -34,6 +34,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (data.avatarUrl && !isAllowedPhotoUrl(data.avatarUrl)) {
+      return NextResponse.json(
+        { error: "Personal badge photo must be uploaded through the registration form." },
+        { status: 400 }
+      );
+    }
+
     if (!process.env.QR_SIGNING_SECRET) {
       console.error("QR_SIGNING_SECRET is not configured; refusing registration.");
       return NextResponse.json(
@@ -95,6 +102,7 @@ export async function POST(request: NextRequest) {
           company: data.company || null,
           id_photo_url: data.idPhotoUrl,
           karnet_photo_url: data.karnetPhotoUrl,
+          avatar_url: data.avatarUrl || null,
           qr_code: qrBase64,
           registration_id: registrationId,
           linkedin_shared: false,
@@ -130,37 +138,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const resendApiKey = process.env.RESEND_API_KEY;
-    if (resendApiKey) {
-      const emailContent = buildConfirmationEmail({
-        fullName: data.fullName,
-        registrationId,
-        university: data.university,
-        qrDataUrl: qrBase64,
-      });
+    const emailContent = buildConfirmationEmail({
+      fullName: data.fullName,
+      registrationId,
+      university: data.university,
+      qrDataUrl: qrBase64,
+    });
 
-      after(async () => {
-        try {
-          const { Resend } = await import("resend");
-          const resend = new Resend(resendApiKey);
-          const { error: sendError } = await resend.emails.send({
-            from: emailContent.from,
-            to: email,
-            subject: emailContent.subject,
-            html: emailContent.html,
-            text: emailContent.text,
-            attachments: emailContent.attachments,
-          });
-          if (sendError) {
-            console.error("Confirmation email rejected by Resend:", sendError);
-          }
-        } catch (emailErr) {
-          console.error("Confirmation email dispatch failed:", emailErr);
-        }
-      });
-    } else {
-      console.warn("RESEND_API_KEY not configured; confirmation email skipped.");
-    }
+    after(async () => {
+      try {
+        await sendConfirmationEmail(email, emailContent);
+      } catch (emailErr) {
+        console.error("Confirmation email dispatch failed:", emailErr);
+      }
+    });
 
     return NextResponse.json({
       success: true,
@@ -168,6 +159,7 @@ export async function POST(request: NextRequest) {
       full_name: data.fullName,
       email: data.email,
       university: data.university,
+      avatar_url: data.avatarUrl || null,
       qr_code: qrBase64,
     });
   } catch (error) {
