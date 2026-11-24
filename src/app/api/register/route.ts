@@ -2,7 +2,7 @@ import { NextRequest, NextResponse, after } from "next/server";
 import { completeRegistrationSchema } from "@/lib/validations/registration";
 import { isAllowedPhotoUrl } from "@/lib/validations/photo-url";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { generateRegistrationId } from "@/lib/registration-id";
+import { generateRegistrationId, REGISTRATION_ID_REGEX } from "@/lib/registration-id";
 import { signQrPayload } from "@/lib/qr";
 import { buildConfirmationEmail, sendConfirmationEmail } from "@/lib/email/confirmation";
 import QRCode from "qrcode";
@@ -164,6 +164,95 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Unexpected error in /api/register:", error);
+    return NextResponse.json(
+      { error: "Internal server error occurred." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const { registration_id, avatar_url } = await request.json();
+
+    if (typeof registration_id !== "string" || !REGISTRATION_ID_REGEX.test(registration_id)) {
+      return NextResponse.json(
+        { error: "Valid registration_id is required." },
+        { status: 400 }
+      );
+    }
+
+    if (!isAllowedPhotoUrl(avatar_url)) {
+      return NextResponse.json(
+        { error: "Personal badge photo must be uploaded through the application." },
+        { status: 400 }
+      );
+    }
+
+    const supabase = createAdminClient();
+    const { data, error } = await supabase
+      .from("registrants")
+      .update({ avatar_url })
+      .eq("registration_id", registration_id)
+      .select("registration_id, avatar_url")
+      .maybeSingle();
+
+    if (error || !data) {
+      console.error("Failed to update avatar_url:", error);
+      return NextResponse.json(
+        { error: "Registration not found or could not be updated." },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      registration_id: data.registration_id,
+      avatar_url: data.avatar_url,
+    });
+  } catch (err) {
+    console.error("Error in PATCH /api/register:", err);
+    return NextResponse.json(
+      { error: "Internal server error occurred." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id || !REGISTRATION_ID_REGEX.test(id)) {
+      return NextResponse.json(
+        { error: "Valid registration_id is required." },
+        { status: 400 }
+      );
+    }
+
+    const supabase = createAdminClient();
+    const { data, error } = await supabase
+      .from("registrants")
+      .select(
+        "registration_id, full_name, email, university, faculty, academic_year, job_title, company, qr_code, avatar_url"
+      )
+      .eq("registration_id", id)
+      .maybeSingle();
+
+    if (error || !data) {
+      return NextResponse.json(
+        { error: "Registration not found." },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      ...data,
+    });
+  } catch (err) {
+    console.error("Error in GET /api/register:", err);
     return NextResponse.json(
       { error: "Internal server error occurred." },
       { status: 500 }

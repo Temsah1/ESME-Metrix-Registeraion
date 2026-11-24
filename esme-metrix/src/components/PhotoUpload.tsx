@@ -11,6 +11,7 @@ interface PhotoUploadProps {
   value: string;
   onChange: (url: string) => void;
   error?: string;
+  required?: boolean;
 }
 
 export default function PhotoUpload({
@@ -19,6 +20,7 @@ export default function PhotoUpload({
   value,
   onChange,
   error,
+  required = true,
 }: PhotoUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -88,7 +90,12 @@ export default function PhotoUpload({
   return (
     <div className="flex flex-col gap-2">
       <label className="text-sm font-semibold text-slate-200">
-        {label} <span className="text-[#D97706]">*</span>
+        {label}{" "}
+        {required ? (
+          <span className="text-[#D97706]">*</span>
+        ) : (
+          <span className="text-slate-400 font-normal">(Optional)</span>
+        )}
       </label>
       <span className="text-xs text-slate-400">{sublabel}</span>
 

@@ -66,6 +66,7 @@ export default function RegisterPage() {
       company: "",
       idPhotoUrl: "",
       karnetPhotoUrl: "",
+      avatarUrl: "",
       termsAccepted: false,
     },
   });
@@ -132,6 +133,7 @@ export default function RegisterPage() {
       const step3Result = step3Schema.safeParse({
         idPhotoUrl: getValues("idPhotoUrl"),
         karnetPhotoUrl: getValues("karnetPhotoUrl"),
+        avatarUrl: getValues("avatarUrl") || undefined,
       });
 
       if (!step3Result.success) {
@@ -146,7 +148,7 @@ export default function RegisterPage() {
         return;
       }
 
-      clearErrors(["idPhotoUrl", "karnetPhotoUrl"]);
+      clearErrors(["idPhotoUrl", "karnetPhotoUrl", "avatarUrl"]);
       setCurrentStep(4);
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
@@ -531,6 +533,20 @@ export default function RegisterPage() {
                 error={errors.karnetPhotoUrl?.message}
               />
             </div>
+
+            <div className="pt-2 border-t border-slate-800">
+              <PhotoUpload
+                label="Badge & Social Share Portrait"
+                sublabel="Upload a headshot for your personalized 'I'm Attending' social card & event badge"
+                value={formData.avatarUrl || ""}
+                onChange={(url) => {
+                  setValue("avatarUrl", url, { shouldValidate: true });
+                  if (url) clearErrors("avatarUrl");
+                }}
+                error={errors.avatarUrl?.message}
+                required={false}
+              />
+            </div>
           </div>
         )}
 
@@ -593,6 +609,13 @@ export default function RegisterPage() {
                   }`}
                 >
                   <CheckCircle2 className="w-4 h-4" /> Student Karnet {formData.karnetPhotoUrl ? "Attached" : "Missing"}
+                </span>
+                <span
+                  className={`flex items-center gap-1 font-semibold ${
+                    formData.avatarUrl ? "text-[#10B981]" : "text-slate-400"
+                  }`}
+                >
+                  <CheckCircle2 className="w-4 h-4" /> Badge Photo {formData.avatarUrl ? "Attached" : "Default"}
                 </span>
               </div>
             </div>
