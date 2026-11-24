@@ -19,7 +19,7 @@ import {
 } from "../../../supabase/functions/_shared/confirmation-template";
 
 export type { ConfirmationEmail, ConfirmationEmailInput } from "../../../supabase/functions/_shared/confirmation-template";
-export { CONFIRMATION_SUBJECT, maskNationalId } from "../../../supabase/functions/_shared/confirmation-template";
+export { CONFIRMATION_SUBJECT, maskNationalId, academicStatusLabel } from "../../../supabase/functions/_shared/confirmation-template";
 
 const EDGE_FUNCTION_TIMEOUT_MS = 10_000;
 

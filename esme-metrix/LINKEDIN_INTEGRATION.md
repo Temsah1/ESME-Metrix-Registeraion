@@ -52,5 +52,5 @@
   - `/api/og` يقرأ فقط: `full_name, university, faculty, job_title, registration_id, avatar_url`.
   - `/share/[ticketId]` يقرأ فقط: `full_name`.
   - أي تعديل مستقبلي على هذه الملفات يجب ألا يضيف `national_id` إلى الـ `select`، لأن هذه الروابط عامة ويقرأها LinkedIn Crawler.
-- الرقم القومي متاح فقط للأدمن (صفحات `/admin/*` و `/api/scan` بعد تسجيل الدخول) ويظهر في إيميل التأكيد مخفياً (آخر 4 أرقام فقط).
+- الرقم القومي متاح فقط للأدمن (صفحات `/admin/*` و `/api/scan` بعد تسجيل الدخول) ولا يظهر في إيميل التأكيد.
 - **سنة التخرج (`graduation_year`)** محفوظة في قاعدة البيانات ومتصلة بلوحة الأدمن (فلتر + تصدير)، لكنها غير معروضة على بطاقة LinkedIn حالياً. لإضافتها لاحقاً (مثلاً "Class of 2026")، أضف `graduation_year` إلى الـ `select` في `src/app/api/og/route.tsx` فقط.

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { buildConfirmationEmail, CONFIRMATION_SUBJECT, maskNationalId } from "@/lib/email/confirmation";
+import { buildConfirmationEmail, CONFIRMATION_SUBJECT, maskNationalId, academicStatusLabel } from "@/lib/email/confirmation";
 
 const input = {
   fullName: "Omar Hassan",
@@ -38,21 +38,45 @@ describe("QR-07/08 email template uses CID attachment, not data URI", () => {
   });
 });
 
-describe("prompt spec: subject, greeting, instructions, tagline", () => {
-  it("uses the subject from the build prompt", () => {
+describe("organizer message: subject, greeting, visitor pass, signature", () => {
+  it("uses the confirmation subject", () => {
     expect(buildConfirmationEmail(input).subject).toBe(CONFIRMATION_SUBJECT);
     expect(CONFIRMATION_SUBJECT).toBe("✅ You're registered — ESME Metrix 2026");
   });
 
-  it("greets the attendee by name with 'Congratulations'", () => {
+  it("greets the attendee by name with 'Dear'", () => {
     const email = buildConfirmationEmail(input);
-    expect(email.html).toContain("Congratulations, Omar Hassan!");
-    expect(email.text).toContain("Congratulations, Omar Hassan!");
+    expect(email.html).toContain("Dear Omar Hassan,");
+    expect(email.text).toContain("Dear Omar Hassan,");
   });
 
-  it("includes QR usage instructions and the tagline", () => {
+  it("shows the visitor pass with name, university and department", () => {
+    const email = buildConfirmationEmail({ ...input, faculty: "Chemical Engineering", academicYear: "3rd" });
+    for (const body of [email.html, email.text]) {
+      expect(body).toContain("Your registration has been successfully confirmed!");
+      expect(body).toContain("Omar Hassan");
+      expect(body).toContain("Cairo University");
+      expect(body).toContain("Chemical Engineering");
+      expect(body).toContain("ESME METRIX 2026");
+    }
+    expect(email.text).toContain("Academic Status: Student");
+  });
+
+  it("maps Graduate / Alumni academic status", () => {
+    expect(academicStatusLabel("Graduate")).toBe("Graduate");
+    expect(academicStatusLabel("Alumni")).toBe("Alumni");
+    expect(academicStatusLabel("1st")).toBe("Student");
+    expect(academicStatusLabel(null)).toBe("Student");
+  });
+
+  it("is signed by Kareem Tamer", () => {
     const email = buildConfirmationEmail(input);
-    expect(email.html).toContain("How to use your QR on event day");
+    for (const body of [email.html, email.text]) {
+      expect(body).toContain("Kareem Tamer");
+      expect(body).toContain("ESME METRIX Organizing Team");
+    }
+    expect(email.html).toContain("Director of Digital Transformation &amp; IT");
+    expect(email.text).toContain("Director of Digital Transformation & IT");
     expect(email.html).toContain("BE POSITIVE VALUABLE");
   });
 });
@@ -77,12 +101,11 @@ describe("branding and social links come from configuration", () => {
   });
 });
 
-describe("National ID is masked in the email", () => {
-  it("shows only the last 4 digits", () => {
+describe("National ID never appears in the email", () => {
+  it("does not include the National ID", () => {
     const email = buildConfirmationEmail({ ...input, nationalId: "29912010101234" });
     expect(email.html).not.toContain("29912010101234");
     expect(email.text).not.toContain("29912010101234");
-    expect(email.html).toContain("1234");
     expect(maskNationalId("29912010101234")).toBe("••••••••••1234");
     expect(maskNationalId(null)).toBe("N/A");
   });
@@ -115,7 +138,6 @@ describe("event details come from configuration, not invented values", () => {
     const email = buildConfirmationEmail(input);
     expect(email.html).toContain("2026-12-01");
     expect(email.html).toContain("Cairo University Main Hall");
-    expect(email.html).toContain("10:00 AM");
   });
 
   it("falls back to 'Cairo University' when venue is not explicitly set", () => {

@@ -82,7 +82,7 @@ NOTIFY pgrst, 'reload schema';
 | التحقق (`validations/registration.ts`) | `EGYPTIAN_NATIONAL_ID_REGEX` + `trim` | `GRADUATION_YEAR_REGEX`، من 1990 إلى 2035 |
 | الـ API (`/api/register`) | فحص التكرار مع الموبايل والإيميل → رسالة 409 | يُحفظ مع التسجيل |
 | قاعدة البيانات | `CHECK` للصيغة + `UNIQUE INDEX` | `CHECK` للصيغة + `INDEX` |
-| إيميل التأكيد (`send-confirmation`) | يظهر **مخفياً** (آخر 4 أرقام فقط) | يظهر بجوار السنة الدراسية (Class of 2026) |
+| إيميل التأكيد | **لا يظهر** | غير معروض (الإيميل يعرض الحالة الأكاديمية والقسم) |
 | لوحة الأدمن — Registrants | بحث + عمود + تصدير Excel | فلتر "Class of" + عمود + تصدير Excel |
 | لوحة الأدمن — Search | بحث مباشر بالرقم القومي (14 رقم) | يظهر في بطاقة المشترك |
 | الماسح (`/admin/scanner`) | يظهر لمطابقته مع البطاقة عند البوابة | يظهر "Class of 2026" |

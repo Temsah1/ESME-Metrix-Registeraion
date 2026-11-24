@@ -59,10 +59,18 @@ export interface ConfirmationEmail {
 export const CONFIRMATION_SUBJECT = "✅ You're registered — ESME Metrix 2026";
 export const QR_CONTENT_ID = "metrix-qr";
 
+/** Signature at the bottom of every confirmation email. */
+export const EMAIL_SIGNATURE = {
+  name: "Kareem Tamer",
+  title: "Director of Digital Transformation & IT",
+  organization: "ESME CU",
+  team: "ESME METRIX Organizing Team",
+};
+
 export const DEFAULT_EMAIL_CONFIG: ConfirmationEmailConfig = {
   from: "ESME Metrix <onboarding@resend.dev>",
   eventDate: "12 December 2026",
-  eventVenue: "Cairo University, Faculty of Engineering",
+  eventVenue: "Cairo University",
   eventTime: "Saturday 12 / 12 / 2026 — 09:00 AM",
   social: {
     whatsapp: "https://chat.whatsapp.com/BahfelppPpX8aXanFJvDhl?s=cl&p=i&iam=2",
@@ -86,6 +94,13 @@ export function maskNationalId(nationalId?: string | null): string {
   return `${"•".repeat(clean.length - 4)}${clean.slice(-4)}`;
 }
 
+/** "Student" for current students, otherwise the stored status (Graduate / Alumni). */
+export function academicStatusLabel(academicYear?: string | null): string {
+  if (academicYear === "Graduate") return "Graduate";
+  if (academicYear === "Alumni") return "Alumni";
+  return "Student";
+}
+
 function isSafeHttpUrl(value?: string): value is string {
   return typeof value === "string" && /^https:\/\/[^\s"'<>]+$/i.test(value);
 }
@@ -100,28 +115,31 @@ export function buildConfirmationEmailContent(
 ): ConfirmationEmail {
   const name = escapeHtml(input.fullName);
   const university = escapeHtml(input.university || "Cairo University");
-  const faculty = escapeHtml(input.faculty || "Engineering");
-  const academicYear = escapeHtml(input.academicYear || "Undergraduate");
-  const graduationYear = escapeHtml(input.graduationYear || "2026");
-  const maskedNationalId = escapeHtml(maskNationalId(input.nationalId));
+  const department = escapeHtml(input.faculty || "Engineering");
+  const academicStatus = escapeHtml(academicStatusLabel(input.academicYear));
   const registrationId = escapeHtml(input.registrationId);
   const eventDate = escapeHtml(config.eventDate);
   const eventVenue = escapeHtml(config.eventVenue);
-  const eventTime = escapeHtml(config.eventTime);
+  const sig = {
+    name: escapeHtml(EMAIL_SIGNATURE.name),
+    title: escapeHtml(EMAIL_SIGNATURE.title),
+    organization: escapeHtml(EMAIL_SIGNATURE.organization),
+    team: escapeHtml(EMAIL_SIGNATURE.team),
+  };
 
   const qrBase64 = input.qrDataUrl.includes(",")
     ? input.qrDataUrl.split(",")[1]
     : input.qrDataUrl;
 
-  // 1. Branded header logo (only when a public https site URL is configured)
+  // Branded header logo (only when a public https site URL is configured)
   const logoUrl = isSafeHttpUrl(config.appUrl)
     ? `${stripTrailingSlash(config.appUrl)}/esme_logo.png`
     : null;
   const logoHtml = logoUrl
-    ? `<img src="${escapeHtml(logoUrl)}" alt="ESME Cairo University Student Chapter" width="72" height="72" style="width: 72px; height: 72px; display: block; margin: 0 auto 12px auto; border: 0; border-radius: 14px;" />`
+    ? `<img src="${escapeHtml(logoUrl)}" alt="ESME CU" width="64" height="64" style="width: 64px; height: 64px; display: block; margin: 0 auto 10px auto; border: 0; border-radius: 12px;" />`
     : "";
 
-  // 8. Social links (only the ones configured)
+  // Social links in the footer (only the ones configured)
   const social = config.social ?? {};
   const socialEntries: { label: string; url: string; color: string }[] = [];
   if (isSafeHttpUrl(social.facebook)) socialEntries.push({ label: "Facebook", url: social.facebook, color: "#1877F2" });
@@ -130,7 +148,7 @@ export function buildConfirmationEmailContent(
   if (isSafeHttpUrl(social.whatsapp)) socialEntries.push({ label: "WhatsApp", url: social.whatsapp, color: "#25D366" });
 
   const socialHtml = socialEntries.length
-    ? `<p style="margin: 0 0 12px 0;">${socialEntries
+    ? `<p style="margin: 0 0 10px 0;">${socialEntries
         .map(
           (s) =>
             `<a href="${escapeHtml(s.url)}" style="color: ${s.color}; text-decoration: none; font-weight: bold; font-size: 12px; margin: 0 8px;">${s.label}</a>`
@@ -138,21 +156,11 @@ export function buildConfirmationEmailContent(
         .join(`<span style="color: #334155;">|</span>`)}</p>`
     : "";
 
-  const whatsappCta = isSafeHttpUrl(social.whatsapp)
-    ? `
-              <tr>
-                <td align="center" style="padding: 0 30px 25px 30px;">
-                  <div style="background-color: rgba(37, 211, 102, 0.1); border: 1px solid #25D366; border-radius: 12px; padding: 18px; text-align: center;">
-                    <p style="color: #FFFFFF; font-size: 13px; font-weight: bold; margin: 0 0 10px 0;">
-                      انضم إلى جروب الواتساب الرسمي لمتابعة الورش والمحاضرات:
-                    </p>
-                    <a href="${escapeHtml(social.whatsapp)}" style="background-color: #25D366; color: #FFFFFF; text-decoration: none; font-weight: 900; font-size: 13px; padding: 10px 22px; border-radius: 20px; display: inline-block;">
-                      دخول جروب الواتساب الرسمي
-                    </a>
-                  </div>
-                </td>
-              </tr>`
-    : "";
+  const passRow = (label: string, value: string, highlight = false) =>
+    `<tr><td width="38%" style="color: #94A3B8; padding: 6px 0;">${label}</td><td style="color: ${highlight ? "#F59E0B" : "#FFFFFF"}; font-weight: bold; padding: 6px 0;">${value}</td></tr>`;
+
+  const paragraph = (content: string) =>
+    `<p style="color: #CBD5E1; font-size: 14.5px; line-height: 1.7; margin: 0 0 14px 0;">${content}</p>`;
 
   const html = `
     <!DOCTYPE html>
@@ -160,7 +168,7 @@ export function buildConfirmationEmailContent(
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>ESME Metrix 2026 — Registration Confirmed</title>
+      <title>ESME METRIX 2026 — Registration Confirmed</title>
     </head>
     <body style="margin: 0; padding: 0; background-color: #0B1928; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
       <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #0B1928; padding: 25px 10px;">
@@ -168,116 +176,76 @@ export function buildConfirmationEmailContent(
           <td align="center">
             <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #0F243A; border: 2px solid #D97706; border-radius: 18px; overflow: hidden;">
 
-              <!-- 1. Branded header: logo + event name -->
+              <!-- Header -->
               <tr>
-                <td align="center" style="background-color: #15304B; padding: 30px 20px 20px 20px; border-bottom: 1px solid rgba(217, 119, 6, 0.3);">
+                <td align="center" style="background-color: #15304B; padding: 26px 20px 18px 20px; border-bottom: 1px solid rgba(217, 119, 6, 0.3);">
                   ${logoHtml}
-                  <div style="font-size: 11px; font-weight: bold; color: #F59E0B; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px;">
-                    ESME CAIRO UNIVERSITY STUDENT CHAPTER
-                  </div>
-                  <h1 style="color: #FFFFFF; font-size: 30px; margin: 0; font-weight: 900; letter-spacing: 1px;">
+                  <h1 style="color: #FFFFFF; font-size: 28px; margin: 0; font-weight: 900; letter-spacing: 1px;">
                     ESME <span style="color: #D97706;">METRIX</span> 2026
                   </h1>
-                  <p style="color: #94A3B8; font-size: 13px; margin: 6px 0 0 0;">
-                    Flagship Materials &amp; Engineering Gathering
+                  <p style="color: #94A3B8; font-size: 12px; margin: 6px 0 0 0; letter-spacing: 1.5px; text-transform: uppercase;">
+                    ESME CU · Materials Engineering Event
                   </p>
                 </td>
               </tr>
 
-              <!-- 3. Confirmation with green checkmark -->
+              <!-- Message -->
               <tr>
-                <td align="center" style="padding: 26px 20px 8px 20px;">
-                  <div style="width: 56px; height: 56px; line-height: 56px; border-radius: 50%; background-color: #10B981; color: #FFFFFF; font-size: 30px; font-weight: bold; text-align: center; margin: 0 auto 12px auto;">&#10003;</div>
-                  <div style="background-color: rgba(16, 185, 129, 0.15); border: 1px solid #10B981; color: #10B981; font-weight: bold; font-size: 13px; padding: 7px 18px; border-radius: 30px; display: inline-block;">
-                    REGISTRATION CONFIRMED
+                <td style="padding: 28px 30px 6px 30px;">
+                  <p style="color: #FFFFFF; font-size: 16px; font-weight: bold; margin: 0 0 16px 0;">Dear ${name},</p>
+                  ${paragraph(`Thank you for registering to attend <strong style="color: #FFFFFF;">ESME METRIX</strong>, a Materials Engineering event organized by ESME CU, taking place on <strong style="color: #FFFFFF;">${eventDate} at ${eventVenue}</strong>.`)}
+                  <p style="color: #10B981; font-size: 15px; font-weight: bold; line-height: 1.6; margin: 0 0 14px 0;">&#10003; Your registration has been successfully confirmed!</p>
+                  ${paragraph("We're excited to welcome you to an engaging experience exploring the fascinating world of Materials Engineering, advanced materials, and engineering innovations.")}
+                  ${paragraph("Join fellow engineering students and enthusiasts to discover new ideas, expand your knowledge, and explore the technologies shaping the future of materials science.")}
+                </td>
+              </tr>
+
+              <!-- Visitor pass -->
+              <tr>
+                <td style="padding: 6px 30px 24px 30px;">
+                  <div style="background-color: #11253B; border: 1px solid rgba(217, 119, 6, 0.35); border-radius: 14px; padding: 20px;">
+                    <div style="font-size: 13px; font-weight: 900; color: #F59E0B; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;">
+                      Your Visitor Pass
+                    </div>
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="font-size: 14px;">
+                      ${passRow("Name:", name)}
+                      ${passRow("Academic Status:", academicStatus)}
+                      ${passRow("University:", university)}
+                      ${passRow("Department:", department)}
+                      ${passRow("Event:", "ESME METRIX 2026")}
+                      ${passRow("Date:", eventDate)}
+                      ${passRow("Registration ID:", `<span style="font-family: monospace;">${registrationId}</span>`, true)}
+                    </table>
+                    <div style="text-align: center; margin-top: 18px;">
+                      <div style="background-color: #FFFFFF; padding: 12px; border-radius: 12px; display: inline-block;">
+                        <img src="cid:${QR_CONTENT_ID}" alt="ESME METRIX QR code" width="200" height="200" style="width: 200px; height: 200px; display: block; border: 0;" />
+                      </div>
+                    </div>
                   </div>
                 </td>
               </tr>
 
-              <!-- 2. Personalized greeting -->
+              <!-- Closing + signature -->
               <tr>
-                <td style="padding: 12px 30px 20px 30px; color: #E2E8F0; text-align: center;">
-                  <h2 style="color: #FFFFFF; font-size: 22px; margin: 0 0 10px 0;">Congratulations, ${name}!</h2>
-                  <p style="color: #CBD5E1; font-size: 14px; line-height: 1.6; margin: 0;" dir="rtl">
-                    تم تأكيد تسجيلك بنجاح في <strong>ESME METRIX 2026</strong>، وتم إصدار كود الدخول الخاص بك (QR Code).
+                <td style="padding: 0 30px 28px 30px;">
+                  ${paragraph("Your personalized QR code is attached to this email. Please keep it accessible and present it at the event entrance for verification and check-in.")}
+                  ${paragraph("We look forward to seeing you at ESME METRIX!")}
+                  <p style="color: #CBD5E1; font-size: 14.5px; line-height: 1.6; margin: 18px 0 0 0;">
+                    Best Regards,<br>
+                    <strong style="color: #FFFFFF;">${sig.name}</strong><br>
+                    ${sig.title}<br>
+                    ${sig.organization}<br>
+                    <span style="color: #F59E0B;">${sig.team}</span>
                   </p>
                 </td>
               </tr>
 
-              <!-- 4. QR code, embedded inline (CID attachment) -->
+              <!-- Footer -->
               <tr>
-                <td align="center" style="padding: 0 30px 25px 30px;">
-                  <div style="background-color: #15304B; border: 2px dashed rgba(217, 119, 6, 0.5); border-radius: 14px; padding: 25px; text-align: center;">
-                    <div style="font-size: 11px; font-weight: bold; color: #F59E0B; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px;">
-                      OFFICIAL ADMISSION QR BADGE
-                    </div>
-                    <div style="background-color: #FFFFFF; padding: 12px; border-radius: 12px; display: inline-block;">
-                      <img src="cid:${QR_CONTENT_ID}" alt="ESME Metrix admission QR code" width="220" height="220" style="width: 220px; height: 220px; display: block; border: 0;" />
-                    </div>
-                    <div style="font-family: monospace; font-size: 18px; font-weight: bold; color: #F59E0B; margin-top: 14px; letter-spacing: 1px;">
-                      ID: ${registrationId}
-                    </div>
-                    <div style="font-size: 11px; color: #10B981; font-weight: bold; margin-top: 4px;">
-                      ● Cryptographically signed &amp; verified
-                    </div>
-                  </div>
-                </td>
-              </tr>
-
-              <!-- 5 + 6. Attendee details + event details -->
-              <tr>
-                <td style="padding: 0 30px 25px 30px;">
-                  <div style="background-color: #11253B; border-radius: 12px; padding: 20px; border: 1px solid rgba(255,255,255,0.06);">
-                    <div style="font-size: 12px; font-weight: bold; color: #D97706; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">
-                      Attendee Details — بيانات التسجيل
-                    </div>
-                    <table width="100%" border="0" cellspacing="0" cellpadding="6" style="color: #CBD5E1; font-size: 13px;">
-                      <tr><td width="38%" style="color: #94A3B8;">Name · الاسم</td><td style="color: #FFFFFF; font-weight: bold;">${name}</td></tr>
-                      <tr><td style="color: #94A3B8;">University · الجامعة</td><td style="color: #FFFFFF;">${university}</td></tr>
-                      <tr><td style="color: #94A3B8;">Registration ID · رقم التسجيل</td><td style="color: #F59E0B; font-weight: bold; font-family: monospace;">${registrationId}</td></tr>
-                      <tr><td style="color: #94A3B8;">Department · القسم</td><td style="color: #FFFFFF;">${faculty}</td></tr>
-                      <tr><td style="color: #94A3B8;">Year · السنة</td><td style="color: #FFFFFF;">${academicYear} (Class of ${graduationYear})</td></tr>
-                      <tr><td style="color: #94A3B8;">National ID · الرقم القومي</td><td style="color: #FFFFFF; font-family: monospace;">${maskedNationalId}</td></tr>
-                    </table>
-                    <div style="height: 1px; background-color: rgba(217, 119, 6, 0.25); margin: 14px 0;"></div>
-                    <div style="font-size: 12px; font-weight: bold; color: #D97706; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
-                      Event Details — تفاصيل الحدث
-                    </div>
-                    <table width="100%" border="0" cellspacing="0" cellpadding="6" style="color: #CBD5E1; font-size: 13px;">
-                      <tr><td width="38%" style="color: #94A3B8;">Date · التاريخ</td><td style="color: #F59E0B; font-weight: bold;">${eventDate}</td></tr>
-                      <tr><td style="color: #94A3B8;">Venue · المكان</td><td style="color: #FFFFFF;">${eventVenue}</td></tr>
-                      <tr><td style="color: #94A3B8;">Time · الميعاد</td><td style="color: #FFFFFF;">${eventTime}</td></tr>
-                    </table>
-                  </div>
-                </td>
-              </tr>
-
-              <!-- 7. QR usage instructions for event day -->
-              <tr>
-                <td style="padding: 0 30px 25px 30px;">
-                  <div style="background-color: rgba(217, 119, 6, 0.1); border-left: 4px solid #D97706; padding: 14px 18px; border-radius: 0 8px 8px 0; color: #FCD34D; font-size: 12.5px; line-height: 1.7;">
-                    <div style="font-weight: bold; color: #F59E0B; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px;">How to use your QR on event day</div>
-                    <ol style="margin: 0; padding-left: 18px; color: #E2E8F0;">
-                      <li>Save this email or take a screenshot of the QR code (printing it also works).</li>
-                      <li>Bring your original National ID or Student Karnet for identity check.</li>
-                      <li>Show the QR at the entrance — staff will scan it to record your attendance.</li>
-                      <li>The QR is personal and works once. Do not share it.</li>
-                      <li>Your scan is required to receive the official attendance certificate.</li>
-                    </ol>
-                  </div>
-                </td>
-              </tr>
-${whatsappCta}
-              <!-- 8 + 9. Social links, footer, tagline -->
-              <tr>
-                <td align="center" style="background-color: #0A1929; padding: 22px 20px; border-top: 1px solid rgba(217, 119, 6, 0.2); color: #64748B; font-size: 11px;">
+                <td align="center" style="background-color: #0A1929; padding: 18px 20px; border-top: 1px solid rgba(217, 119, 6, 0.2); color: #64748B; font-size: 11px;">
                   ${socialHtml}
-                  <p style="margin: 0 0 6px 0; color: #D97706; font-weight: bold; letter-spacing: 2px;">
-                    BE POSITIVE VALUABLE
-                  </p>
-                  <p style="margin: 0;">
-                    &copy; 2026 ESME Cairo University Student Chapter. You received this email because you registered for ESME Metrix 2026.
-                  </p>
+                  <p style="margin: 0 0 6px 0; color: #D97706; font-weight: bold; letter-spacing: 2px;">BE POSITIVE VALUABLE</p>
+                  <p style="margin: 0;">&copy; 2026 ESME Cairo University Student Chapter</p>
                 </td>
               </tr>
 
@@ -289,35 +257,37 @@ ${whatsappCta}
     </html>
   `;
 
-  const socialText = socialEntries.map((s) => `${s.label}: ${s.url}`);
-
   const text = [
-    `Congratulations, ${input.fullName}!`,
-    "Your registration for ESME Metrix 2026 is confirmed. — تم تأكيد تسجيلك في ESME METRIX 2026.",
+    `Dear ${input.fullName},`,
     "",
-    "ATTENDEE DETAILS",
+    `Thank you for registering to attend ESME METRIX, a Materials Engineering event organized by ESME CU, taking place on ${config.eventDate} at ${config.eventVenue}.`,
+    "",
+    "Your registration has been successfully confirmed!",
+    "",
+    "We're excited to welcome you to an engaging experience exploring the fascinating world of Materials Engineering, advanced materials, and engineering innovations.",
+    "",
+    "Join fellow engineering students and enthusiasts to discover new ideas, expand your knowledge, and explore the technologies shaping the future of materials science.",
+    "",
+    "YOUR VISITOR PASS",
     `Name: ${input.fullName}`,
+    `Academic Status: ${academicStatusLabel(input.academicYear)}`,
     `University: ${input.university}`,
-    `Registration ID: ${input.registrationId}`,
     `Department: ${input.faculty || "Engineering"}`,
-    `Year: ${input.academicYear || "N/A"} (Class of ${input.graduationYear || "N/A"})`,
-    `National ID: ${maskNationalId(input.nationalId)}`,
-    "",
-    "EVENT DETAILS",
+    "Event: ESME METRIX 2026",
     `Date: ${config.eventDate}`,
-    `Venue: ${config.eventVenue}`,
-    `Time: ${config.eventTime}`,
+    `Registration ID: ${input.registrationId}`,
     "",
-    "HOW TO USE YOUR QR ON EVENT DAY",
-    `1. Your QR code is attached to this email (ESME-METRIX-QR-${input.registrationId}.png). Save it or take a screenshot.`,
-    "2. Bring your original National ID or Student Karnet.",
-    "3. Show the QR at the entrance — staff will scan it.",
-    "4. The QR is personal and works once. Do not share it.",
-    "5. Your scan is required to receive the official attendance certificate.",
+    `Your personalized QR code is attached to this email (ESME-METRIX-QR-${input.registrationId}.png). Please keep it accessible and present it at the event entrance for verification and check-in.`,
     "",
-    ...(socialText.length ? ["FOLLOW ESME", ...socialText, ""] : []),
+    "We look forward to seeing you at ESME METRIX!",
+    "",
+    "Best Regards,",
+    EMAIL_SIGNATURE.name,
+    EMAIL_SIGNATURE.title,
+    EMAIL_SIGNATURE.organization,
+    EMAIL_SIGNATURE.team,
+    "",
     "BE POSITIVE VALUABLE.",
-    "ESME Cairo University Student Chapter",
   ].join("\n");
 
   return {
