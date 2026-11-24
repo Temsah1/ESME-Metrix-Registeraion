@@ -90,7 +90,6 @@ select:-webkit-autofill:focus {
   caret-color: #FFFFFF !important;
   transition: background-color 5000s ease-in-out 0s;
 }
-<<<<<<< HEAD
 
 /* ═══════════════════════════════════════════════════════════════════════════
    ESME METRIX — PROFESSIONAL ANIMATION LIBRARY
@@ -589,8 +588,3 @@ button, a, input, select {
 .animate-shake {
   animation: shakeError 0.5s ease-in-out;
 }
-
-
-
-=======
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098

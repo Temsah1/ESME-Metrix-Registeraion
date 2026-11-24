@@ -7,12 +7,8 @@ import { createClient } from "@/lib/supabase/client";
 
 interface PhotoUploadProps {
   label: string;
-<<<<<<< HEAD
   sublabel?: string;
   description?: string;
-=======
-  sublabel: string;
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
   value: string;
   onChange: (url: string) => void;
   error?: string;
@@ -22,10 +18,7 @@ interface PhotoUploadProps {
 export default function PhotoUpload({
   label,
   sublabel,
-<<<<<<< HEAD
   description,
-=======
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
   value,
   onChange,
   error,
@@ -106,11 +99,7 @@ export default function PhotoUpload({
           <span className="text-slate-400 font-normal">(Optional)</span>
         )}
       </label>
-<<<<<<< HEAD
       <span className="text-xs text-slate-400">{sublabel || description}</span>
-=======
-      <span className="text-xs text-slate-400">{sublabel}</span>
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
 
       {value ? (
         <div className="relative w-full h-44 rounded-xl border border-[#D97706]/40 bg-[#0F243A] overflow-hidden flex items-center justify-center group">

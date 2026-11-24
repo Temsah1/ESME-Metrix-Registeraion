@@ -21,16 +21,12 @@ export default function HeroParticles() {
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
     };
-<<<<<<< HEAD
-=======
 
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
     window.addEventListener("resize", handleResize);
 
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReducedMotion) return;
 
-<<<<<<< HEAD
     // ── Particle system with connection lines (constellation effect) ──
     const count = 90;
     const colorBases = [
@@ -141,34 +137,12 @@ export default function HeroParticles() {
         p.x += p.speedX;
         p.y += p.speedY;
         p.pulsePhase += p.pulseSpeed;
-=======
-    // Generate 60 floating particles in brand Golden and Orange shades
-    const particleCount = 60;
-    const colorBases = ["rgba(217, 119, 6, ", "rgba(245, 158, 11, "];
-    const particles = Array.from({ length: particleCount }).map(() => ({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      radius: Math.random() * 2 + 1,
-      speedX: (Math.random() - 0.5) * 0.4,
-      speedY: (Math.random() - 0.5) * 0.4,
-      opacity: Math.random() * 0.4 + 0.1,
-      colorBase: colorBases[Math.floor(Math.random() * colorBases.length)],
-    }));
-
-    const render = () => {
-      ctx.clearRect(0, 0, width, height);
-
-      particles.forEach((p) => {
-        p.x += p.speedX;
-        p.y += p.speedY;
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
 
         if (p.x < 0) p.x = width;
         if (p.x > width) p.x = 0;
         if (p.y < 0) p.y = height;
         if (p.y > height) p.y = 0;
 
-<<<<<<< HEAD
         const pulsedRadius = p.radius + Math.sin(p.pulsePhase) * 0.5;
         const pulsedOpacity = p.opacity + Math.sin(p.pulsePhase) * 0.08;
 
@@ -206,14 +180,6 @@ export default function HeroParticles() {
         ctx.restore();
       }
 
-=======
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `${p.colorBase}${p.opacity})`;
-        ctx.fill();
-      });
-
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
       animationFrameId = requestAnimationFrame(render);
     };
 
@@ -228,13 +194,8 @@ export default function HeroParticles() {
   return (
     <canvas
       ref={canvasRef}
-<<<<<<< HEAD
-      className="fixed inset-0 pointer-events-none z-0"
-      style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, opacity: 0.65 }}
-=======
       className="fixed inset-0 pointer-events-none z-0 opacity-60"
       style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
     />
   );
 }

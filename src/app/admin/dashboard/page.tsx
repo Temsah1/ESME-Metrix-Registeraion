@@ -120,7 +120,6 @@ Register now: https://esme-metrix-registeration.vercel.app/
     field_type: "image",
     value: "/images/ticket-bg.jpg",
   },
-<<<<<<< HEAD
   // ── HOME PAGE CMS ──
   {
     key: "about_text",
@@ -170,8 +169,6 @@ Register now: https://esme-metrix-registeration.vercel.app/
     field_type: "image",
     value: "",
   },
-=======
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
 ];
 
 function aggregate(rows: { university: string | null; city: string | null }[]) {

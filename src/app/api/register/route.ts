@@ -94,11 +94,8 @@ export async function POST(request: NextRequest) {
           full_name: data.fullName,
           phone: data.phone,
           email,
-<<<<<<< HEAD
           national_id: data.nationalId || null,
           graduation_year: data.graduationYear || null,
-=======
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
           university: data.university,
           faculty: data.faculty,
           academic_year: data.academicYear,
@@ -147,13 +144,10 @@ export async function POST(request: NextRequest) {
       fullName: data.fullName,
       registrationId,
       university: data.university,
-<<<<<<< HEAD
       faculty: data.faculty,
       academicYear: data.academicYear,
       graduationYear: data.graduationYear,
       nationalId: data.nationalId,
-=======
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
       qrDataUrl: qrBase64,
     });
 

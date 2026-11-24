@@ -46,14 +46,11 @@ export async function GET(request: NextRequest) {
       .join("")
       .toUpperCase() || "EM";
 
-<<<<<<< HEAD
   // ─────────────────────────────────────────────────────────────────────────────
   // LINKEDIN OG IMAGE — 1200x630
   // Layout: Left column (event info + stats) | Right column (ATTENDEE PHOTO, name, id)
   // The right side shows the person's photo (not QR), styled like Egypt-GITEX/ICT cards
   // ─────────────────────────────────────────────────────────────────────────────
-=======
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
   return new ImageResponse(
     (
       <div
@@ -61,7 +58,6 @@ export async function GET(request: NextRequest) {
           width: "1200px",
           height: "630px",
           display: "flex",
-<<<<<<< HEAD
           backgroundColor: "#0D1F33",
           color: "#FFFFFF",
           fontFamily: "system-ui, -apple-system, sans-serif",
@@ -129,56 +125,20 @@ export async function GET(request: NextRequest) {
           {/* Top section */}
           <div style={{ display: "flex", flexDirection: "column" }}>
             {/* Chapter badge */}
-=======
-          backgroundColor: "#15304B",
-          color: "#FFFFFF",
-          fontFamily: "sans-serif",
-          position: "relative",
-          padding: "36px 40px",
-          border: "6px solid #D97706",
-          boxSizing: "border-box",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        {/* Left Column: Event Details & 2x3 Metrics Grid */}
-        <div
-          style={{
-            width: "680px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            height: "100%",
-          }}
-        >
-          {/* Header & Badges */}
-          <div style={{ display: "flex", flexDirection: "column" }}>
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
-<<<<<<< HEAD
                 gap: "8px",
                 fontSize: "11px",
-=======
-                gap: "10px",
-                fontSize: "12px",
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
                 fontWeight: "bold",
                 letterSpacing: "1.5px",
                 color: "#F59E0B",
                 textTransform: "uppercase",
-<<<<<<< HEAD
                 marginBottom: "10px",
               }}
             >
               ✦ ESME CAIRO UNIVERSITY STUDENT CHAPTER
-=======
-              }}
-            >
-              ESME CAIRO UNIVERSITY STUDENT CHAPTER
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
             </div>
 
             {/* Date & Venue Bar */}
@@ -186,7 +146,6 @@ export async function GET(request: NextRequest) {
               style={{
                 display: "flex",
                 alignItems: "center",
-<<<<<<< HEAD
                 backgroundColor: "#0F243A",
                 border: "1px solid rgba(217, 119, 6, 0.4)",
                 borderRadius: "8px",
@@ -210,90 +169,40 @@ export async function GET(request: NextRequest) {
                 lineHeight: "1",
                 letterSpacing: "-1px",
                 marginBottom: "4px",
-=======
-                marginTop: "10px",
-                backgroundColor: "#0F243A",
-                border: "1px solid rgba(217, 119, 6, 0.45)",
-                borderRadius: "8px",
-                padding: "6px 14px",
-                fontSize: "13px",
-                fontWeight: "bold",
-                color: "#E2E8F0",
-                width: "fit-content",
-              }}
-            >
-              <span style={{ color: "#F59E0B", marginRight: "8px" }}>📅</span>
-              12 DECEMBER 2026
-              <span style={{ margin: "0 10px", color: "#D97706" }}>|</span>
-              <span style={{ color: "#F59E0B", marginRight: "8px" }}>📍</span>
-              CAIRO UNIVERSITY
-            </div>
-
-            {/* Main Headline */}
-            <div
-              style={{
-                fontSize: "56px",
-                fontWeight: "900",
-                color: "#FFFFFF",
-                marginTop: "14px",
-                lineHeight: "1",
-                letterSpacing: "-1px",
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
               }}
             >
               I&apos;M ATTENDING
             </div>
             <div
               style={{
-<<<<<<< HEAD
                 fontSize: "38px",
                 fontWeight: "900",
                 color: "#F59E0B",
                 lineHeight: "1.1",
                 letterSpacing: "1.5px",
                 marginBottom: "4px",
-=======
-                fontSize: "40px",
-                fontWeight: "900",
-                color: "#F59E0B",
-                lineHeight: "1.1",
-                letterSpacing: "1px",
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
               }}
             >
               ESME METRIX
             </div>
             <div
               style={{
-<<<<<<< HEAD
                 fontSize: "12px",
                 color: "#94A3B8",
                 fontWeight: "bold",
                 letterSpacing: "2px",
                 marginBottom: "20px",
-=======
-                fontSize: "13px",
-                color: "#CBD5E1",
-                fontWeight: "bold",
-                letterSpacing: "1px",
-                marginTop: "4px",
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
               }}
             >
               MATERIALS ENGINEERING EVENT 2026
             </div>
           </div>
 
-<<<<<<< HEAD
           {/* Stats grid 2×3 */}
-=======
-          {/* 2x3 Event Highlights Grid */}
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
           <div
             style={{
               display: "flex",
               flexWrap: "wrap",
-<<<<<<< HEAD
               gap: "8px",
             }}
           >
@@ -324,126 +233,6 @@ export async function GET(request: NextRequest) {
                 </span>
               </div>
             ))}
-=======
-              gap: "10px",
-              width: "100%",
-              marginTop: "8px",
-            }}
-          >
-            {/* 1. Attendees */}
-            <div
-              style={{
-                width: "216px",
-                backgroundColor: "#0F243A",
-                border: "1px solid rgba(217, 119, 6, 0.25)",
-                borderLeft: "4px solid #D97706",
-                borderRadius: "8px",
-                padding: "8px 12px",
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <span style={{ fontSize: "20px", fontWeight: "900", color: "#FFFFFF" }}>500+</span>
-              <span style={{ fontSize: "10px", fontWeight: "bold", color: "#CBD5E1", letterSpacing: "0.5px" }}>
-                ATTENDEES
-              </span>
-            </div>
-
-            {/* 2. Keynote Speakers */}
-            <div
-              style={{
-                width: "216px",
-                backgroundColor: "#0F243A",
-                border: "1px solid rgba(217, 119, 6, 0.25)",
-                borderLeft: "4px solid #F59E0B",
-                borderRadius: "8px",
-                padding: "8px 12px",
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <span style={{ fontSize: "20px", fontWeight: "900", color: "#FFFFFF" }}>15+</span>
-              <span style={{ fontSize: "10px", fontWeight: "bold", color: "#CBD5E1", letterSpacing: "0.5px" }}>
-                KEYNOTE SPEAKERS
-              </span>
-            </div>
-
-            {/* 3. Workshops */}
-            <div
-              style={{
-                width: "216px",
-                backgroundColor: "#0F243A",
-                border: "1px solid rgba(217, 119, 6, 0.25)",
-                borderLeft: "4px solid #10B981",
-                borderRadius: "8px",
-                padding: "8px 12px",
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <span style={{ fontSize: "20px", fontWeight: "900", color: "#FFFFFF" }}>8+</span>
-              <span style={{ fontSize: "10px", fontWeight: "bold", color: "#CBD5E1", letterSpacing: "0.5px" }}>
-                WORKSHOPS & SESSIONS
-              </span>
-            </div>
-
-            {/* 4. Companies & Exhibitors */}
-            <div
-              style={{
-                width: "216px",
-                backgroundColor: "#0F243A",
-                border: "1px solid rgba(217, 119, 6, 0.25)",
-                borderLeft: "4px solid #F59E0B",
-                borderRadius: "8px",
-                padding: "8px 12px",
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <span style={{ fontSize: "20px", fontWeight: "900", color: "#FFFFFF" }}>20+</span>
-              <span style={{ fontSize: "10px", fontWeight: "bold", color: "#CBD5E1", letterSpacing: "0.5px" }}>
-                COMPANIES & EXHIBITORS
-              </span>
-            </div>
-
-            {/* 5. Competitions */}
-            <div
-              style={{
-                width: "216px",
-                backgroundColor: "#0F243A",
-                border: "1px solid rgba(217, 119, 6, 0.25)",
-                borderLeft: "4px solid #10B981",
-                borderRadius: "8px",
-                padding: "8px 12px",
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <span style={{ fontSize: "20px", fontWeight: "900", color: "#FFFFFF" }}>3</span>
-              <span style={{ fontSize: "10px", fontWeight: "bold", color: "#CBD5E1", letterSpacing: "0.5px" }}>
-                COMPETITIONS & AWARDS
-              </span>
-            </div>
-
-            {/* 6. Tracks */}
-            <div
-              style={{
-                width: "216px",
-                backgroundColor: "#0F243A",
-                border: "1px solid rgba(217, 119, 6, 0.25)",
-                borderLeft: "4px solid #D97706",
-                borderRadius: "8px",
-                padding: "8px 12px",
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <span style={{ fontSize: "20px", fontWeight: "900", color: "#FFFFFF" }}>4</span>
-              <span style={{ fontSize: "10px", fontWeight: "bold", color: "#CBD5E1", letterSpacing: "0.5px" }}>
-                ENGINEERING TRACKS
-              </span>
-            </div>
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
           </div>
 
           {/* Footer URL */}
@@ -451,7 +240,6 @@ export async function GET(request: NextRequest) {
             style={{
               display: "flex",
               alignItems: "center",
-<<<<<<< HEAD
               gap: "6px",
               fontSize: "12px",
               fontFamily: "monospace",
@@ -467,32 +255,11 @@ export async function GET(request: NextRequest) {
         <div
           style={{
             width: "340px",
-=======
-              gap: "8px",
-              fontSize: "13px",
-              fontFamily: "monospace",
-              color: "#F59E0B",
-              fontWeight: "bold",
-              marginTop: "8px",
-            }}
-          >
-            <span>🌐</span>
-            <span>esme-metrix-registeration.vercel.app</span>
-          </div>
-        </div>
-
-        {/* Right Column: Rectangular Framed Attendee Portrait & Identity */}
-        <div
-          style={{
-            width: "380px",
-            height: "100%",
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
             backgroundColor: "#0F243A",
-<<<<<<< HEAD
             borderLeft: "2px solid rgba(217,119,6,0.3)",
             padding: "32px 24px",
             position: "relative",
@@ -518,33 +285,14 @@ export async function GET(request: NextRequest) {
               height: "230px",
               borderRadius: "16px",
               border: "3px solid #D97706",
-=======
-            borderRadius: "18px",
-            border: "3px solid #D97706",
-            padding: "24px 20px",
-            boxSizing: "border-box",
-            position: "relative",
-          }}
-        >
-          {/* Framed Photo Container */}
-          <div
-            style={{
-              width: "240px",
-              height: "270px",
-              borderRadius: "12px",
-              border: "2px solid #F59E0B",
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
               backgroundColor: "#15304B",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               overflow: "hidden",
               position: "relative",
-<<<<<<< HEAD
               marginBottom: "16px",
               boxShadow: "0 0 40px rgba(217,119,6,0.3)",
-=======
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
             }}
           >
             {avatarUrl ? (
@@ -565,66 +313,33 @@ export async function GET(request: NextRequest) {
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-<<<<<<< HEAD
                   gap: "8px",
-=======
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
                 }}
               >
                 <div
                   style={{
-<<<<<<< HEAD
                     width: "88px",
                     height: "88px",
                     borderRadius: "50%",
-=======
-                    width: "90px",
-                    height: "90px",
-                    borderRadius: "45px",
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
                     backgroundColor: "#D97706",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-<<<<<<< HEAD
                     fontSize: "34px",
                     fontWeight: "bold",
                     color: "#FFFFFF",
                     border: "3px solid #F59E0B",
-=======
-                    fontSize: "36px",
-                    fontWeight: "bold",
-                    color: "#FFFFFF",
-                    border: "3px solid #F59E0B",
-                    marginBottom: "10px",
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
                   }}
                 >
                   {initials}
                 </div>
-<<<<<<< HEAD
                 <span style={{ fontSize: "10px", color: "#F59E0B", fontWeight: "bold", letterSpacing: "1px" }}>
                   ATTENDEE
-=======
-                <span
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: "bold",
-                    color: "#F59E0B",
-                    letterSpacing: "1px",
-                  }}
-                >
-                  OFFICIAL ATTENDEE
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
                 </span>
               </div>
             )}
 
-<<<<<<< HEAD
             {/* Verified badge overlay */}
-=======
-            {/* Top Verified Badge */}
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
             <div
               style={{
                 position: "absolute",
@@ -632,11 +347,7 @@ export async function GET(request: NextRequest) {
                 right: "8px",
                 backgroundColor: "#10B981",
                 color: "#FFFFFF",
-<<<<<<< HEAD
                 fontSize: "9px",
-=======
-                fontSize: "10px",
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
                 fontWeight: "bold",
                 padding: "3px 8px",
                 borderRadius: "10px",
@@ -649,7 +360,6 @@ export async function GET(request: NextRequest) {
           {/* Attendee Full Name */}
           <div
             style={{
-<<<<<<< HEAD
               fontSize: "22px",
               fontWeight: "bold",
               color: "#FFFFFF",
@@ -693,60 +403,11 @@ export async function GET(request: NextRequest) {
             }}
           >
             {(jobTitle || "Materials Engineering").slice(0, 28)}
-=======
-              fontSize: "24px",
-              fontWeight: "bold",
-              color: "#FFFFFF",
-              marginTop: "16px",
-              textAlign: "center",
-              maxWidth: "340px",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {fullName}
-          </div>
-
-          {/* University / Affiliation */}
-          <div
-            style={{
-              fontSize: "14px",
-              color: "#CBD5E1",
-              marginTop: "4px",
-              textAlign: "center",
-              maxWidth: "340px",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {faculty ? `${faculty} • ${university}` : university}
-          </div>
-
-          {/* Role Pill */}
-          <div
-            style={{
-              marginTop: "12px",
-              backgroundColor: "rgba(217, 119, 6, 0.15)",
-              border: "1px solid #D97706",
-              borderRadius: "16px",
-              padding: "4px 16px",
-              fontSize: "11px",
-              fontWeight: "bold",
-              color: "#F59E0B",
-              fontFamily: "monospace",
-              textTransform: "uppercase",
-            }}
-          >
-            {jobTitle || "MATERIALS ENGINEERING ATTENDEE"}
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
           </div>
 
           {/* Registration ID */}
           <div
             style={{
-<<<<<<< HEAD
               fontSize: "12px",
               fontFamily: "monospace",
               color: "#CBD5E1",
@@ -755,18 +416,10 @@ export async function GET(request: NextRequest) {
               padding: "4px 12px",
               borderRadius: "6px",
               border: "1px solid rgba(217,119,6,0.2)",
-=======
-              marginTop: "10px",
-              fontSize: "13px",
-              fontFamily: "monospace",
-              color: "#FFFFFF",
-              fontWeight: "bold",
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
             }}
           >
             ID: {ticketId}
           </div>
-<<<<<<< HEAD
 
           {/* Gate active */}
           <div
@@ -780,8 +433,6 @@ export async function GET(request: NextRequest) {
           >
             ● GATE ADMISSION ACTIVE
           </div>
-=======
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
         </div>
       </div>
     ),

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState, useRef, useMemo, useSyncExternalStore } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import confetti from "canvas-confetti";
 import { jsPDF } from "jspdf";
@@ -39,7 +38,6 @@ interface RegisteredData {
   avatar_url?: string | null;
 }
 
-<<<<<<< HEAD
 const LINKEDIN_SHARE_CAPTION = `🎓 Excited to announce — I'll be attending *ESME METRIX 2026*!
 
 📅 12 December 2026 | 📍 Cairo University, Egypt
@@ -53,17 +51,6 @@ Looking forward to incredible workshops, competitions, keynotes, and networking 
 #ESMEMetrix #MaterialsEngineering #ESMECU #CairoUniversity #Engineering #Egypt`;
 
 const WHATSAPP_GROUP_URL = "https://chat.whatsapp.com/BahfelppPpX8aXanFJvDhl?s=cl&p=i&iam=2";
-=======
-const LINKEDIN_SHARE_CAPTION = `I'm attending *ESME METRIX*!
-
-Join us on 12 December 2026 at Cairo University for an exciting event exploring the world of Materials Engineering, innovation, and advanced materials.
-
-Discover, learn, and connect with fellow engineering students.
-
-Register now: https://esme-metrix-registeration.vercel.app/
-
-#ESMEMetrix #MaterialsEngineering #ESMECU #CairoUniversity`;
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
 
 function subscribeToStorage() {
   return () => {};
@@ -113,7 +100,7 @@ export default function SuccessPage() {
   }, [stored]);
 
   const [data, setData] = useState<RegisteredData | null>(initialData);
-  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(initialData?.avatar_url ?? null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [shared, setShared] = useState(false);
   const [ticketReady, setTicketReady] = useState(false);
@@ -124,16 +111,6 @@ export default function SuccessPage() {
   const ticketCanvasRef = useRef<HTMLCanvasElement>(null);
   const linkedInCanvasRef = useRef<HTMLCanvasElement>(null);
   const confettiFired = useRef(false);
-
-  // Sync state if session storage changes
-  useEffect(() => {
-    if (initialData) {
-      setData(initialData);
-      if (initialData.avatar_url) {
-        setAvatarPreviewUrl(initialData.avatar_url);
-      }
-    }
-  }, [initialData]);
 
   // Fallback: If session storage is empty, check URL parameter ?id=MX8-XXXXXX
   useEffect(() => {
@@ -157,13 +134,10 @@ export default function SuccessPage() {
     }
   }, [data]);
 
-<<<<<<< HEAD
-  // Spectacular multi-stage celebration confetti (عيد ميلاد / Fireworks effect)
+  // Confetti celebration on load
   useEffect(() => {
     if (data && !confettiFired.current) {
       confettiFired.current = true;
-
-      // 1. Immediate center cannon blast
       confetti({
         particleCount: 120,
         spread: 90,
@@ -171,52 +145,19 @@ export default function SuccessPage() {
         colors: ["#D97706", "#F59E0B", "#10B981", "#3B82F6", "#EC4899", "#FFFFFF"],
       });
 
-      // 2. Left and right celebratory bursts (Fireworks style)
       const timer1 = setTimeout(() => {
-        confetti({
-          particleCount: 70,
-          angle: 60,
-          spread: 70,
-          origin: { x: 0.05, y: 0.65 },
-          colors: ["#D97706", "#F59E0B", "#10B981", "#FFFFFF"],
-        });
-        confetti({
-          particleCount: 70,
-          angle: 120,
-          spread: 70,
-          origin: { x: 0.95, y: 0.65 },
-          colors: ["#D97706", "#F59E0B", "#10B981", "#FFFFFF"],
-        });
+        confetti({ particleCount: 70, angle: 60, spread: 70, origin: { x: 0.05, y: 0.65 }, colors: ["#D97706", "#F59E0B", "#10B981", "#FFFFFF"] });
+        confetti({ particleCount: 70, angle: 120, spread: 70, origin: { x: 0.95, y: 0.65 }, colors: ["#D97706", "#F59E0B", "#10B981", "#FFFFFF"] });
       }, 350);
 
-      // 3. Falling glitter rain
       const timer2 = setTimeout(() => {
-        confetti({
-          particleCount: 50,
-          spread: 120,
-          origin: { y: 0.3 },
-          gravity: 0.8,
-          ticks: 300,
-          colors: ["#F59E0B", "#D97706", "#10B981"],
-        });
+        confetti({ particleCount: 50, spread: 120, origin: { y: 0.3 }, gravity: 0.8, ticks: 300, colors: ["#F59E0B", "#D97706", "#10B981"] });
       }, 700);
 
       return () => {
         clearTimeout(timer1);
         clearTimeout(timer2);
       };
-=======
-  // Confetti celebration on load
-  useEffect(() => {
-    if (data && !confettiFired.current) {
-      confettiFired.current = true;
-      confetti({
-        particleCount: 90,
-        spread: 80,
-        origin: { y: 0.6 },
-        colors: ["#D97706", "#F59E0B", "#10B981", "#FFFFFF"],
-      });
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
     }
   }, [data]);
 
@@ -245,11 +186,7 @@ export default function SuccessPage() {
       // Draw background template
       ctx.drawImage(bgImg, 0, 0, width, height);
 
-<<<<<<< HEAD
-      // Draw dynamic attendee details in right box
-=======
       // Draw dynamic attendee details
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
       const qrBoxX = 1664;
       const qrBoxY = 416;
       const qrBoxW = 286;
@@ -261,7 +198,6 @@ export default function SuccessPage() {
       ctx.fill();
       ctx.restore();
 
-<<<<<<< HEAD
       const finishTicket = () => {
         // Stub text
         ctx.save();
@@ -350,69 +286,6 @@ export default function SuccessPage() {
         qrImg.src = data.qr_code;
       } else {
         finishTicket();
-=======
-      if (data.qr_code) {
-        const qrImg = new window.Image();
-        qrImg.onload = () => {
-          if (cancelled) return;
-          const qrPad = 12;
-          ctx.drawImage(
-            qrImg,
-            qrBoxX + qrPad,
-            qrBoxY + qrPad,
-            qrBoxW - qrPad * 2,
-            qrBoxH - qrPad * 2
-          );
-
-          // Stub text
-          ctx.save();
-          ctx.textAlign = "center";
-          ctx.fillStyle = "#F59E0B";
-          ctx.font = "bold 28px monospace";
-          ctx.fillText(`ID: ${data.registration_id}`, 1805, 890);
-
-          ctx.fillStyle = "#FFFFFF";
-          ctx.font = "bold 32px sans-serif";
-          const stubName =
-            data.full_name.length > 20
-              ? data.full_name.substring(0, 18) + "..."
-              : data.full_name;
-          ctx.fillText(stubName, 1805, 935);
-
-          ctx.fillStyle = "#CBD5E1";
-          ctx.font = "20px sans-serif";
-          const stubUni =
-            (data.university || "Cairo University").length > 24
-              ? (data.university || "Cairo University").substring(0, 22) + "..."
-              : data.university || "Cairo University";
-          ctx.fillText(stubUni, 1805, 975);
-          ctx.restore();
-
-          // Left ticket body
-          ctx.save();
-          ctx.textAlign = "left";
-          ctx.fillStyle = "#D97706";
-          ctx.font = "bold 22px monospace";
-          ctx.letterSpacing = "2px";
-          ctx.fillText("ATTENDEE CREDENTIAL", 120, 680);
-
-          ctx.fillStyle = "#FFFFFF";
-          ctx.font = "bold 46px sans-serif";
-          ctx.fillText(data.full_name, 120, 735);
-
-          ctx.fillStyle = "#F59E0B";
-          ctx.font = "bold 26px monospace";
-          ctx.fillText(
-            `TICKET ID: ${data.registration_id}  •  ${data.university || "Cairo University"}`,
-            120,
-            780
-          );
-          ctx.restore();
-
-          setTicketReady(true);
-        };
-        qrImg.src = data.qr_code;
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
       }
     };
     bgImg.src = "/images/ticket-bg.jpg";
@@ -420,11 +293,7 @@ export default function SuccessPage() {
     return () => {
       cancelled = true;
     };
-<<<<<<< HEAD
   }, [data, avatarPreviewUrl]);
-=======
-  }, [data]);
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
 
   // ─────────────────────────────────────────────────────────────────────────────
   // 2. RENDER 1200x628 SOCIAL SHARE CARD CANVAS (Rendered at 2x 2400x1256 retina)
@@ -1005,30 +874,19 @@ export default function SuccessPage() {
 
     // 2. Set exact requested toast notification message
     setToastMessage(
-<<<<<<< HEAD
       "Opening LinkedIn — your personalized attendance card will appear as the preview image automatically!"
-=======
-      "Post text copied! Paste it into LinkedIn and attach your downloaded 'I'm Attending' card."
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
     );
     setTimeout(() => {
       setCopiedCaption(false);
       setToastMessage(null);
     }, 7000);
 
-<<<<<<< HEAD
-    // 3. Open LinkedIn share dialog pointing to the attendee's personal share page.
-    //    LinkedIn scrapes the OG meta-tags at /share/{ticketId} which serves the
-    //    personalised card image (attendee photo, not QR) via /api/og?id={ticketId}.
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://esme-metrix-registeration.vercel.app";
-    const shareUrl = `${baseUrl}/share/${data.registration_id}`;
-=======
     // 3. Trigger card download automatically so the attendee has the image ready to attach
     handleDownloadCard();
 
     // 4. Open LinkedIn share dialog in a new tab
-    const shareUrl = "https://esme-metrix-registeration.vercel.app/";
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://esme-metrix-registeration.vercel.app";
+    const shareUrl = `${baseUrl}/share/${data.registration_id}`;
     window.open(
       `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
       "_blank",
@@ -1109,20 +967,6 @@ export default function SuccessPage() {
       )}
 
       {/* Header Badge */}
-<<<<<<< HEAD
-      <div className="w-16 h-16 rounded-2xl bg-[#10B981]/15 border-2 border-[#10B981] flex items-center justify-center text-[#10B981] mb-5 shadow-[0_0_30px_rgba(16,185,129,0.3)] animate-bounce animate-scale-in">
-        <CheckCircle2 className="w-9 h-9" />
-      </div>
-
-      <div className="animate-fade-in-up inline-block px-3.5 py-1 rounded-full border border-[#D97706]/35 bg-[#0F243A] text-[#F59E0B] font-mono text-xs mb-3 font-semibold">
-        ADMISSION CONFIRMED & CREDENTIAL ISSUED
-      </div>
-
-      <h1 className="animate-fade-in-up-delay-1 text-3xl sm:text-5xl font-extrabold text-white tracking-tight mb-2">
-        Welcome to ESME METRIX 2026!
-      </h1>
-      <p className="text-slate-300 text-sm sm:text-base max-w-2xl mb-6 leading-relaxed">
-=======
       <div className="w-16 h-16 rounded-2xl bg-[#10B981]/15 border-2 border-[#10B981] flex items-center justify-center text-[#10B981] mb-5 shadow-[0_0_30px_rgba(16,185,129,0.3)] animate-bounce">
         <CheckCircle2 className="w-9 h-9" />
       </div>
@@ -1135,13 +979,11 @@ export default function SuccessPage() {
         Welcome to ESME METRIX 2026!
       </h1>
       <p className="text-slate-300 text-sm sm:text-base max-w-2xl mb-10 leading-relaxed">
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
         Congratulations <span className="text-[#D97706] font-semibold">{data.full_name}</span>.
         Your official event ticket has been generated and your admission QR badge is linked to your
         identity.
       </p>
 
-<<<<<<< HEAD
       {/* ── WHATSAPP GROUP BUTTON (PROMINENT CALL TO ACTION) ── */}
       <div className="w-full max-w-xl mb-12">
         <div className="p-6 rounded-3xl bg-gradient-to-br from-[#0F243A] via-[#15304B] to-[#0F243A] border-2 border-[#25D366]/40 relative overflow-hidden shadow-[0_0_35px_rgba(37,211,102,0.18)]">
@@ -1174,8 +1016,6 @@ export default function SuccessPage() {
         </div>
       </div>
 
-=======
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* SECTION 1: OFFICIAL EVENT TICKET (CUSTOM CANVAS + PDF & QR DOWNLOADS) */}
       {/* ─────────────────────────────────────────────────────────────────── */}
@@ -1299,21 +1139,10 @@ export default function SuccessPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full mb-5">
           <button
             onClick={handleLinkedInShare}
-<<<<<<< HEAD
-            className="px-7 py-3.5 rounded-xl text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2.5 transition-all shadow-[0_0_25px_rgba(0,119,181,0.35)] hover:brightness-110 hover:scale-105 cursor-pointer"
-            style={{ backgroundColor: "#0077B5" }}
-          >
-            {/* LinkedIn icon */}
-            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white shrink-0" xmlns="http://www.w3.org/2000/svg">
-              <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-            </svg>
-            {shared ? "✓ SHARED ON LINKEDIN" : "SHARE ON LINKEDIN"}
-=======
             className="px-7 py-3.5 rounded-xl bg-[#0077B5] hover:bg-[#006097] text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2.5 transition-all shadow-[0_0_25px_rgba(0,119,181,0.35)] cursor-pointer"
           >
             <Share2 className="w-4 h-4" />
             {shared ? "OPENED LINKEDIN (SHARED)" : "SHARE ON LINKEDIN (COPIES POST)"}
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
           </button>
 
           <button

@@ -1,26 +1,28 @@
+import type { Variants } from "framer-motion";
+
 /**
  * Motion Tokens & Animation Presets
  * Optimized for 60fps mobile GPU acceleration (transform & opacity)
  */
 
 export const transitionSpring = {
-  type: "spring",
+  type: "spring" as const,
   stiffness: 300,
   damping: 30,
 };
 
 export const transitionSmooth = {
   duration: 0.35,
-  ease: [0.16, 1, 0.3, 1], // Custom cubic-bezier for snappy mobile response
+  ease: "easeOut" as const,
 };
 
 export const transitionCinematic = {
   duration: 0.65,
-  ease: [0.16, 1, 0.3, 1],
+  ease: "easeOut" as const,
 };
 
 // Multi-step slide variants (direction-aware)
-export const stepVariants = {
+export const stepVariants: Variants = {
   enter: (direction: number) => ({
     x: direction > 0 ? 40 : -40,
     opacity: 0,
@@ -33,7 +35,7 @@ export const stepVariants = {
     scale: 1,
     transition: {
       duration: 0.35,
-      ease: [0.16, 1, 0.3, 1],
+      ease: "easeOut",
     },
   },
   exit: (direction: number) => ({
@@ -43,13 +45,13 @@ export const stepVariants = {
     scale: 0.98,
     transition: {
       duration: 0.25,
-      ease: [0.16, 1, 0.3, 1],
+      ease: "easeOut",
     },
   }),
 };
 
 // Staggered field entrance
-export const containerStagger = {
+export const containerStagger: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -60,14 +62,14 @@ export const containerStagger = {
   },
 };
 
-export const fieldEntrance = {
+export const fieldEntrance: Variants = {
   hidden: { opacity: 0, y: 16 },
   visible: {
     opacity: 1,
     y: 0,
     transition: {
       duration: 0.35,
-      ease: [0.16, 1, 0.3, 1],
+      ease: "easeOut",
     },
   },
 };
@@ -81,5 +83,5 @@ export const buttonTapMotion = {
 export const cardHoverMotion = {
   scale: 1.015,
   y: -4,
-  transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] },
+  transition: { duration: 0.25, ease: "easeOut" as const },
 };

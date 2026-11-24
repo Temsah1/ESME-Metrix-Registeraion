@@ -1,3 +1,4 @@
+
 {
   "name": "esme-metrix",
   "version": "0.1.0",
@@ -19,17 +20,11 @@
     "clsx": "^2.1.1",
     "framer-motion": "^14.14.0",
     "html5-qrcode": "^2.3.8",
-<<<<<<< HEAD
     "jspdf": "^4.2.1",
     "lucide-react": "^1.78.0",
     "nanoid": "^6.0.2",
     "next": "16.4.6",
     "nodemailer": "^10.6.1",
-=======
-    "lucide-react": "^1.78.0",
-    "nanoid": "^6.0.2",
-    "next": "16.4.6",
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
     "qrcode": "^1.5.4",
     "react": "19.3.0",
     "react-dom": "19.3.0",
@@ -45,10 +40,7 @@
     "@tailwindcss/turbopack": "4.3.3",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^20",
-<<<<<<< HEAD
     "@types/nodemailer": "^8.0.2",
-=======
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
     "@types/pngjs": "^6.0.5",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",

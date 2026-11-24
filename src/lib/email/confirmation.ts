@@ -2,13 +2,10 @@ export interface ConfirmationEmailInput {
   fullName: string;
   registrationId: string;
   university: string;
-<<<<<<< HEAD
   faculty?: string;
   academicYear?: string;
   graduationYear?: string;
   nationalId?: string;
-=======
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
   qrDataUrl: string;
 }
 
@@ -37,7 +34,6 @@ function escapeHtml(value: string): string {
 export function buildConfirmationEmail(input: ConfirmationEmailInput): ConfirmationEmail {
   const from = process.env.RESEND_FROM_EMAIL || "ESME Metrix <onboarding@resend.dev>";
   const eventDate = process.env.EVENT_DATE || "12 December 2026";
-<<<<<<< HEAD
   const eventVenue = process.env.EVENT_VENUE || "Cairo University, Faculty of Engineering";
   const eventTime = process.env.EVENT_TIME || "Saturday 12 / 12 / 2026 — 09:00 AM";
 
@@ -46,13 +42,8 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
   const faculty = escapeHtml(input.faculty || "Engineering");
   const academicYear = escapeHtml(input.academicYear || "Undergraduate");
   const graduationYear = escapeHtml(input.graduationYear || "2026");
-=======
-  const eventVenue = process.env.EVENT_VENUE || "Cairo University";
-  const eventTime = process.env.EVENT_TIME || "Saturday 12 / 12 / 2026";
+  const nationalId = escapeHtml(input.nationalId || "N/A");
 
-  const name = escapeHtml(input.fullName);
-  const university = escapeHtml(input.university);
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
   const registrationId = escapeHtml(input.registrationId);
 
   const qrBase64 = input.qrDataUrl.includes(",")
@@ -60,7 +51,6 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
     : input.qrDataUrl;
 
   const html = `
-<<<<<<< HEAD
     <!DOCTYPE html>
     <html>
     <head>
@@ -155,6 +145,10 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
                         <td style="color: #FFFFFF;">${academicYear} (دفعة ${graduationYear})</td>
                       </tr>
                       <tr>
+                        <td style="color: #94A3B8;">الرقم القومي:</td>
+                        <td style="color: #FFFFFF;">${nationalId}</td>
+                      </tr>
+                      <tr>
                         <td style="color: #94A3B8;">تاريخ الفعالية:</td>
                         <td style="color: #F59E0B; font-weight: bold;">${escapeHtml(eventDate)}</td>
                       </tr>
@@ -222,6 +216,8 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
     `الاسم: ${input.fullName}`,
     `الجامعة: ${input.university}`,
     `القسم: ${input.faculty || "الهندسة"}`,
+    `السنة وسنة التخرج: ${input.academicYear || "غير محدد"} (دفعة ${input.graduationYear || "غير محدد"})`,
+    `الرقم القومي: ${input.nationalId || "غير متاح"}`,
     `تاريخ الفعالية: ${eventDate}`,
     `المكان: ${eventVenue}`,
     `الميعاد: ${eventTime}`,
@@ -234,80 +230,16 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
     "",
     "BE POSITIVE VALUABLE.",
     "ESME Cairo University Student Chapter",
-=======
-    <div style="font-family: Arial, sans-serif; background-color: #15304B; color: #F8FAFC; padding: 30px; border-radius: 12px; max-width: 600px; margin: 0 auto; border: 1px solid #D97706;">
-      <div style="text-align: center; margin-bottom: 24px;">
-        <h1 style="color: #D97706; font-size: 26px; margin: 0; font-weight: bold;">ESME METRIX 2026</h1>
-        <p style="color: #CBD5E1; font-size: 13px; margin-top: 4px;">ESME METRIX — ESME Cairo University Student Chapter</p>
-      </div>
-
-      <div style="background-color: #10B981; color: #FFFFFF; font-weight: bold; font-size: 13px; padding: 6px 14px; border-radius: 20px; display: inline-block; margin-bottom: 12px;">
-        &#10003; REGISTRATION CONFIRMED
-      </div>
-
-      <h2 style="color: #FFFFFF; font-size: 20px; margin-top: 8px;">Congratulations, ${name}!</h2>
-      <p style="color: #E5E7EB; font-size: 15px; line-height: 1.6;">
-        Your registration for ESME Metrix 2026 has been successfully confirmed.
-      </p>
-
-      <div style="background-color: #0F243A; padding: 20px; border-radius: 10px; margin: 24px 0; text-align: center; border: 1px solid rgba(217, 119, 6, 0.3);">
-        <div style="font-size: 12px; color: #CBD5E1; letter-spacing: 1px; margin-bottom: 10px; font-weight: bold;">YOUR DIGITAL ADMISSION BADGE</div>
-        <img src="cid:metrix-qr" alt="ESME Metrix QR Code" width="220" height="220" style="width: 220px; height: 220px; border-radius: 8px; margin: 0 auto; display: block; border: 2px solid #D97706;" />
-        <p style="font-family: monospace; font-size: 16px; font-weight: bold; color: #F59E0B; margin-top: 12px; letter-spacing: 1px;">ID: ${registrationId}</p>
-      </div>
-
-      <div style="color: #E5E7EB; font-size: 14px; margin-bottom: 24px; line-height: 1.8;">
-        <strong>Attendee:</strong> ${name}<br />
-        <strong>Institution:</strong> ${university}<br />
-        <strong>Event:</strong> ESME Metrix 2026 — Materials Engineering Event<br />
-        <strong>Date:</strong> ${escapeHtml(eventDate)}<br />
-        <strong>Venue:</strong> ${escapeHtml(eventVenue)}<br />
-        <strong>Time:</strong> ${escapeHtml(eventTime)}
-      </div>
-
-      <p style="color: #CBD5E1; font-size: 13px; border-top: 1px solid rgba(217, 119, 6, 0.2); padding-top: 16px; text-align: center;">
-        Please keep this QR code ready on your mobile device during entrance verification.<br />
-        <span style="color: #D97706; font-weight: bold; letter-spacing: 1px;">BE POSITIVE VALUABLE.</span><br />
-        <span style="color: #94A3B8; font-size: 11px;">ESME METRIX — ESME Cairo University Student Chapter</span>
-      </p>
-    </div>
-  `;
-
-  const text = [
-    `Congratulations, ${input.fullName}!`,
-    "Your registration for ESME Metrix 2026 has been successfully confirmed.",
-    "",
-    `Registration ID: ${input.registrationId}`,
-    `Attendee: ${input.fullName}`,
-    `Institution: ${input.university}`,
-    `Date: ${eventDate}`,
-    `Venue: ${eventVenue}`,
-    `Time: ${eventTime}`,
-    "",
-    "Your QR admission badge is attached to this email (metrix-qr.png).",
-    "Keep it ready on your mobile device during entrance verification.",
-    "",
-    "BE POSITIVE VALUABLE.",
-    "ESME METRIX — ESME Cairo University Student Chapter",
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
   ].join("\n");
 
   return {
     from,
-<<<<<<< HEAD
     subject: `تأكيد تسجيلك وكود الدخول الرسمي — ESME METRIX 2026 [${registrationId}]`,
-=======
-    subject: "You're registered — ESME METRIX 2026",
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
     html,
     text,
     attachments: [
       {
-<<<<<<< HEAD
         filename: `ESME-METRIX-QR-${registrationId}.png`,
-=======
-        filename: "metrix-qr.png",
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
         content: qrBase64,
         contentId: "metrix-qr",
         contentType: "image/png",
@@ -317,48 +249,10 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
 }
 
 export async function sendConfirmationEmail(to: string, emailContent: ConfirmationEmail): Promise<void> {
-<<<<<<< HEAD
-  const resendApiKey = process.env.RESEND_API_KEY;
-
-  // 1. Primary engine: Resend API
-  if (resendApiKey) {
-    try {
-      const { Resend } = await import("resend");
-      const resend = new Resend(resendApiKey);
-
-      const { data, error: sendError } = await resend.emails.send({
-        from: emailContent.from,
-        to,
-        subject: emailContent.subject,
-        html: emailContent.html,
-        text: emailContent.text,
-        attachments: emailContent.attachments.map((a) => ({
-          filename: a.filename,
-          content: a.content,
-        })),
-      });
-
-      if (sendError) {
-        console.error("Confirmation email rejected by Resend API:", sendError);
-      } else {
-        console.log(`Confirmation email sent via Resend API to ${to} (Message ID: ${data?.id})`);
-        return;
-      }
-    } catch (resendErr) {
-      console.error("Resend API dispatch encountered error, checking fallback:", resendErr);
-    }
-  }
-
-  // 2. Secondary fallback: Nodemailer (SMTP / Gmail)
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
-
-=======
   const smtpUser = process.env.SMTP_USER;
   const smtpPass = process.env.SMTP_PASS;
 
   // 1. Primary: Try nodemailer Gmail SMTP if configured
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
   if (smtpUser && smtpPass) {
     try {
       const nodemailer = await import("nodemailer");
@@ -386,16 +280,6 @@ export async function sendConfirmationEmail(to: string, emailContent: Confirmati
         attachments,
       });
 
-<<<<<<< HEAD
-      console.log(`Confirmation email sent via Gmail SMTP fallback to ${to}`);
-      return;
-    } catch (smtpErr) {
-      console.error("Gmail SMTP fallback dispatch failed:", smtpErr);
-    }
-  }
-
-  console.warn("Neither RESEND_API_KEY nor SMTP credentials configured; email dispatch skipped.");
-=======
       console.log(`Confirmation email sent via Gmail SMTP to ${to}`);
       return;
     } catch (smtpErr) {
@@ -431,5 +315,4 @@ export async function sendConfirmationEmail(to: string, emailContent: Confirmati
   }
 
   console.warn("Neither SMTP_USER/SMTP_PASS nor RESEND_API_KEY configured; confirmation email skipped.");
->>>>>>> 09b2a302a6578eb70d80e94949a12c8b9ce02098
 }
