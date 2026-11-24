@@ -14,7 +14,6 @@ export default function RegistrantsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUniversity, setSelectedUniversity] = useState("ALL");
   const [selectedCity, setSelectedCity] = useState("ALL");
-  const [selectedGradYear, setSelectedGradYear] = useState("ALL");
   const [selectedRegistrant, setSelectedRegistrant] = useState<Registrant | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -54,16 +53,9 @@ export default function RegistrantsPage() {
 
     const matchesUniv = selectedUniversity === "ALL" || r.university === selectedUniversity;
     const matchesCity = selectedCity === "ALL" || r.city === selectedCity;
-    const matchesGradYear =
-      selectedGradYear === "ALL" ||
-      (selectedGradYear === "NONE" ? !r.graduation_year : r.graduation_year === selectedGradYear);
 
-    return matchesSearch && matchesUniv && matchesCity && matchesGradYear;
+    return matchesSearch && matchesUniv && matchesCity;
   });
-
-  const graduationYears = Array.from(
-    new Set(registrants.map((r) => r.graduation_year).filter((y): y is string => Boolean(y)))
-  ).sort();
 
   const handleExportExcel = () => {
     const exportData = filteredRegistrants.map((r) => ({
@@ -109,7 +101,7 @@ export default function RegistrantsPage() {
       </div>
 
       {/* Filter Toolbar */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 rounded-xl bg-[#0F243A] border border-[#D97706]/20">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-[#0F243A] border border-[#D97706]/20">
         <div className="relative">
           <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
           <input
@@ -144,22 +136,6 @@ export default function RegistrantsPage() {
             <option value="Cairo">Cairo</option>
             <option value="Giza">Giza</option>
             <option value="Alexandria">Alexandria</option>
-          </select>
-        </div>
-
-        <div>
-          <select
-            value={selectedGradYear}
-            onChange={(e) => setSelectedGradYear(e.target.value)}
-            className="w-full h-10 px-3 rounded-lg bg-[#15304B] border border-slate-700 text-slate-200 focus:outline-none focus:border-[#D97706] text-xs"
-          >
-            <option value="ALL">All Graduation Years</option>
-            {graduationYears.map((year) => (
-              <option key={year} value={year}>
-                Class of {year}
-              </option>
-            ))}
-            <option value="NONE">Not provided</option>
           </select>
         </div>
       </div>

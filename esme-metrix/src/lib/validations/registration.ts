@@ -2,13 +2,7 @@ import { z } from "zod";
 
 export const EGYPTIAN_PHONE_REGEX = /^01[0125][0-9]{8}$/;
 
-// Must stay in sync with registrants_national_id_format_chk (migration 0006).
 export const EGYPTIAN_NATIONAL_ID_REGEX = /^[23][0-9]{13}$/;
-
-// Must stay in sync with registrants_graduation_year_format_chk (migration 0006).
-export const GRADUATION_YEAR_REGEX = /^(19|20)[0-9]{2}$/;
-export const MIN_GRADUATION_YEAR = 1990;
-export const MAX_GRADUATION_YEAR = 2035;
 
 export const CAIRO_ENG_DEPARTMENTS = [
   "Chemical Engineering (هندسة الكيمياء)",
@@ -35,7 +29,6 @@ export const step1Schema = z.object({
     .max(100, "Full name is too long"),
   nationalId: z
     .string()
-    .trim()
     .regex(
       EGYPTIAN_NATIONAL_ID_REGEX,
       "Enter a valid 14-digit Egyptian National ID (الرقم القومي مكون من 14 رقم)"
@@ -65,16 +58,8 @@ export const step2Schema = z.object({
     }),
   graduationYear: z
     .string()
-    .trim()
-    .min(1, "Graduation year is required (e.g. 2026)")
-    .regex(GRADUATION_YEAR_REGEX, "Enter a 4-digit graduation year (e.g. 2026)")
-    .refine(
-      (val) => {
-        const year = Number(val);
-        return year >= MIN_GRADUATION_YEAR && year <= MAX_GRADUATION_YEAR;
-      },
-      `Graduation year must be between ${MIN_GRADUATION_YEAR} and ${MAX_GRADUATION_YEAR}`
-    ),
+    .min(4, "Graduation year is required (e.g. 2026)")
+    .max(4, "Enter a 4-digit year"),
   jobTitle: z
     .string()
     .min(2, "Job title is required (e.g. Student)"),

@@ -15,8 +15,6 @@ interface ScanResponse {
     university: string;
     faculty: string;
     academic_year: string;
-    graduation_year?: string | null;
-    national_id?: string | null;
     registration_id: string;
     id_photo_url: string;
   };
@@ -201,13 +199,6 @@ export default function QRScannerPage() {
             <div className="text-xs font-mono text-emerald-300 mt-1">
               ID: {scannedResult?.registrant?.registration_id} | {scannedResult?.registrant?.university}
             </div>
-            {(scannedResult?.registrant?.national_id || scannedResult?.registrant?.graduation_year) && (
-              <div className="text-[11px] font-mono text-emerald-200/80 mt-1">
-                {scannedResult?.registrant?.national_id && <>NID: {scannedResult.registrant.national_id}</>}
-                {scannedResult?.registrant?.national_id && scannedResult?.registrant?.graduation_year && " | "}
-                {scannedResult?.registrant?.graduation_year && <>Class of {scannedResult.registrant.graduation_year}</>}
-              </div>
-            )}
             <div className="text-[11px] text-slate-300 mt-2 font-mono">
               Scanned at {formatTime(scannedResult?.scanned_at)}
             </div>

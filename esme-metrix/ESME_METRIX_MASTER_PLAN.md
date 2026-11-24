@@ -299,11 +299,9 @@ erDiagram
         varchar full_name
         varchar phone UK
         varchar email UK
-        varchar national_id UK "14-digit Egyptian NID"
         varchar university
         varchar faculty
         varchar academic_year
-        varchar graduation_year "4-digit year"
         varchar city
         varchar job_title
         varchar company
@@ -382,11 +380,9 @@ CREATE TABLE public.registrants (
   full_name       VARCHAR(255) NOT NULL,
   phone           VARCHAR(20)  NOT NULL,
   email           VARCHAR(255) NOT NULL,
-  national_id     VARCHAR(20),               -- 14-digit Egyptian National ID (sensitive)
   university      VARCHAR(255) NOT NULL,
   faculty         VARCHAR(255) NOT NULL,
   academic_year   VARCHAR(50)  NOT NULL,
-  graduation_year VARCHAR(10),               -- 4-digit year, e.g. 2026
   city            VARCHAR(100) NOT NULL,
   job_title       VARCHAR(255) NOT NULL DEFAULT 'Student',
   company         VARCHAR(255),              -- nullable for students
@@ -399,17 +395,8 @@ CREATE TABLE public.registrants (
 
   CONSTRAINT uq_phone UNIQUE (phone),
   CONSTRAINT uq_email UNIQUE (email),
-  CONSTRAINT uq_registration_id UNIQUE (registration_id),
-  CONSTRAINT registrants_national_id_format_chk
-    CHECK (national_id IS NULL OR national_id ~ '^[23][0-9]{13}$'),
-  CONSTRAINT registrants_graduation_year_format_chk
-    CHECK (graduation_year IS NULL OR graduation_year ~ '^(19|20)[0-9]{2}$')
+  CONSTRAINT uq_registration_id UNIQUE (registration_id)
 );
-
--- One registration per National ID (NULL allowed for rows created before the field existed)
-CREATE UNIQUE INDEX uq_registrants_national_id ON public.registrants (national_id)
-  WHERE national_id IS NOT NULL;
-CREATE INDEX idx_registrants_graduation_year ON public.registrants (graduation_year);
 
 CREATE INDEX idx_registrants_university ON public.registrants (university);
 CREATE INDEX idx_registrants_city ON public.registrants (city);
@@ -724,7 +711,6 @@ flowchart TD
 | Field | Type | Validation |
 |---|---|---|
 | Full Name | text | Required, 2-100 chars, trimmed |
-| National ID | text | Required, trimmed, matches `/^[23][0-9]{13}$/` (14 digits). Unique per registrant. |
 | Phone | tel | Required, matches `/^01[0125]\d{8}$/` |
 | Email | email | Required, valid email format, lowercase |
 | City | select | Required, from predefined list of Egyptian cities |
@@ -736,7 +722,6 @@ flowchart TD
 | University | select/text | Required |
 | Faculty | text | Required |
 | Academic Year | select | Required, from: 1st, 2nd, 3rd, 4th, 5th, Graduate, Alumni |
-| Graduation Year | select | Required, 4 digits (`19xx` or `20xx`), range 1990–2035 |
 | Job Title | text | Required, default "Student" |
 | Company | text | Optional |
 
@@ -756,8 +741,8 @@ flowchart TD
 
 ### Duplicate Prevention
 
-1. **Client-side**: After Step 1, debounced server-side check for phone/email/National ID uniqueness (Server Action returning `{ available: boolean }`). Generic error message, no enumeration.
-2. **Server-side**: `/api/register` first queries `registrants` for a matching phone, email **or** National ID and returns 409. The `INSERT` is the final guard: it fails on the UNIQUE constraints (`phone`, `email`, `uq_registrants_national_id`) with code `23505`, or on the format CHECKs (`registrants_national_id_format_chk`, `registrants_graduation_year_format_chk`) with code `23514`. Both are mapped to friendly messages.
+1. **Client-side**: After Step 1, debounced server-side check for phone/email uniqueness (Server Action returning `{ available: boolean }`). Generic error message, no enumeration.
+2. **Server-side**: The `INSERT` will fail on UNIQUE constraint violation → catch and return appropriate error.
 3. **Submit button**: Disabled after first click; re-enabled on error.
 
 ### Form Data Persistence

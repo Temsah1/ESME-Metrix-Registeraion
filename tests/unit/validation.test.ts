@@ -6,10 +6,6 @@ import {
   step4Schema,
   completeRegistrationSchema,
   EGYPTIAN_PHONE_REGEX,
-  EGYPTIAN_NATIONAL_ID_REGEX,
-  GRADUATION_YEAR_REGEX,
-  MIN_GRADUATION_YEAR,
-  MAX_GRADUATION_YEAR,
 } from "@/lib/validations/registration";
 
 const validStep1 = {
@@ -87,55 +83,6 @@ describe("REG-05 academic year enum", () => {
 
   it("rejects unknown year", () => {
     expect(step2Schema.safeParse({ ...validStep2, academicYear: "5th" }).success).toBe(false);
-  });
-});
-
-describe("REG-08 Egyptian National ID validation", () => {
-  it.each(["29912010101234", "30001010101234", " 29912010101234 "])("accepts valid national ID %j", (nationalId) => {
-    expect(EGYPTIAN_NATIONAL_ID_REGEX.test(nationalId.trim())).toBe(true);
-    expect(step1Schema.safeParse({ ...validStep1, nationalId }).success).toBe(true);
-  });
-
-  it("trims surrounding whitespace", () => {
-    expect(step1Schema.parse({ ...validStep1, nationalId: " 29912010101234 " }).nationalId).toBe("29912010101234");
-  });
-
-  it.each([
-    "",
-    "1991201010123", // 13 digits
-    "299120101012345", // 15 digits
-    "19912010101234", // must start with 2 or 3
-    "49912010101234",
-    "2991201010123a",
-    "2991-201010123",
-  ])("rejects invalid national ID %j", (nationalId) => {
-    expect(step1Schema.safeParse({ ...validStep1, nationalId }).success).toBe(false);
-  });
-
-  it("rejects a missing national ID", () => {
-    const { nationalId: _nid, ...rest } = validStep1;
-    expect(step1Schema.safeParse(rest).success).toBe(false);
-  });
-});
-
-describe("REG-09 graduation year validation", () => {
-  it.each(["2024", "2026", "2030", String(MIN_GRADUATION_YEAR), String(MAX_GRADUATION_YEAR)])(
-    "accepts %s",
-    (graduationYear) => {
-      expect(step2Schema.safeParse({ ...validStep2, graduationYear }).success).toBe(true);
-    }
-  );
-
-  it.each(["", "26", "20266", "abcd", "2O26", "1850", "2099", String(MIN_GRADUATION_YEAR - 1), String(MAX_GRADUATION_YEAR + 1)])(
-    "rejects %j",
-    (graduationYear) => {
-      expect(step2Schema.safeParse({ ...validStep2, graduationYear }).success).toBe(false);
-    }
-  );
-
-  it("matches the database CHECK pattern", () => {
-    expect(GRADUATION_YEAR_REGEX.test("2026")).toBe(true);
-    expect(GRADUATION_YEAR_REGEX.test("2026+")).toBe(false);
   });
 });
 

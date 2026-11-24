@@ -107,6 +107,13 @@ Register now: https://esme-metrix-registeration.vercel.app/
 #ESMEMetrix #MaterialsEngineering #ESMECU #CairoUniversity`,
   },
   {
+    key: "whatsapp_group_url",
+    label: "WhatsApp Group Invite Link",
+    category: "Social Amplification",
+    field_type: "text",
+    value: "https://chat.whatsapp.com/KOT8wY8h2lK5p0mNN7NcNW",
+  },
+  {
     key: "hero_logo_url",
     label: "Hero Logo URL",
     category: "Brand Assets",

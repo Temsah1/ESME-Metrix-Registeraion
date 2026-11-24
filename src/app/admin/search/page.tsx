@@ -8,7 +8,7 @@ import { Registrant } from "@/types/database";
 import { REGISTRATION_ID_REGEX } from "@/lib/registration-id";
 import { getAdminPhotoUrl } from "@/lib/utils";
 
-import { EGYPTIAN_PHONE_REGEX as PHONE_REGEX, EGYPTIAN_NATIONAL_ID_REGEX } from "@/lib/validations/registration";
+const PHONE_REGEX = /^01[0125][0-9]{8}$/;
 
 interface AttendanceInfo {
   scanned_at: string;
@@ -45,8 +45,6 @@ export default function AdminSearchPage() {
       let builder = supabase.from("registrants").select("*");
       if (PHONE_REGEX.test(clean)) {
         builder = builder.eq("phone", clean);
-      } else if (EGYPTIAN_NATIONAL_ID_REGEX.test(clean)) {
-        builder = builder.eq("national_id", clean);
       } else if (REGISTRATION_ID_REGEX.test(clean.toUpperCase())) {
         builder = builder.eq("registration_id", clean.toUpperCase());
       } else {
@@ -132,7 +130,7 @@ export default function AdminSearchPage() {
       <div>
         <h1 className="text-2xl font-bold text-white tracking-tight">Attendee Search & Gate Verification</h1>
         <p className="text-xs text-slate-400 font-mono mt-1">
-          Instant manual identity verification by Egyptian phone number, National ID, attendee name, or Registration ID.
+          Instant manual identity verification by Egyptian phone number, attendee name, or Registration ID.
         </p>
       </div>
 
@@ -146,7 +144,7 @@ export default function AdminSearchPage() {
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Enter Phone (01XXXXXXXXX), National ID (14 digits), Name, or MX8-XXXXXX"
+            placeholder="Enter Phone (01XXXXXXXXX), Name, or MX8-XXXXXX"
             className="w-full h-11 pl-10 pr-3.5 rounded-xl bg-[#0F243A] border border-[#D97706]/30 text-white placeholder-slate-400 focus:outline-none focus:border-[#D97706] text-xs sm:text-sm font-mono"
           />
         </div>
@@ -200,12 +198,10 @@ export default function AdminSearchPage() {
 
               {/* Detailed Contact & Academic Credentials */}
               <div className="grid grid-cols-2 gap-3 text-xs font-mono bg-[#15304B] p-4 rounded-xl border border-slate-800 text-slate-300">
-                <div><span className="text-slate-400">National ID:</span> {result.registrant.national_id || "N/A"}</div>
                 <div><span className="text-slate-400">Phone:</span> {result.registrant.phone}</div>
                 <div><span className="text-slate-400">Email:</span> {result.registrant.email}</div>
                 <div><span className="text-slate-400">City:</span> {result.registrant.city}</div>
                 <div><span className="text-slate-400">Year:</span> {result.registrant.academic_year}</div>
-                <div><span className="text-slate-400">Graduation Year:</span> {result.registrant.graduation_year || "N/A"}</div>
                 <div><span className="text-slate-400">Job Title:</span> {result.registrant.job_title}</div>
                 <div><span className="text-slate-400">Company:</span> {result.registrant.company || "None"}</div>
               </div>
