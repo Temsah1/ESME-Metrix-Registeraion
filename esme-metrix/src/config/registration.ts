@@ -294,6 +294,9 @@ export function parseOgHighlights(raw?: string | null): OgHighlightItem[] {
   return parsed;
 }
 
+export const OFFICIAL_ESME_LINKEDIN_URL =
+  "https://www.linkedin.com/company/esme-cairo-university-student-chapter/";
+
 export const LINKEDIN_POST_TEXT = `I'm attending *ESME METRIX*!
 
 Join us on 12 December 2026 at Cairo University for an exciting event exploring the world of Materials Engineering, innovation, and advanced materials.
@@ -301,5 +304,6 @@ Join us on 12 December 2026 at Cairo University for an exciting event exploring 
 Discover, learn, and connect with fellow engineering students.
 
 Register now: https://esme-metrix-registeration.vercel.app/
+Follow ESME Cairo University: ${OFFICIAL_ESME_LINKEDIN_URL}
 
 #ESMEMetrix #MaterialsEngineering #ESMECU #CairoUniversity`;

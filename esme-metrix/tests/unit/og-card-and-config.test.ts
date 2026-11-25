@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   DEFAULT_OG_HIGHLIGHTS,
   LINKEDIN_POST_TEXT,
+  OFFICIAL_ESME_LINKEDIN_URL,
   parseOgHighlights,
 } from "@/config/registration";
 import {
@@ -84,6 +85,9 @@ describe("OG Card template slots, highlights & LinkedIn copy", () => {
     );
     expect(LINKEDIN_POST_TEXT).toContain(
       "Register now: https://esme-metrix-registeration.vercel.app/"
+    );
+    expect(LINKEDIN_POST_TEXT).toContain(
+      `Follow ESME Cairo University: ${OFFICIAL_ESME_LINKEDIN_URL}`
     );
     expect(LINKEDIN_POST_TEXT).toContain(
       "#ESMEMetrix #MaterialsEngineering #ESMECU #CairoUniversity"

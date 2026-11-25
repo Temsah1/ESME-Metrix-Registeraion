@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import crypto from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isMissingColumnError } from "@/lib/supabase/registrant-compat";
-import { ArrowRight, Calendar, MapPin, Ticket } from "lucide-react";
+import { ArrowRight, Calendar, Download, MapPin, Ticket } from "lucide-react";
+import { FaLinkedin } from "react-icons/fa";
+import { OFFICIAL_ESME_LINKEDIN_URL } from "@/config/registration";
 import { formatRoleOrMajor } from "@/lib/og/card-data";
 
 export interface SharePageProps {
@@ -21,25 +24,45 @@ function getBaseUrl(): string {
   ).replace(/\/$/, "");
 }
 
-export async function buildShareMetadata(
-  routePrefix: "share" | "ticket",
+function computeOgCacheVersion(input: {
+  name: string;
+  university: string;
+  avatarUrl?: string | null;
+}): string {
+  return crypto
+    .createHash("sha256")
+    .update(`${input.name}|${input.university}|${input.avatarUrl || ""}`)
+    .digest("hex")
+    .slice(0, 8);
+}
+
+interface ResolvedShareAttendee {
+  foundInDb: boolean;
+  name: string;
+  university: string;
+  major: string;
+  role: string;
+  avatarUrl: string | null;
+}
+
+async function resolveShareAttendee(
   ticketId: string,
   searchParams?: { [key: string]: string | string[] | undefined }
-): Promise<Metadata> {
-  const baseUrl = getBaseUrl();
-  let name = firstParam(searchParams?.name) || "Attendee";
+): Promise<ResolvedShareAttendee> {
+  let name = firstParam(searchParams?.name) || "ESME METRIX Attendee";
   let university = firstParam(searchParams?.university) || "";
   let major = firstParam(searchParams?.major) || "";
   let role = firstParam(searchParams?.role) || "";
+  let avatarUrl: string | null = null;
   let foundInDb = false;
 
   try {
-    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY && ticketId) {
       const supabase = createAdminClient();
       const { data: primaryData, error: primaryError } = await supabase
         .from("registrants")
         .select(
-          "full_name, university, faculty, department, job_title, is_esme_member, committee, role"
+          "full_name, university, faculty, department, job_title, is_esme_member, committee, role, avatar_url"
         )
         .eq("registration_id", ticketId)
         .maybeSingle();
@@ -48,7 +71,7 @@ export async function buildShareMetadata(
       if (primaryError && isMissingColumnError(primaryError)) {
         const legacyRes = await supabase
           .from("registrants")
-          .select("full_name, university, faculty, job_title")
+          .select("full_name, university, faculty, job_title, avatar_url")
           .eq("registration_id", ticketId)
           .maybeSingle();
         if (!legacyRes.error && legacyRes.data) {
@@ -67,6 +90,7 @@ export async function buildShareMetadata(
         name = data.full_name || name;
         university = data.university || university;
         major = data.department || data.faculty || major;
+        avatarUrl = data.avatar_url || null;
         role = formatRoleOrMajor({
           jobTitle: data.job_title,
           department: data.department,
@@ -81,16 +105,40 @@ export async function buildShareMetadata(
     console.error("OG registrant fetch failed:", e);
   }
 
+  return { foundInDb, name, university, major, role, avatarUrl };
+}
+
+export async function buildShareMetadata(
+  routePrefix: "share" | "ticket",
+  ticketId: string,
+  searchParams?: { [key: string]: string | string[] | undefined }
+): Promise<Metadata> {
+  const baseUrl = getBaseUrl();
+  const attendee = await resolveShareAttendee(ticketId, searchParams);
+
   const ogQuery = new URLSearchParams();
   if (ticketId) ogQuery.set("id", ticketId);
-  if (!foundInDb) {
-    if (name && name !== "Attendee") ogQuery.set("name", name);
-    if (university) ogQuery.set("university", university);
-    if (major) ogQuery.set("major", major);
-    if (role) ogQuery.set("role", role);
+  if (attendee.foundInDb) {
+    ogQuery.set(
+      "v",
+      computeOgCacheVersion({
+        name: attendee.name,
+        university: attendee.university,
+        avatarUrl: attendee.avatarUrl,
+      })
+    );
+  } else {
+    if (attendee.name && attendee.name !== "ESME METRIX Attendee") {
+      ogQuery.set("name", attendee.name);
+    }
+    if (attendee.university) ogQuery.set("university", attendee.university);
+    if (attendee.major) ogQuery.set("major", attendee.major);
+    if (attendee.role) ogQuery.set("role", attendee.role);
   }
 
-  const title = `${name} is attending ESME METRIX!`;
+  const displayName =
+    attendee.name === "ESME METRIX Attendee" ? "Attendee" : attendee.name;
+  const title = `${displayName} is attending ESME METRIX!`;
   const description =
     "Join us on 12 December 2026 at Cairo University for an exciting event exploring the world of Materials Engineering, innovation, and advanced materials.";
   const ogImageUrl = `${baseUrl}/api/og?${ogQuery.toString()}`;
@@ -99,6 +147,9 @@ export async function buildShareMetadata(
   return {
     title,
     description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
       title,
       description,
@@ -124,6 +175,10 @@ export async function buildShareMetadata(
   };
 }
 
+/**
+ * Standalone public personalized "I'm Attending" card view — completely isolated
+ * from the Member Dashboard, QR gate credentials, lookup controls, and Admin links.
+ */
 export async function ShareBadgeLanding({
   ticketId,
   searchParams,
@@ -131,82 +186,100 @@ export async function ShareBadgeLanding({
   ticketId: string;
   searchParams?: { [key: string]: string | string[] | undefined };
 }) {
-  let attendeeName = firstParam(searchParams?.name) || "ESME METRIX Attendee";
+  const attendee = await resolveShareAttendee(ticketId, searchParams);
 
-  try {
-    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      const supabase = createAdminClient();
-      const { data } = await supabase
-        .from("registrants")
-        .select("full_name")
-        .eq("registration_id", ticketId)
-        .maybeSingle();
-      if (data?.full_name) {
-        attendeeName = data.full_name;
-      }
-    }
-  } catch {
-    // Fallback to query param / generic name when offline
+  const ogQuery = new URLSearchParams();
+  if (ticketId) ogQuery.set("id", ticketId);
+  if (attendee.foundInDb) {
+    ogQuery.set(
+      "v",
+      computeOgCacheVersion({
+        name: attendee.name,
+        university: attendee.university,
+        avatarUrl: attendee.avatarUrl,
+      })
+    );
+  } else {
+    const nameParam = firstParam(searchParams?.name);
+    const uniParam = firstParam(searchParams?.university);
+    const majorParam = firstParam(searchParams?.major);
+    const roleParam = firstParam(searchParams?.role);
+    if (nameParam) ogQuery.set("name", nameParam);
+    if (uniParam) ogQuery.set("university", uniParam);
+    if (majorParam) ogQuery.set("major", majorParam);
+    if (roleParam) ogQuery.set("role", roleParam);
   }
-
-  const ogQuery = new URLSearchParams({ id: ticketId });
-  const nameParam = firstParam(searchParams?.name);
-  const uniParam = firstParam(searchParams?.university);
-  const majorParam = firstParam(searchParams?.major);
-  const roleParam = firstParam(searchParams?.role);
-  if (nameParam) ogQuery.set("name", nameParam);
-  if (uniParam) ogQuery.set("university", uniParam);
-  if (majorParam) ogQuery.set("major", majorParam);
-  if (roleParam) ogQuery.set("role", roleParam);
 
   const ogSrc = `/api/og?${ogQuery.toString()}`;
 
   return (
-    <div className="max-w-4xl mx-auto w-full px-4 py-10 sm:py-16 flex flex-col items-center text-center">
-      <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-[#D97706]/35 bg-[#0F243A] text-[#F59E0B] font-mono text-xs mb-4 font-semibold">
-        <Ticket className="w-3.5 h-3.5" />
-        OFFICIAL ATTENDEE BADGE • {ticketId}
-      </div>
+    <div className="min-h-screen w-full flex flex-col items-center justify-center px-4 py-10 sm:py-14 bg-[#15304B]">
+      <div className="max-w-4xl w-full flex flex-col items-center text-center">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-[#D97706]/40 bg-[#0F243A] text-[#F59E0B] font-mono text-xs mb-4 font-semibold uppercase tracking-wider">
+          <Ticket className="w-3.5 h-3.5" />
+          ESME METRIX 2026 • OFFICIAL ATTENDING CARD
+        </div>
 
-      <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
-        {attendeeName} is Attending <span className="text-[#F59E0B]">ESME METRIX</span>!
-      </h1>
-      <p className="text-slate-300 text-sm sm:text-base max-w-2xl mb-8 leading-relaxed">
-        Join us on 12 December 2026 at Cairo University for an exciting event exploring Materials
-        Engineering, innovation, and advanced materials.
-      </p>
+        <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mb-2">
+          {attendee.name} is Attending <span className="text-[#F59E0B]">ESME METRIX</span>!
+        </h1>
+        {attendee.university ? (
+          <p className="text-xs sm:text-sm font-mono text-amber-200/90 mb-3">
+            {attendee.university}
+          </p>
+        ) : null}
+        <p className="text-slate-300 text-sm sm:text-base max-w-2xl mb-7 leading-relaxed">
+          Join us on 12 December 2026 at Cairo University for an exciting event exploring the
+          world of Materials Engineering, innovation, and advanced materials.
+        </p>
 
-      <div className="w-full rounded-2xl overflow-hidden border-2 border-[#D97706]/40 shadow-2xl bg-[#07111E] mb-8">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={ogSrc}
-          alt={`${attendeeName} — ESME METRIX Attendance Badge`}
-          className="w-full h-auto block"
-        />
-      </div>
+        {/* Standalone 16:9 Personalized Card Display */}
+        <div className="w-full rounded-2xl overflow-hidden border-2 border-[#D97706]/50 shadow-[0_0_45px_rgba(217,119,6,0.22)] bg-[#07111E] mb-7">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={ogSrc}
+            alt={`${attendee.name} — ESME METRIX Attendance Card`}
+            className="w-full h-auto block"
+          />
+        </div>
 
-      <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-slate-300 font-mono mb-8">
-        <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0F243A] border border-slate-800">
-          <Calendar className="w-4 h-4 text-[#F59E0B]" /> 12 December 2026
-        </span>
-        <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0F243A] border border-slate-800">
-          <MapPin className="w-4 h-4 text-[#F59E0B]" /> Cairo University
-        </span>
-      </div>
+        <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-slate-300 font-mono mb-8">
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0F243A] border border-slate-800">
+            <Calendar className="w-4 h-4 text-[#F59E0B]" /> Saturday, 12 December 2026
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0F243A] border border-slate-800">
+            <MapPin className="w-4 h-4 text-[#F59E0B]" /> Cairo University
+          </span>
+        </div>
 
-      <div className="flex flex-wrap items-center justify-center gap-3">
-        <Link
-          href="/register"
-          className="px-7 py-3.5 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold text-xs sm:text-sm hover:brightness-110 shadow-[0_0_20px_rgba(217,119,6,0.35)] transition-all flex items-center gap-2"
-        >
-          Register Now for ESME METRIX <ArrowRight className="w-4 h-4" />
-        </Link>
-        <Link
-          href="/"
-          className="px-6 py-3.5 rounded-xl border border-slate-700 bg-[#0F243A] text-slate-300 hover:text-white hover:border-slate-500 text-xs sm:text-sm font-semibold transition-colors"
-        >
-          Explore Event Details
-        </Link>
+        {/* Focused Public Actions (Registration + Official Chapter LinkedIn + Download Card) */}
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <Link
+            href="/register"
+            className="px-7 py-3.5 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold text-xs sm:text-sm hover:brightness-110 shadow-[0_0_20px_rgba(217,119,6,0.35)] transition-all flex items-center gap-2"
+          >
+            Register Now <ArrowRight className="w-4 h-4" />
+          </Link>
+          <a
+            href={OFFICIAL_ESME_LINKEDIN_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-6 py-3.5 rounded-xl bg-[#0077B5] hover:bg-[#006097] text-white font-bold text-xs sm:text-sm transition-colors flex items-center gap-2 shadow-[0_0_20px_rgba(0,119,181,0.3)]"
+          >
+            <FaLinkedin className="w-4 h-4" /> Follow ESME Cairo University
+          </a>
+          <a
+            href={ogSrc}
+            download={`ESME-METRIX-Attending-${ticketId || "Card"}.png`}
+            className="px-5 py-3.5 rounded-xl border border-slate-700 bg-[#0F243A] text-slate-200 hover:text-white hover:border-[#D97706] text-xs sm:text-sm font-semibold transition-colors flex items-center gap-2"
+          >
+            <Download className="w-4 h-4 text-[#F59E0B]" /> Download Card (PNG)
+          </a>
+        </div>
+
+        <p className="mt-8 text-[11px] font-mono text-slate-400">
+          ESME Cairo University Student Chapter • Materials Engineering Event
+        </p>
       </div>
     </div>
   );

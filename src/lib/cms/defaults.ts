@@ -7,6 +7,7 @@ import {
   ESME_COMMITTEES,
   ESME_ROLES,
   LINKEDIN_POST_TEXT,
+  OFFICIAL_ESME_LINKEDIN_URL,
 } from "@/config/registration";
 import type {
   ConfirmationCmsConfig,
@@ -462,7 +463,7 @@ export const DEFAULT_FOOTER_CMS: FooterCmsConfig = {
       id: "soc-linkedin",
       platform: "linkedin",
       label: "LinkedIn",
-      url: "https://www.linkedin.com/company/esme-cairo-university/",
+      url: OFFICIAL_ESME_LINKEDIN_URL,
       enabled: true,
     },
     {

@@ -1,3 +1,4 @@
+import { OFFICIAL_ESME_LINKEDIN_URL } from "@/config/registration";
 import {
   DEFAULT_AGENDA_CMS,
   DEFAULT_CONFIRMATION_CMS,
@@ -141,6 +142,19 @@ function parseAgendaConfig(parsed: LegacyAgendaShape | null): DualHallAgendaConf
   };
 }
 
+const LEGACY_LINKEDIN_COMPANY_URL = "https://www.linkedin.com/company/esme-cairo-university/";
+
+function normalizeLinkedinCaption(rawCaption: string | undefined): string {
+  const trimmed = rawCaption?.trim() || "";
+  if (!trimmed) return DEFAULT_CONFIRMATION_CMS.linkedinCaption;
+
+  // Auto-upgrade unmodified pre-0009 captions that omit the official chapter LinkedIn follow link
+  const isUntouchedLegacy =
+    trimmed.includes("esme-metrix-registeration.vercel.app") &&
+    !trimmed.includes("Follow ESME Cairo University:");
+  return isUntouchedLegacy ? DEFAULT_CONFIRMATION_CMS.linkedinCaption : trimmed;
+}
+
 /**
  * Merges raw `site_content` key-value pairs with full defaults so public pages,
  * `/register`, `/dashboard`, `/member`, `/api/register`, and Admin CMS share one source of truth.
@@ -282,10 +296,9 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
       raw[CMS_KEYS.postRegistrationWhatsappUrl]?.trim() ||
       raw.whatsapp_group_url?.trim() ||
       DEFAULT_CONFIRMATION_CMS.postRegistrationWhatsappUrl,
-    linkedinCaption:
-      parsedConfirmation?.linkedinCaption?.trim() ||
-      raw.linkedin_caption?.trim() ||
-      DEFAULT_CONFIRMATION_CMS.linkedinCaption,
+    linkedinCaption: normalizeLinkedinCaption(
+      parsedConfirmation?.linkedinCaption?.trim() || raw.linkedin_caption?.trim()
+    ),
     ogHighlightsText:
       parsedConfirmation?.ogHighlightsText?.trim() ||
       raw.og_highlights?.trim() ||
@@ -302,7 +315,10 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
           id: s?.id || `soc-${idx}`,
           platform: s?.platform || "website",
           label: s?.label || "Link",
-          url: s?.url || "",
+          url:
+            s?.url?.trim() === LEGACY_LINKEDIN_COMPANY_URL
+              ? OFFICIAL_ESME_LINKEDIN_URL
+              : s?.url || "",
           enabled: typeof s?.enabled === "boolean" ? s.enabled : true,
         }))
       : DEFAULT_FOOTER_CMS.socialLinks;

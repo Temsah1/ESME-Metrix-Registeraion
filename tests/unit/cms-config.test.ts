@@ -81,4 +81,17 @@ describe("Comprehensive CMS defaults, parsing & serialization", () => {
     expect(parsed.form.esmeCommittees).toEqual(["IT", "PR"]);
     expect(parsed.gallery).toHaveLength(8);
   });
+
+  it("auto-upgrades legacy linkedin_caption and company URL to official student chapter URL", () => {
+    const legacyCaption =
+      "I'm attending *ESME METRIX*!\n\nRegister now: https://esme-metrix-registeration.vercel.app/\n\n#ESMEMetrix";
+    const cms = buildFullCmsData({ linkedin_caption: legacyCaption });
+    expect(cms.confirmation.linkedinCaption).toContain(
+      "Follow ESME Cairo University: https://www.linkedin.com/company/esme-cairo-university-student-chapter/"
+    );
+    const linkedInSoc = cms.footer.socialLinks.find((s) => s.platform === "linkedin");
+    expect(linkedInSoc?.url).toBe(
+      "https://www.linkedin.com/company/esme-cairo-university-student-chapter/"
+    );
+  });
 });
