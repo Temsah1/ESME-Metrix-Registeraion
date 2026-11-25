@@ -124,7 +124,6 @@ export interface RegistrationFormConfig {
       required: boolean;
     };
     committee: FormFieldConfig;
-    role: FormFieldConfig;
     idPhotoUrl: FormFieldConfig;
     avatarUrl: FormFieldConfig;
   };
@@ -133,7 +132,6 @@ export interface RegistrationFormConfig {
   academicYears: SelectOptionItem[];
   graduationYears: SelectOptionItem[];
   esmeCommittees: string[];
-  esmeRoles: string[];
   termsLabel: string;
   submitButtonLabel: string;
 }

@@ -2,15 +2,15 @@ import type { AppLanguage } from "./types";
 
 const COMMITTEE_AR_LABELS: Record<string, string> = {
   "High Board": "الهيئة العليا (High Board)",
-  IT: "لجنة تكنولوجيا المعلومات (IT)",
-  Marketing: "لجنة التسويق (Marketing)",
-  Digital: "لجنة المحتوى الرقمي (Digital)",
-};
-
-const ROLE_AR_LABELS: Record<string, string> = {
-  Member: "عضو (Member)",
-  Director: "مدير لجنة (Director)",
-  Head: "رئيس لجنة (Head)",
+  "Business & Finance Sector": "قطاع الأعمال والمالية (Business & Finance)",
+  "IT & Digital Transformation Sector":
+    "قطاع تكنولوجيا المعلومات والتحول الرقمي (IT & Digital Transformation)",
+  "Marketing & Media Sector": "قطاع التسويق والإعلام (Marketing & Media)",
+  "Operations & Supply Chain Sector":
+    "قطاع العمليات وسلاسل الإمداد (Operations & Supply Chain)",
+  "Quality Sector": "قطاع الجودة (Quality Sector)",
+  "Technical & Engineering Sector": "القطاع التقني والهندسي (Technical & Engineering)",
+  "SID Sector": "قطاع التطوير المؤسسي والاستراتيجي (SID Sector)",
 };
 
 const ACADEMIC_YEAR_AR_LABELS: Record<string, string> = {
@@ -166,11 +166,6 @@ const DEPARTMENT_AR_LABELS: Record<string, string> = {
 export function localizeCommittee(committee: string, lang: AppLanguage): string {
   if (lang !== "ar") return committee;
   return COMMITTEE_AR_LABELS[committee] || committee;
-}
-
-export function localizeRole(role: string, lang: AppLanguage): string {
-  if (lang !== "ar") return role;
-  return ROLE_AR_LABELS[role] || role;
 }
 
 export function localizeCity(city: string, lang: AppLanguage): string {

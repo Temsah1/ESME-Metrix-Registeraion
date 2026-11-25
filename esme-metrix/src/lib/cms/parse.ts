@@ -146,8 +146,10 @@ function parseAgendaConfig(parsed: LegacyAgendaShape | null): DualHallAgendaConf
 }
 
 const LEGACY_LINKEDIN_COMPANY_URL = "https://www.linkedin.com/company/esme-cairo-university/";
-const LEGACY_COMMITTEES_KEY = "digital|it|marketing";
-const LEGACY_ROLES_KEY = "head|high board|member";
+const LEGACY_COMMITTEES_SIGNATURES = new Set([
+  "digital|it|marketing",
+  "digital|high board|it|marketing",
+]);
 
 function normalizeLinkedinCaption(rawCaption: string | undefined): string {
   const trimmed = rawCaption?.trim() || "";
@@ -167,20 +169,8 @@ function normalizeCommitteesList(items: unknown): string[] {
   if (cleaned.length === 0) return DEFAULT_FORM_CMS.esmeCommittees;
 
   const sortedSignature = [...cleaned].map((c) => c.toLowerCase()).sort().join("|");
-  if (sortedSignature === LEGACY_COMMITTEES_KEY) {
+  if (LEGACY_COMMITTEES_SIGNATURES.has(sortedSignature)) {
     return DEFAULT_FORM_CMS.esmeCommittees;
-  }
-  return cleaned;
-}
-
-function normalizeRolesList(items: unknown): string[] {
-  if (!Array.isArray(items)) return DEFAULT_FORM_CMS.esmeRoles;
-  const cleaned = items.map((r) => String(r).trim()).filter(Boolean);
-  if (cleaned.length === 0) return DEFAULT_FORM_CMS.esmeRoles;
-
-  const sortedSignature = [...cleaned].map((r) => r.toLowerCase()).sort().join("|");
-  if (sortedSignature === LEGACY_ROLES_KEY) {
-    return DEFAULT_FORM_CMS.esmeRoles;
   }
   return cleaned;
 }
@@ -194,7 +184,8 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
   const parsedHighlights = safeJsonArray<HighlightMetric>(raw[CMS_KEYS.highlights]);
   const parsedGallery = safeJsonArray<GalleryItem>(raw[CMS_KEYS.gallery]);
   const parsedAgenda = safeJsonParse<LegacyAgendaShape>(raw[CMS_KEYS.agenda]);
-  const parsedForm = safeJsonParse<RegistrationFormConfig>(raw[CMS_KEYS.form]);
+  const parsedFormRaw = safeJsonParse<Record<string, unknown>>(raw[CMS_KEYS.form]);
+  const parsedForm = parsedFormRaw as Partial<RegistrationFormConfig> | null;
   const parsedConfirmation = safeJsonParse<ConfirmationCmsConfig>(raw[CMS_KEYS.confirmation]);
   const parsedFooter = safeJsonParse<FooterCmsConfig>(raw[CMS_KEYS.footer]);
   const parsedArabic = safeJsonParse<ArabicCmsData>(raw[CMS_KEYS.arabic]);
@@ -250,7 +241,11 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
 
   const form: RegistrationFormConfig = {
     ...DEFAULT_FORM_CMS,
-    ...(parsedForm || {}),
+    bannerBadge: parsedForm?.bannerBadge || DEFAULT_FORM_CMS.bannerBadge,
+    bannerTitle: parsedForm?.bannerTitle || DEFAULT_FORM_CMS.bannerTitle,
+    bannerDescription: parsedForm?.bannerDescription || DEFAULT_FORM_CMS.bannerDescription,
+    termsLabel: parsedForm?.termsLabel || DEFAULT_FORM_CMS.termsLabel,
+    submitButtonLabel: parsedForm?.submitButtonLabel || DEFAULT_FORM_CMS.submitButtonLabel,
     steps: {
       step1: { ...DEFAULT_FORM_CMS.steps.step1, ...(parsedForm?.steps?.step1 || {}) },
       step2: { ...DEFAULT_FORM_CMS.steps.step2, ...(parsedForm?.steps?.step2 || {}) },
@@ -282,7 +277,6 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
         ...(parsedForm?.fields?.isEsmeMember || {}),
       },
       committee: { ...DEFAULT_FORM_CMS.fields.committee, ...(parsedForm?.fields?.committee || {}) },
-      role: { ...DEFAULT_FORM_CMS.fields.role, ...(parsedForm?.fields?.role || {}) },
       idPhotoUrl: { ...DEFAULT_FORM_CMS.fields.idPhotoUrl, ...(parsedForm?.fields?.idPhotoUrl || {}) },
       avatarUrl: { ...DEFAULT_FORM_CMS.fields.avatarUrl, ...(parsedForm?.fields?.avatarUrl || {}) },
     },
@@ -310,7 +304,6 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
         ? parsedForm.graduationYears.filter((g) => g?.value && g?.label)
         : DEFAULT_FORM_CMS.graduationYears,
     esmeCommittees: normalizeCommitteesList(parsedForm?.esmeCommittees),
-    esmeRoles: normalizeRolesList(parsedForm?.esmeRoles),
   };
 
   const confirmation: ConfirmationCmsConfig = {

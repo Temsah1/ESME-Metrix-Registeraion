@@ -5,7 +5,6 @@ import {
   DEFAULT_GRADUATION_YEARS,
   DEFAULT_OG_HIGHLIGHTS_TEXT,
   ESME_COMMITTEES,
-  ESME_ROLES,
   LINKEDIN_POST_TEXT,
   OFFICIAL_ESME_LINKEDIN_URL,
 } from "@/config/registration";
@@ -378,11 +377,6 @@ export const DEFAULT_FORM_CMS: RegistrationFormConfig = {
       placeholder: "Select Committee...",
       required: true,
     },
-    role: {
-      label: "Role / Position",
-      placeholder: "Select Role / Position...",
-      required: true,
-    },
     idPhotoUrl: {
       label: "National ID Card (Front)",
       placeholder: "",
@@ -404,7 +398,6 @@ export const DEFAULT_FORM_CMS: RegistrationFormConfig = {
   academicYears: DEFAULT_ACADEMIC_YEARS.map((item) => ({ ...item })),
   graduationYears: DEFAULT_GRADUATION_YEARS.map((item) => ({ ...item })),
   esmeCommittees: [...ESME_COMMITTEES],
-  esmeRoles: [...ESME_ROLES],
   termsLabel:
     "I confirm that all submitted details and uploaded documents are authentic, and I agree to follow the ESME Cairo University event code of conduct.",
   submitButtonLabel: "COMPLETE REGISTRATION",

@@ -37,7 +37,6 @@ const AR_FIELD_META: Array<{
   { key: "jobTitle", enLabel: "Job Title" },
   { key: "company", enLabel: "Company / Organization" },
   { key: "committee", enLabel: "Committee" },
-  { key: "role", enLabel: "Role / Position" },
   { key: "idPhotoUrl", enLabel: "National ID Card (Front)" },
   { key: "avatarUrl", enLabel: "Profile Photo (For Event Badge)" },
 ];

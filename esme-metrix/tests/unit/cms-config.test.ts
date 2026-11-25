@@ -82,25 +82,46 @@ describe("Comprehensive CMS defaults, parsing & serialization", () => {
     expect(parsed.gallery).toHaveLength(8);
   });
 
-  it("auto-upgrades legacy linkedin_caption, committees/roles, and company URL", () => {
+  it("auto-upgrades legacy linkedin_caption, old 3/4-item committees, strips roles, and upgrades company URL", () => {
     const legacyCaption =
       "I'm attending *ESME METRIX*!\n\nRegister now: https://esme-metrix-registeration.vercel.app/\n\n#ESMEMetrix";
-    const legacyForm = JSON.stringify({
+    const expected8Committees = [
+      "High Board",
+      "Business & Finance Sector",
+      "IT & Digital Transformation Sector",
+      "Marketing & Media Sector",
+      "Operations & Supply Chain Sector",
+      "Quality Sector",
+      "Technical & Engineering Sector",
+      "SID Sector",
+    ];
+
+    const legacy3Form = JSON.stringify({
       esmeCommittees: ["IT", "Marketing", "Digital"],
       esmeRoles: ["High Board", "Head", "Member"],
+      fields: { role: { label: "Role / Position", placeholder: "", required: true } },
     });
-    const cms = buildFullCmsData({
+    const cms3 = buildFullCmsData({
       linkedin_caption: legacyCaption,
-      [CMS_KEYS.form]: legacyForm,
+      [CMS_KEYS.form]: legacy3Form,
     });
-    expect(cms.confirmation.linkedinCaption).toContain("/share/[ticketId]");
-    expect(cms.confirmation.linkedinCaption).toContain(
+    expect(cms3.confirmation.linkedinCaption).toContain("/share/[ticketId]");
+    expect(cms3.confirmation.linkedinCaption).toContain(
       "Follow ESME Cairo University: https://www.linkedin.com/company/esme-cairo-university-student-chapter/"
     );
-    expect(cms.form.esmeCommittees).toEqual(["High Board", "IT", "Marketing", "Digital"]);
-    expect(cms.form.esmeRoles).toEqual(["Member", "Director", "Head"]);
+    expect(cms3.form.esmeCommittees).toEqual(expected8Committees);
+    expect("esmeRoles" in cms3.form).toBe(false);
+    expect("role" in cms3.form.fields).toBe(false);
 
-    const linkedInSoc = cms.footer.socialLinks.find((s) => s.platform === "linkedin");
+    const legacy4Form = JSON.stringify({
+      esmeCommittees: ["High Board", "IT", "Marketing", "Digital"],
+      esmeRoles: ["Member", "Director", "Head"],
+    });
+    const cms4 = buildFullCmsData({ [CMS_KEYS.form]: legacy4Form });
+    expect(cms4.form.esmeCommittees).toEqual(expected8Committees);
+    expect("esmeRoles" in cms4.form).toBe(false);
+
+    const linkedInSoc = cms3.footer.socialLinks.find((s) => s.platform === "linkedin");
     expect(linkedInSoc?.url).toBe(
       "https://www.linkedin.com/company/esme-cairo-university-student-chapter/"
     );

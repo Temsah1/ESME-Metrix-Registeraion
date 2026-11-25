@@ -5,7 +5,6 @@ import {
   localizeCommittee,
   localizeDepartment,
   localizeFaculty,
-  localizeRole,
 } from "@/lib/i18n/registrationLabels";
 import { DEFAULT_FULL_CMS } from "@/lib/cms/defaults";
 import {
@@ -49,7 +48,6 @@ describe("Bilingual EN/AR approved glossary & i18n integrity", () => {
     expect(arCms.form.fields.isEsmeMember.yesLabel).toBe("نعم — عضو في الشابتر");
     expect(arCms.form.fields.isEsmeMember.noLabel).toBe("لا");
     expect(arCms.form.fields.committee.label).toBe("اللجنة");
-    expect(arCms.form.fields.role.label).toBe("المنصب");
     expect(arCms.form.fields.idPhotoUrl.label).toBe(
       "صورة بطاقة الرقم القومي (الوجه الأمامي)"
     );
@@ -57,15 +55,27 @@ describe("Bilingual EN/AR approved glossary & i18n integrity", () => {
       "الصورة الشخصية (للبادج التعريفي — اختياري)"
     );
 
-    // Committees & Roles
+    // 8 Official Committees / Sectors
     expect(localizeCommittee("High Board", "ar")).toBe("الهيئة العليا (High Board)");
-    expect(localizeCommittee("IT", "ar")).toBe("لجنة تكنولوجيا المعلومات (IT)");
-    expect(localizeCommittee("Marketing", "ar")).toBe("لجنة التسويق (Marketing)");
-    expect(localizeCommittee("Digital", "ar")).toBe("لجنة المحتوى الرقمي (Digital)");
-
-    expect(localizeRole("Member", "ar")).toBe("عضو (Member)");
-    expect(localizeRole("Director", "ar")).toBe("مدير لجنة (Director)");
-    expect(localizeRole("Head", "ar")).toBe("رئيس لجنة (Head)");
+    expect(localizeCommittee("Business & Finance Sector", "ar")).toBe(
+      "قطاع الأعمال والمالية (Business & Finance)"
+    );
+    expect(localizeCommittee("IT & Digital Transformation Sector", "ar")).toBe(
+      "قطاع تكنولوجيا المعلومات والتحول الرقمي (IT & Digital Transformation)"
+    );
+    expect(localizeCommittee("Marketing & Media Sector", "ar")).toBe(
+      "قطاع التسويق والإعلام (Marketing & Media)"
+    );
+    expect(localizeCommittee("Operations & Supply Chain Sector", "ar")).toBe(
+      "قطاع العمليات وسلاسل الإمداد (Operations & Supply Chain)"
+    );
+    expect(localizeCommittee("Quality Sector", "ar")).toBe("قطاع الجودة (Quality Sector)");
+    expect(localizeCommittee("Technical & Engineering Sector", "ar")).toBe(
+      "القطاع التقني والهندسي (Technical & Engineering)"
+    );
+    expect(localizeCommittee("SID Sector", "ar")).toBe(
+      "قطاع التطوير المؤسسي والاستراتيجي (SID Sector)"
+    );
 
     // Agenda & Halls
     expect(arCms.agenda.title).toBe("جدول الفعاليات");

@@ -29,7 +29,6 @@ import {
   localizeDepartment,
   localizeFaculty,
   localizeGraduationYear,
-  localizeRole,
 } from "@/lib/i18n/registrationLabels";
 import PhotoUpload from "@/components/PhotoUpload";
 import AnimatedField from "@/components/motion/AnimatedField";
@@ -115,7 +114,6 @@ export default function RegisterFormClient({
         faculties: activeConfig.faculties,
         academicYears: activeConfig.academicYears,
         esmeCommittees: activeConfig.esmeCommittees,
-        esmeRoles: activeConfig.esmeRoles,
         lang,
       }),
     [activeConfig, lang]
@@ -169,7 +167,6 @@ export default function RegisterFormClient({
       company: "",
       isEsmeMember: undefined,
       committee: "",
-      role: "",
       idPhotoUrl: "",
       avatarUrl: "",
       termsAccepted: false,
@@ -211,10 +208,9 @@ export default function RegisterFormClient({
   const handleEsmeMembershipSelect = (isMember: boolean) => {
     setErrorState(null);
     setValue("isEsmeMember", isMember, { shouldValidate: true });
-    clearErrors(["isEsmeMember", "committee", "role"]);
+    clearErrors(["isEsmeMember", "committee"]);
     if (!isMember) {
       setValue("committee", "", { shouldValidate: false });
-      setValue("role", "", { shouldValidate: false });
     }
   };
 
@@ -261,7 +257,6 @@ export default function RegisterFormClient({
         company: getValues("company") || undefined,
         isEsmeMember: getValues("isEsmeMember"),
         committee: getValues("committee"),
-        role: getValues("role"),
       });
 
       if (!step2Result.success) {
@@ -287,7 +282,6 @@ export default function RegisterFormClient({
         "company",
         "isEsmeMember",
         "committee",
-        "role",
       ]);
       setDirection(1);
       setCurrentStep(3);
@@ -337,7 +331,6 @@ export default function RegisterFormClient({
         department: data.department || "",
         customMajor: data.customMajor || "",
         committee: data.isEsmeMember ? data.committee || "" : "",
-        role: data.isEsmeMember ? data.role || "" : "",
         avatarUrl: data.avatarUrl || undefined,
       };
 
@@ -852,7 +845,7 @@ export default function RegisterFormClient({
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -4 }}
                         transition={{ duration: 0.18 }}
-                        className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-800/80"
+                        className="pt-2 border-t border-slate-800/80"
                       >
                         <AnimatedField
                           standalone
@@ -875,32 +868,6 @@ export default function RegisterFormClient({
                             {activeConfig.esmeCommittees.map((comm) => (
                               <option key={comm} value={comm}>
                                 {localizeCommittee(comm, lang)}
-                              </option>
-                            ))}
-                          </select>
-                        </AnimatedField>
-
-                        <AnimatedField
-                          standalone
-                          label={fieldLabelWithOptional(f.role)}
-                          required={f.role.required}
-                          error={errors.role?.message}
-                        >
-                          <select
-                            value={formData.role || ""}
-                            onChange={(e) => {
-                              setValue("role", e.target.value, { shouldValidate: true });
-                              clearErrors("role");
-                              setErrorState(null);
-                            }}
-                            className="w-full h-11 px-3 rounded-xl bg-[#0F243A] border border-[#D97706]/40 focus:border-[#D97706] text-white focus:outline-none text-xs sm:text-sm transition-colors"
-                          >
-                            <option value="">
-                              {f.role.placeholder || t.register.rolePlaceholder}
-                            </option>
-                            {activeConfig.esmeRoles.map((r) => (
-                              <option key={r} value={r}>
-                                {localizeRole(r, lang)}
                               </option>
                             ))}
                           </select>
@@ -1064,20 +1031,12 @@ export default function RegisterFormClient({
                     </strong>
                   </div>
                   {formData.isEsmeMember && (
-                    <>
-                      <div>
-                        <span className="text-slate-400">{t.register.committeeLabel}:</span>{" "}
-                        <strong className="text-white">
-                          {localizeCommittee(formData.committee || "", lang)}
-                        </strong>
-                      </div>
-                      <div>
-                        <span className="text-slate-400">{t.register.roleLabel}:</span>{" "}
-                        <strong className="text-white">
-                          {localizeRole(formData.role || "", lang)}
-                        </strong>
-                      </div>
-                    </>
+                    <div>
+                      <span className="text-slate-400">{t.register.committeeLabel}:</span>{" "}
+                      <strong className="text-white">
+                        {localizeCommittee(formData.committee || "", lang)}
+                      </strong>
+                    </div>
                   )}
                 </div>
 

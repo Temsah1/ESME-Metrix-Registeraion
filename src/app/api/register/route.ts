@@ -25,7 +25,6 @@ export async function POST(request: NextRequest) {
       faculties: cms.form.faculties,
       academicYears: cms.form.academicYears,
       esmeCommittees: cms.form.esmeCommittees,
-      esmeRoles: cms.form.esmeRoles,
     });
 
     const validationResult = completeRegistrationSchema.safeParse(body);
@@ -69,7 +68,7 @@ export async function POST(request: NextRequest) {
       customMajor: data.customMajor,
     });
     const committee = data.isEsmeMember ? data.committee || null : null;
-    const role = data.isEsmeMember ? data.role || null : null;
+    const role: string | null = null;
 
     const supabase = createAdminClient();
 

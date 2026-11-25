@@ -3,7 +3,6 @@ import {
   DEFAULT_ACADEMIC_YEARS,
   DEFAULT_FACULTY_CONFIGS,
   ESME_COMMITTEES,
-  ESME_ROLES,
   FacultyDefinition,
   getDepartmentsForFaculty,
   isOtherFaculty,
@@ -16,7 +15,6 @@ export {
   FACULTIES,
   DEPARTMENTS_BY_FACULTY,
   ESME_COMMITTEES,
-  ESME_ROLES,
   getDepartmentsForFaculty,
   isOtherFaculty,
   isOtherDepartment,
@@ -33,7 +31,6 @@ export interface SchemaBuildOptions {
   faculties?: readonly FacultyDefinition[];
   academicYears?: readonly { value: string; label: string }[];
   esmeCommittees?: readonly string[];
-  esmeRoles?: readonly string[];
   lang?: AppLanguage;
 }
 
@@ -59,7 +56,6 @@ const VALIDATION_MESSAGES = {
     companyRequired: "Company / Organization is required",
     esmeMemberRequired: "Please indicate whether you are a member of the ESME Chapter",
     committeeRequired: "Please select your ESME Committee",
-    roleRequired: "Please select your ESME Role / Position",
     idPhotoRequired: "National ID front photo is required",
     avatarRequired: "Profile badge photo is required",
     termsRequired: "You must accept the terms and conditions",
@@ -85,7 +81,6 @@ const VALIDATION_MESSAGES = {
     companyRequired: "اسم الشركة أو الجهة مطلوب",
     esmeMemberRequired: "يُرجى تحديد ما إذا كنت عضواً في شابتر ESME",
     committeeRequired: "يُرجى اختيار لجنتك داخل الشابتر",
-    roleRequired: "يُرجى اختيار منصبك داخل الشابتر",
     idPhotoRequired: "صورة بطاقة الرقم القومي (الوجه الأمامي) مطلوبة للمتابعة",
     avatarRequired: "الصورة الشخصية مطلوبة للبادج",
     termsRequired: "يجب الموافقة على الشروط والأحكام لإتمام التسجيل",
@@ -104,10 +99,9 @@ function validateDynamicStep2(
     company?: string;
     isEsmeMember?: boolean;
     committee?: string;
-    role?: string;
   },
   ctx: z.RefinementCtx,
-  opts: Required<Pick<SchemaBuildOptions, "faculties" | "academicYears" | "esmeCommittees" | "esmeRoles">> & {
+  opts: Required<Pick<SchemaBuildOptions, "faculties" | "academicYears" | "esmeCommittees">> & {
     fields?: Partial<RegistrationFormConfig["fields"]>;
     lang: AppLanguage;
   }
@@ -119,7 +113,6 @@ function validateDynamicStep2(
   const customMajorRequired = fCfg?.customMajor?.required ?? true;
   const esmeRequired = fCfg?.isEsmeMember?.required ?? true;
   const committeeRequired = fCfg?.committee?.required ?? true;
-  const roleRequired = fCfg?.role?.required ?? true;
   const uniRequired = fCfg?.university?.required ?? true;
   const academicRequired = fCfg?.academicYear?.required ?? true;
   const gradRequired = fCfg?.graduationYear?.required ?? true;
@@ -252,13 +245,6 @@ function validateDynamicStep2(
         message: m.committeeRequired,
       });
     }
-    if (roleRequired && !opts.esmeRoles.includes(data.role || "")) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["role"],
-        message: m.roleRequired,
-      });
-    }
   }
 }
 
@@ -282,10 +268,6 @@ export function createRegistrationSchemas(options: SchemaBuildOptions = {}) {
     options.esmeCommittees && options.esmeCommittees.length > 0
       ? options.esmeCommittees
       : [...ESME_COMMITTEES];
-  const esmeRoles =
-    options.esmeRoles && options.esmeRoles.length > 0
-      ? options.esmeRoles
-      : [...ESME_ROLES];
 
   const fullNameRequired = fCfg?.fullName?.required ?? true;
   const nationalIdRequired = fCfg?.nationalId?.required ?? true;
@@ -352,7 +334,6 @@ export function createRegistrationSchemas(options: SchemaBuildOptions = {}) {
     company: z.string().optional().default(""),
     isEsmeMember: z.boolean().optional(),
     committee: z.string().trim().optional().default(""),
-    role: z.string().trim().optional().default(""),
   });
 
   const step2Refine = (
@@ -364,7 +345,6 @@ export function createRegistrationSchemas(options: SchemaBuildOptions = {}) {
       faculties,
       academicYears,
       esmeCommittees,
-      esmeRoles,
       lang,
     });
 

@@ -40,7 +40,6 @@ import {
   localizeCommittee,
   localizeDepartment,
   localizeFaculty,
-  localizeRole,
 } from "@/lib/i18n/registrationLabels";
 import { createClient } from "@/lib/supabase/client";
 import type { PublicAttendeePass } from "@/lib/registrants/public-pass";
@@ -735,9 +734,11 @@ export default function MemberDashboardClient({
               {activePass.is_esme_member ? (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 text-xs font-bold">
                   <Award className="w-3.5 h-3.5" />
-                  {t.dashboard.esmeMemberBadge}
-                  {activePass.committee ? ` • ${localizeCommittee(activePass.committee, lang)}` : ""}
-                  {activePass.role ? ` — ${localizeRole(activePass.role, lang)}` : ""}
+                  {activePass.committee
+                    ? lang === "ar"
+                      ? `عضو في شابتر ESME — ${localizeCommittee(activePass.committee, lang)}`
+                      : `ESME Member — ${activePass.committee}`
+                    : t.dashboard.esmeMemberBadge}
                 </span>
               ) : (
                 <span className="px-3 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-xs font-semibold">

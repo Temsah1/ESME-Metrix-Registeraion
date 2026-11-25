@@ -203,13 +203,18 @@ export const DEFAULT_GRADUATION_YEARS = [
   { value: "2030", label: "2030+" },
 ] as const;
 
-/** Centralized default ESME Chapter committees (editable via Admin CMS Form Builder). */
-export const ESME_COMMITTEES = ["High Board", "IT", "Marketing", "Digital"] as const;
+/** Centralized default 8 official ESME Chapter committees/sectors (editable via Admin CMS). */
+export const ESME_COMMITTEES = [
+  "High Board",
+  "Business & Finance Sector",
+  "IT & Digital Transformation Sector",
+  "Marketing & Media Sector",
+  "Operations & Supply Chain Sector",
+  "Quality Sector",
+  "Technical & Engineering Sector",
+  "SID Sector",
+] as const;
 export type EsmeCommittee = (typeof ESME_COMMITTEES)[number];
-
-/** Centralized default ESME Chapter roles (editable via Admin CMS Form Builder). */
-export const ESME_ROLES = ["Member", "Director", "Head"] as const;
-export type EsmeRole = (typeof ESME_ROLES)[number];
 
 export function isOtherFaculty(faculty?: string | null): boolean {
   if (!faculty) return false;

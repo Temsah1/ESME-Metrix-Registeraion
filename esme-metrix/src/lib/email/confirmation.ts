@@ -54,8 +54,10 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
   const graduationYear = escapeHtml(input.graduationYear || "2026");
   const nationalId = escapeHtml(input.nationalId || "N/A");
   const esmeLine =
-    input.isEsmeMember && (input.committee || input.role)
-      ? `${escapeHtml(input.committee || "")}${input.role ? ` (${escapeHtml(input.role)})` : ""}`
+    input.isEsmeMember && input.committee
+      ? `ESME Member — ${escapeHtml(input.committee)}`
+      : input.isEsmeMember
+      ? "ESME Member"
       : "";
 
   const registrationId = escapeHtml(input.registrationId);
@@ -241,8 +243,10 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
         ? `${input.faculty || ""} — ${input.department}`
         : input.faculty || "Engineering"
     }`,
-    ...(input.isEsmeMember && (input.committee || input.role)
-      ? [`ESME Chapter: ${input.committee || ""}${input.role ? ` (${input.role})` : ""}`]
+    ...(input.isEsmeMember && input.committee
+      ? [`ESME Chapter: ESME Member — ${input.committee}`]
+      : input.isEsmeMember
+      ? ["ESME Chapter: ESME Member"]
       : []),
     `Academic Year: ${input.academicYear || "Undergraduate"} (Class of ${
       input.graduationYear || "2026"

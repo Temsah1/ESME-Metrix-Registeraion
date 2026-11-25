@@ -65,13 +65,16 @@ export function formatRoleOrMajor(input: {
   const dept = input.department?.trim() || "";
   const fac = input.faculty?.trim() || "";
 
-  if (input.isEsmeMember && (input.role || input.committee)) {
-    const chapterRole = [input.role, input.committee].filter(Boolean).join(" • ");
+  if (input.isEsmeMember && input.committee) {
+    const chapterBadge = `ESME Member — ${input.committee}`;
     if (dept) {
-      const combined = `${chapterRole} | ${dept}`;
-      return combined.length > 48 ? `${chapterRole} | ${dept.slice(0, 24)}...` : combined;
+      const combined = `${chapterBadge} | ${dept}`;
+      if (combined.length > 56 && dept.length > 24) {
+        return `${chapterBadge} | ${dept.slice(0, 24).trimEnd()}...`;
+      }
+      return combined;
     }
-    return chapterRole;
+    return chapterBadge;
   }
 
   const major = dept || fac;

@@ -44,13 +44,12 @@ describe("QR-07/08 email template uses CID attachment, not data URI, and 100% En
       faculty: "Computer Science & IT",
       department: "Cybersecurity",
       isEsmeMember: true,
-      committee: "IT",
-      role: "Head",
+      committee: "SID Sector",
     });
     expect(email.html).toContain("Cybersecurity");
-    expect(email.html).toContain("IT (Head)");
+    expect(email.html).toContain("ESME Member — SID Sector");
     expect(email.text).toContain("Cybersecurity");
-    expect(email.text).toContain("IT (Head)");
+    expect(email.text).toContain("ESME Member — SID Sector");
   });
 
   it("provides a plain-text fallback", () => {
