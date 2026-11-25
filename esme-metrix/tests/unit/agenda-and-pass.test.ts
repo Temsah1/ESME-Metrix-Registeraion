@@ -1,7 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { buildAgendaBlocks } from "@/components/DualHallAgenda";
 import { DEFAULT_AGENDA_CMS } from "@/lib/cms/defaults";
-import { parsePassLookupQuery } from "@/lib/registrants/public-pass";
+import {
+  parseLegacyFacultyFallback,
+  parseMemberLoginIdentifier,
+} from "@/lib/registrants/public-pass";
 
 describe("Wireframe Agenda Block Layout", () => {
   it("groups shared Opening top block, parallel Hall 1 & Hall 2 middle block, and shared bottom blocks", () => {
@@ -25,29 +28,33 @@ describe("Wireframe Agenda Block Layout", () => {
   });
 });
 
-describe("Member Dashboard Lookup Classification", () => {
-  it("recognizes valid Egyptian phone numbers", () => {
-    expect(parsePassLookupQuery(" 01012345678 ")).toEqual({
+describe("Member Portal Login Identifier Validation", () => {
+  it("recognizes valid Egyptian phone numbers and email addresses", () => {
+    expect(parseMemberLoginIdentifier(" 01012345678 ")).toEqual({
       kind: "phone",
       value: "01012345678",
     });
-    expect(parsePassLookupQuery("01598765432")).toEqual({
-      kind: "phone",
-      value: "01598765432",
+    expect(parseMemberLoginIdentifier("Omar.Ali@CU.edu.eg ")).toEqual({
+      kind: "email",
+      value: "omar.ali@cu.edu.eg",
     });
   });
 
-  it("recognizes Ticket IDs case-insensitively and normalizes uppercase", () => {
-    expect(parsePassLookupQuery("mx8-ab23cd")).toEqual({
-      kind: "id",
-      value: "MX8-AB23CD",
-    });
+  it("rejects empty or invalid identifiers safely", () => {
+    expect(parseMemberLoginIdentifier("")).toEqual({ kind: "invalid" });
+    expect(parseMemberLoginIdentifier("02012345678")).toEqual({ kind: "invalid" });
+    expect(parseMemberLoginIdentifier("Omar Hassan")).toEqual({ kind: "invalid" });
   });
 
-  it("rejects malformed lookup tokens safely", () => {
-    expect(parsePassLookupQuery("")).toEqual({ kind: "invalid" });
-    expect(parsePassLookupQuery("02012345678")).toEqual({ kind: "invalid" });
-    expect(parsePassLookupQuery("MX8-123")).toEqual({ kind: "invalid" });
-    expect(parsePassLookupQuery("Omar Hassan")).toEqual({ kind: "invalid" });
+  it("extracts ESME High Board committee & role cleanly from legacy faculty strings", () => {
+    expect(
+      parseLegacyFacultyFallback("Engineering — Materials Engineering [ESME: High Board / Director]")
+    ).toEqual({
+      faculty: "Engineering",
+      department: "Materials Engineering",
+      is_esme_member: true,
+      committee: "High Board",
+      role: "Director",
+    });
   });
 });

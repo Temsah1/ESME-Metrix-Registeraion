@@ -15,13 +15,15 @@ import {
   CheckCircle2,
   Clock,
   Copy,
+  CreditCard,
   Download,
   ExternalLink,
   Loader2,
+  Lock,
+  LogOut,
+  Mail,
   MapPin,
   QrCode,
-  RefreshCw,
-  Search,
   Share2,
   ShieldCheck,
   Ticket,
@@ -29,6 +31,7 @@ import {
 } from "lucide-react";
 import { FaLinkedin, FaWhatsapp } from "react-icons/fa";
 import DualHallAgenda from "@/components/DualHallAgenda";
+import { buildPersonalizedLinkedInPostText } from "@/config/registration";
 import type { ConfirmationCmsConfig, DualHallAgendaConfig } from "@/lib/cms/types";
 import { createClient } from "@/lib/supabase/client";
 import type { PublicAttendeePass } from "@/lib/registrants/public-pass";
@@ -39,6 +42,7 @@ import {
 } from "@/lib/og/canvas-renderer";
 
 const STORAGE_KEY = "esme_metrix_registration";
+const TICKET_ID_STORAGE_KEY = "esme_metrix_ticket_id";
 
 interface MemberDashboardClientProps {
   initialData?: PublicAttendeePass | null;
@@ -57,30 +61,19 @@ function subscribeToStorage() {
   return () => {};
 }
 
-function readStoredPass(): PublicAttendeePass | null {
-  if (typeof window === "undefined") return null;
-  const raw =
-    sessionStorage.getItem(STORAGE_KEY) || localStorage.getItem(STORAGE_KEY);
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(raw) as PublicAttendeePass;
-    return parsed && parsed.registration_id && parsed.qr_code ? parsed : null;
-  } catch {
-    return null;
-  }
-}
-
 function persistPassLocally(pass: PublicAttendeePass) {
   if (typeof window === "undefined") return;
   const serialized = JSON.stringify(pass);
   sessionStorage.setItem(STORAGE_KEY, serialized);
   localStorage.setItem(STORAGE_KEY, serialized);
+  localStorage.setItem(TICKET_ID_STORAGE_KEY, pass.registration_id);
 }
 
 function clearStoredPass() {
   if (typeof window === "undefined") return;
   sessionStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(TICKET_ID_STORAGE_KEY);
 }
 
 export default function MemberDashboardClient({
@@ -104,6 +97,15 @@ export default function MemberDashboardClient({
     () => null
   );
 
+  const savedTicketId = useSyncExternalStore(
+    subscribeToStorage,
+    () => {
+      if (typeof window === "undefined") return null;
+      return localStorage.getItem(TICKET_ID_STORAGE_KEY);
+    },
+    () => null
+  );
+
   const clientStoredPass = useMemo<PublicAttendeePass | null>(() => {
     if (!clientStoredRaw) return null;
     try {
@@ -115,15 +117,17 @@ export default function MemberDashboardClient({
   }, [clientStoredRaw]);
 
   const [manualPass, setManualPass] = useState<PublicAttendeePass | null>(null);
-  const [switchedOut, setSwitchedOut] = useState(false);
+  const [loggedOut, setLoggedOut] = useState(false);
 
-  const activePass = switchedOut
+  const activePass = loggedOut
     ? manualPass
     : manualPass || initialData || clientStoredPass;
 
-  const [lookupInput, setLookupInput] = useState("");
-  const [lookupLoading, setLookupLoading] = useState(false);
-  const [lookupError, setLookupError] = useState<string | null>(initialLookupError);
+  // Login form state (Phone/Email + 14-digit National ID)
+  const [identifierInput, setIdentifierInput] = useState("");
+  const [nationalIdInput, setNationalIdInput] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(initialLookupError);
 
   const [avatarOverrideUrl, setAvatarOverrideUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -136,14 +140,61 @@ export default function MemberDashboardClient({
   const ticketContainerRef = useRef<HTMLDivElement>(null);
   const ticketCanvasRef = useRef<HTMLCanvasElement>(null);
   const linkedInCanvasRef = useRef<HTMLCanvasElement>(null);
-  const linkedInSectionRef = useRef<HTMLDivElement>(null);
   const confettiFired = useRef(false);
+  const syncedTicketRef = useRef<string | null>(null);
 
   const effectiveAvatarUrl = avatarOverrideUrl || activePass?.avatar_url || null;
   const whatsappUrl = confirmationCms.postRegistrationWhatsappUrl;
-  const linkedInPostText = confirmationCms.linkedinCaption;
 
-  // Keep storage & URL synchronized when a pass is active
+  const baseAppUrl = (
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (typeof window !== "undefined"
+      ? window.location.origin
+      : "https://esme-metrix-registeration.vercel.app")
+  ).replace(/\/$/, "");
+
+  const personalizedPostText = useMemo(
+    () =>
+      buildPersonalizedLinkedInPostText(
+        confirmationCms.linkedinCaption,
+        activePass?.registration_id || "",
+        baseAppUrl
+      ),
+    [confirmationCms.linkedinCaption, activePass?.registration_id, baseAppUrl]
+  );
+
+  // Hydrate / refresh saved ticketId session directly from Supabase on return visits
+  useEffect(() => {
+    if (loggedOut || initialData || !savedTicketId) return;
+    if (syncedTicketRef.current === savedTicketId) return;
+    syncedTicketRef.current = savedTicketId;
+
+    let cancelled = false;
+    fetch(`/api/register?id=${encodeURIComponent(savedTicketId)}`)
+      .then(async (res) => {
+        if (cancelled) return;
+        if (res.status === 404 || res.status === 400) {
+          clearStoredPass();
+          setManualPass(null);
+          return;
+        }
+        if (!res.ok) return;
+        const fresh = (await res.json()) as PublicAttendeePass;
+        if (!cancelled && fresh?.registration_id) {
+          persistPassLocally(fresh);
+          setManualPass(fresh);
+        }
+      })
+      .catch(() => {
+        // Offline / network issue: keep localStorage cached pass if available
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loggedOut, initialData, savedTicketId]);
+
+  // Keep localStorage + URL synchronized when logged in
   useEffect(() => {
     if (!activePass) return;
     persistPassLocally(activePass);
@@ -158,7 +209,7 @@ export default function MemberDashboardClient({
     }
   }, [activePass]);
 
-  // Trigger celebratory confetti once when arriving right after registration
+  // Celebratory confetti right after completing registration
   useEffect(() => {
     if (isPostRegistration && activePass && !confettiFired.current) {
       confettiFired.current = true;
@@ -225,24 +276,33 @@ export default function MemberDashboardClient({
     setTimeout(() => setToastMessage(null), duration);
   };
 
-  const handlePassLookup = async (e: React.FormEvent) => {
+  const handleMemberLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = lookupInput.trim();
-    if (!trimmed) {
-      setLookupError("Please enter your Phone Number (01XXXXXXXXX) or Ticket ID (MX8-XXXXXX).");
+    const identifier = identifierInput.trim();
+    const nationalId = nationalIdInput.trim();
+
+    if (!identifier || !nationalId) {
+      setLoginError(
+        "Please enter both your registered Phone Number (or Email) and your 14-digit National ID."
+      );
       return;
     }
 
-    setLookupLoading(true);
-    setLookupError(null);
+    setLoginLoading(true);
+    setLoginError(null);
 
     try {
-      const res = await fetch(`/api/register?lookup=${encodeURIComponent(trimmed)}`);
+      const res = await fetch("/api/member/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier, nationalId }),
+      });
       const payload = await res.json();
+
       if (!res.ok || !payload?.registration_id) {
-        setLookupError(
+        setLoginError(
           payload?.error ||
-            "No registration found matching that Phone Number or Ticket ID."
+            "No registration found matching these details. Please verify your Phone Number and National ID, or register now."
         );
         return;
       }
@@ -250,21 +310,23 @@ export default function MemberDashboardClient({
       persistPassLocally(payload as PublicAttendeePass);
       setManualPass(payload as PublicAttendeePass);
       setAvatarOverrideUrl(payload.avatar_url || null);
-      setSwitchedOut(false);
+      setLoggedOut(false);
     } catch {
-      setLookupError("Network error while looking up your pass. Please try again.");
+      setLoginError("Network error while verifying your registration. Please try again.");
     } finally {
-      setLookupLoading(false);
+      setLoginLoading(false);
     }
   };
 
-  const handleSwitchPass = () => {
+  const handleLogoutSwitch = () => {
     clearStoredPass();
+    syncedTicketRef.current = null;
     setManualPass(null);
     setAvatarOverrideUrl(null);
-    setSwitchedOut(true);
-    setLookupError(null);
-    setLookupInput("");
+    setLoggedOut(true);
+    setLoginError(null);
+    setIdentifierInput("");
+    setNationalIdInput("");
     setTicketReady(false);
     setCardReady(false);
     if (typeof window !== "undefined") {
@@ -417,32 +479,23 @@ export default function MemberDashboardClient({
     if (!activePass) return;
 
     try {
-      await navigator.clipboard.writeText(linkedInPostText);
+      await navigator.clipboard.writeText(personalizedPostText);
       setCopiedCaption(true);
     } catch {
-      // Clipboard may be unavailable in restricted contexts
+      // Clipboard may be unavailable in restricted browsers; prefilled feed URL still populates text
     }
 
     showToast(
-      "LinkedIn caption copied! Paste it into your post—your personalized card loads via the link or attach your downloaded PNG.",
+      "Post text copied! Opening LinkedIn composer pre-filled with your personalized caption and card preview.",
       7000
     );
     setTimeout(() => setCopiedCaption(false), 7000);
 
-    handleDownloadCard();
-
-    const baseUrl = (
-      process.env.NEXT_PUBLIC_APP_URL ||
-      (typeof window !== "undefined"
-        ? window.location.origin
-        : "https://esme-metrix-registeration.vercel.app")
-    ).replace(/\/$/, "");
-    const shareUrl = `${baseUrl}/share/${encodeURIComponent(activePass.registration_id)}`;
-    window.open(
-      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
-      "_blank",
-      "noopener,noreferrer"
-    );
+    // Pre-fill LinkedIn's "Share your thoughts..." composer directly (no PNG auto-download)
+    const linkedInUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(
+      personalizedPostText
+    )}`;
+    window.open(linkedInUrl, "_blank", "noopener,noreferrer");
 
     fetch("/api/linkedin-shared", {
       method: "POST",
@@ -455,99 +508,107 @@ export default function MemberDashboardClient({
       .catch((e) => console.error(e));
   };
 
-  // Fallback helper for reading existing stored pass if user had cleared or came fresh
-  const hasStoredPassHint = Boolean(!activePass && readStoredPass());
-
   if (!activePass) {
     return (
-      <div className="max-w-5xl mx-auto w-full px-4 py-10 sm:py-14 space-y-14">
-        <div className="max-w-xl mx-auto p-6 sm:p-8 rounded-3xl bg-[#0F243A]/95 border border-[#D97706]/35 shadow-2xl text-center space-y-5">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-[#D97706]/15 border border-[#D97706]/40 flex items-center justify-center text-[#F59E0B] shadow-lg">
-            <QrCode className="w-8 h-8" />
-          </div>
-
-          <div>
-            <span className="inline-block px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/35 text-emerald-300 font-mono text-[11px] font-bold uppercase mb-3">
-              My Dashboard • Find My Pass
+      <div className="max-w-3xl mx-auto w-full px-4 py-12 sm:py-16">
+        <div className="max-w-lg mx-auto p-6 sm:p-8 rounded-3xl bg-[#0F243A]/95 border border-[#D97706]/35 shadow-2xl space-y-6">
+          <div className="flex flex-col items-center text-center">
+            <div className="w-16 h-16 rounded-2xl bg-[#D97706]/15 border border-[#D97706]/40 flex items-center justify-center text-[#F59E0B] shadow-lg mb-4">
+              <QrCode className="w-8 h-8" />
+            </div>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/35 text-emerald-300 font-mono text-[11px] font-bold uppercase mb-3">
+              <Lock className="w-3 h-3" /> Verified Member Portal
             </span>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              Access Your Member &amp; Attendee Dashboard
+              Access Your Member Dashboard
             </h1>
             <p className="text-slate-300 text-xs sm:text-sm mt-2 leading-relaxed">
-              Enter your registered <strong>Phone Number</strong> (e.g.{" "}
-              <code className="text-[#F59E0B]">01012345678</code>) or{" "}
-              <strong>Ticket ID</strong> (e.g.{" "}
-              <code className="text-[#F59E0B]">MX8-XXXXXX</code>) to open your
-              scannable QR pass, download PDF/PNG tickets, and follow the live hall schedule.
+              Sign in with your registered <strong>Phone Number</strong> (or{" "}
+              <strong>Email Address</strong>) and <strong>14-digit National ID</strong>{" "}
+              to open your personal QR pass, download PDF tickets, and follow the live hall agenda.
             </p>
           </div>
 
-          {lookupError && (
-            <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/35 text-red-300 text-xs flex items-center gap-2 text-left">
-              <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
-              <span>{lookupError}</span>
-            </div>
-          )}
-
-          <form onSubmit={handlePassLookup} className="space-y-3 text-left">
-            <label
-              htmlFor="pass-lookup-input"
-              className="text-xs font-semibold text-slate-300 block"
-            >
-              Mobile Phone Number or Ticket ID
-            </label>
-            <div className="flex flex-col sm:flex-row gap-2.5">
-              <input
-                id="pass-lookup-input"
-                type="text"
-                value={lookupInput}
-                onChange={(e) => setLookupInput(e.target.value)}
-                placeholder="01012345678 or MX8-XXXXXX"
-                className="flex-1 h-12 px-4 rounded-xl bg-[#15304B] border border-[#D97706]/35 focus:border-[#F59E0B] text-white placeholder-slate-400 font-mono text-sm focus:outline-none"
-              />
-              <button
-                type="submit"
-                disabled={lookupLoading}
-                className="h-12 px-6 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold text-xs sm:text-sm hover:brightness-110 transition-all shadow-[0_0_20px_rgba(217,119,6,0.35)] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shrink-0"
-              >
-                {lookupLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" /> Finding...
-                  </>
-                ) : (
-                  <>
-                    <Search className="w-4 h-4" /> Open My Pass
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-
-          <div className="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
-            <span className="text-slate-400">Haven&apos;t registered for ESME METRIX yet?</span>
-            <div className="flex items-center gap-3">
-              {hasStoredPassHint && (
-                <button
-                  type="button"
-                  onClick={() => setSwitchedOut(false)}
-                  className="text-emerald-300 hover:text-white font-semibold cursor-pointer"
-                >
-                  Restore Saved Pass
-                </button>
-              )}
+          {loginError && (
+            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/35 text-red-300 text-xs flex flex-col gap-2 text-left">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-400 mt-0.5" />
+                <span>{loginError}</span>
+              </div>
               <Link
                 href="/register"
-                className="text-[#F59E0B] hover:text-amber-300 font-bold inline-flex items-center gap-1"
+                className="text-[#F59E0B] hover:text-amber-300 font-bold inline-flex items-center gap-1 pl-6"
               >
                 Register Now <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
-          </div>
-        </div>
+          )}
 
-        {/* Always show Live Event Day Agenda underneath for instant reference */}
-        <div className="pt-4 border-t border-slate-800/80">
-          <DualHallAgenda agenda={agenda} compact id="live-agenda" />
+          <form onSubmit={handleMemberLogin} className="space-y-4">
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="member-identifier"
+                className="text-xs font-semibold text-slate-300 flex items-center gap-1.5"
+              >
+                <Mail className="w-3.5 h-3.5 text-[#D97706]" /> Phone Number or Email Address
+              </label>
+              <input
+                id="member-identifier"
+                type="text"
+                required
+                value={identifierInput}
+                onChange={(e) => setIdentifierInput(e.target.value)}
+                placeholder="01012345678 or student@cu.edu.eg"
+                className="w-full h-11 px-4 rounded-xl bg-[#15304B] border border-[#D97706]/35 focus:border-[#F59E0B] text-white placeholder-slate-400 text-sm focus:outline-none"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="member-national-id"
+                className="text-xs font-semibold text-slate-300 flex items-center gap-1.5"
+              >
+                <CreditCard className="w-3.5 h-3.5 text-[#D97706]" /> National ID (14 Digits)
+              </label>
+              <input
+                id="member-national-id"
+                type="text"
+                required
+                inputMode="numeric"
+                maxLength={14}
+                value={nationalIdInput}
+                onChange={(e) => setNationalIdInput(e.target.value)}
+                placeholder="29912010101234"
+                className="w-full h-11 px-4 rounded-xl bg-[#15304B] border border-[#D97706]/35 focus:border-[#F59E0B] text-white placeholder-slate-400 font-mono tracking-wider text-sm focus:outline-none"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loginLoading}
+              className="w-full h-12 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold text-xs sm:text-sm hover:brightness-110 transition-all shadow-[0_0_20px_rgba(217,119,6,0.35)] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              {loginLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Verifying in Supabase...
+                </>
+              ) : (
+                <>
+                  <ShieldCheck className="w-4 h-4" /> Open My Member Dashboard
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <span className="text-slate-400">Haven&apos;t registered for ESME METRIX yet?</span>
+            <Link
+              href="/register"
+              className="text-[#F59E0B] hover:text-amber-300 font-bold inline-flex items-center gap-1"
+            >
+              Register Now <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -586,10 +647,10 @@ export default function MemberDashboardClient({
         </span>
         <button
           type="button"
-          onClick={handleSwitchPass}
+          onClick={handleLogoutSwitch}
           className="px-3.5 py-1.5 rounded-xl border border-slate-700 bg-[#0F243A] text-slate-300 hover:text-white hover:border-[#D97706] text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-colors"
         >
-          <RefreshCw className="w-3.5 h-3.5" /> Switch / Lookup Pass
+          <LogOut className="w-3.5 h-3.5" /> Logout / Switch Account
         </button>
       </div>
 
@@ -619,9 +680,9 @@ export default function MemberDashboardClient({
               {activePass.is_esme_member ? (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 font-mono text-xs font-bold">
                   <Award className="w-3.5 h-3.5" />
-                  ESME CHAPTER MEMBER
-                  {activePass.role ? ` • ${activePass.role}` : ""}
-                  {activePass.committee ? ` (${activePass.committee})` : ""}
+                  ESME CHAPTER
+                  {activePass.committee ? ` • ${activePass.committee}` : ""}
+                  {activePass.role ? ` (${activePass.role})` : ""}
                 </span>
               ) : (
                 <span className="px-3 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 font-mono text-xs font-semibold">
@@ -843,14 +904,14 @@ export default function MemberDashboardClient({
       </div>
 
       {/* ── LINKEDIN SOCIAL SHARE CARD PREVIEW & COPY ── */}
-      <div ref={linkedInSectionRef} className="w-full mb-10">
+      <div className="w-full mb-10">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div>
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               <Share2 className="w-5 h-5 text-[#F59E0B]" /> LinkedIn &ldquo;I&apos;m Attending&rdquo; Card
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Personalized 1600×900 PNG download &amp; /api/og LinkedIn link preview.
+              Download badge PNG separately or click Share on LinkedIn to open a pre-filled LinkedIn post with your card preview.
             </p>
           </div>
           <button
@@ -868,7 +929,7 @@ export default function MemberDashboardClient({
         </div>
 
         <div className="p-4 sm:p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/20 text-left">
-          <div className="flex items-center justify-between mb-2 gap-3">
+          <div className="flex flex-wrap items-center justify-between mb-2 gap-3">
             <span className="text-xs font-mono font-bold text-slate-300 uppercase flex items-center gap-1.5">
               <Copy className="w-3.5 h-3.5 text-[#D97706]" /> Pre-filled LinkedIn Post Text
             </span>
@@ -876,7 +937,7 @@ export default function MemberDashboardClient({
               <button
                 type="button"
                 onClick={() => {
-                  navigator.clipboard.writeText(linkedInPostText);
+                  navigator.clipboard.writeText(personalizedPostText);
                   setCopiedCaption(true);
                   showToast("LinkedIn post text copied to clipboard!", 4000);
                   setTimeout(() => setCopiedCaption(false), 4000);
@@ -898,12 +959,12 @@ export default function MemberDashboardClient({
                 onClick={handleLinkedInShare}
                 className="px-3 py-1.5 rounded-lg bg-[#0077B5] hover:bg-[#006097] text-xs font-bold text-white flex items-center gap-1.5 transition-colors cursor-pointer"
               >
-                <FaLinkedin className="w-3.5 h-3.5" /> Share Now
+                <FaLinkedin className="w-3.5 h-3.5" /> Share on LinkedIn
               </button>
             </div>
           </div>
           <pre className="text-xs text-slate-300 font-sans whitespace-pre-wrap leading-relaxed bg-[#15304B]/60 p-3.5 rounded-xl border border-slate-800">
-            {linkedInPostText}
+            {personalizedPostText}
           </pre>
         </div>
       </div>

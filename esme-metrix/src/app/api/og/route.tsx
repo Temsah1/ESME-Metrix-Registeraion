@@ -294,7 +294,7 @@ export async function GET(request: NextRequest) {
       width: OG_WIDTH,
       height: OG_HEIGHT,
       headers: {
-        "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600",
+        "Cache-Control": "public, max-age=0, s-maxage=60, stale-while-revalidate=300",
       },
     }
   );

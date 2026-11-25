@@ -194,8 +194,8 @@ describe("REG-05b conditional ESME Chapter membership", () => {
   });
 
   it("requires valid committee and role when isEsmeMember is true", () => {
-    expect(ESME_COMMITTEES).toEqual(["IT", "Marketing", "Digital"]);
-    expect(ESME_ROLES).toEqual(["High Board", "Head", "Member"]);
+    expect(ESME_COMMITTEES).toEqual(["High Board", "IT", "Marketing", "Digital"]);
+    expect(ESME_ROLES).toEqual(["Member", "Director", "Head"]);
 
     expect(
       step2Schema.safeParse({
@@ -210,10 +210,19 @@ describe("REG-05b conditional ESME Chapter membership", () => {
       step2Schema.safeParse({
         ...validStep2,
         isEsmeMember: true,
-        committee: "IT",
+        committee: "High Board",
         role: "",
       }).success
     ).toBe(false);
+
+    expect(
+      step2Schema.safeParse({
+        ...validStep2,
+        isEsmeMember: true,
+        committee: "High Board",
+        role: "Director",
+      }).success
+    ).toBe(true);
 
     expect(
       step2Schema.safeParse({

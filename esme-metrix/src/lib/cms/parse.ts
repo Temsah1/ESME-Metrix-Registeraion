@@ -143,16 +143,43 @@ function parseAgendaConfig(parsed: LegacyAgendaShape | null): DualHallAgendaConf
 }
 
 const LEGACY_LINKEDIN_COMPANY_URL = "https://www.linkedin.com/company/esme-cairo-university/";
+const LEGACY_COMMITTEES_KEY = "digital|it|marketing";
+const LEGACY_ROLES_KEY = "head|high board|member";
 
 function normalizeLinkedinCaption(rawCaption: string | undefined): string {
   const trimmed = rawCaption?.trim() || "";
   if (!trimmed) return DEFAULT_CONFIRMATION_CMS.linkedinCaption;
 
-  // Auto-upgrade unmodified pre-0009 captions that omit the official chapter LinkedIn follow link
+  // Auto-upgrade unmodified pre-0010 captions to include /share/[ticketId] and Chapter LinkedIn URL
   const isUntouchedLegacy =
     trimmed.includes("esme-metrix-registeration.vercel.app") &&
-    !trimmed.includes("Follow ESME Cairo University:");
+    (!trimmed.includes("Follow ESME Cairo University:") ||
+      !trimmed.includes("/share/"));
   return isUntouchedLegacy ? DEFAULT_CONFIRMATION_CMS.linkedinCaption : trimmed;
+}
+
+function normalizeCommitteesList(items: unknown): string[] {
+  if (!Array.isArray(items)) return DEFAULT_FORM_CMS.esmeCommittees;
+  const cleaned = items.map((c) => String(c).trim()).filter(Boolean);
+  if (cleaned.length === 0) return DEFAULT_FORM_CMS.esmeCommittees;
+
+  const sortedSignature = [...cleaned].map((c) => c.toLowerCase()).sort().join("|");
+  if (sortedSignature === LEGACY_COMMITTEES_KEY) {
+    return DEFAULT_FORM_CMS.esmeCommittees;
+  }
+  return cleaned;
+}
+
+function normalizeRolesList(items: unknown): string[] {
+  if (!Array.isArray(items)) return DEFAULT_FORM_CMS.esmeRoles;
+  const cleaned = items.map((r) => String(r).trim()).filter(Boolean);
+  if (cleaned.length === 0) return DEFAULT_FORM_CMS.esmeRoles;
+
+  const sortedSignature = [...cleaned].map((r) => r.toLowerCase()).sort().join("|");
+  if (sortedSignature === LEGACY_ROLES_KEY) {
+    return DEFAULT_FORM_CMS.esmeRoles;
+  }
+  return cleaned;
 }
 
 /**
@@ -278,14 +305,8 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
       Array.isArray(parsedForm?.graduationYears) && parsedForm.graduationYears.length > 0
         ? parsedForm.graduationYears.filter((g) => g?.value && g?.label)
         : DEFAULT_FORM_CMS.graduationYears,
-    esmeCommittees:
-      Array.isArray(parsedForm?.esmeCommittees) && parsedForm.esmeCommittees.length > 0
-        ? parsedForm.esmeCommittees.map((c) => String(c).trim()).filter(Boolean)
-        : DEFAULT_FORM_CMS.esmeCommittees,
-    esmeRoles:
-      Array.isArray(parsedForm?.esmeRoles) && parsedForm.esmeRoles.length > 0
-        ? parsedForm.esmeRoles.map((r) => String(r).trim()).filter(Boolean)
-        : DEFAULT_FORM_CMS.esmeRoles,
+    esmeCommittees: normalizeCommitteesList(parsedForm?.esmeCommittees),
+    esmeRoles: normalizeRolesList(parsedForm?.esmeRoles),
   };
 
   const confirmation: ConfirmationCmsConfig = {

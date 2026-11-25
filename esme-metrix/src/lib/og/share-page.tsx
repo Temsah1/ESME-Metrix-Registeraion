@@ -118,16 +118,7 @@ export async function buildShareMetadata(
 
   const ogQuery = new URLSearchParams();
   if (ticketId) ogQuery.set("id", ticketId);
-  if (attendee.foundInDb) {
-    ogQuery.set(
-      "v",
-      computeOgCacheVersion({
-        name: attendee.name,
-        university: attendee.university,
-        avatarUrl: attendee.avatarUrl,
-      })
-    );
-  } else {
+  if (!attendee.foundInDb) {
     if (attendee.name && attendee.name !== "ESME METRIX Attendee") {
       ogQuery.set("name", attendee.name);
     }
@@ -252,13 +243,19 @@ export async function ShareBadgeLanding({
           </span>
         </div>
 
-        {/* Focused Public Actions (Registration + Official Chapter LinkedIn + Download Card) */}
+        {/* Focused Public Actions (Public Event Landing & Registration + Official Chapter LinkedIn + Card PNG) */}
         <div className="flex flex-wrap items-center justify-center gap-3">
           <Link
             href="/register"
             className="px-7 py-3.5 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold text-xs sm:text-sm hover:brightness-110 shadow-[0_0_20px_rgba(217,119,6,0.35)] transition-all flex items-center gap-2"
           >
             Register Now <ArrowRight className="w-4 h-4" />
+          </Link>
+          <Link
+            href="/"
+            className="px-6 py-3.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-200 hover:text-white hover:border-emerald-400 text-xs sm:text-sm font-bold transition-colors"
+          >
+            Explore Event Homepage
           </Link>
           <a
             href={OFFICIAL_ESME_LINKEDIN_URL}

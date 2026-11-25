@@ -204,11 +204,11 @@ export const DEFAULT_GRADUATION_YEARS = [
 ] as const;
 
 /** Centralized default ESME Chapter committees (editable via Admin CMS Form Builder). */
-export const ESME_COMMITTEES = ["IT", "Marketing", "Digital"] as const;
+export const ESME_COMMITTEES = ["High Board", "IT", "Marketing", "Digital"] as const;
 export type EsmeCommittee = (typeof ESME_COMMITTEES)[number];
 
 /** Centralized default ESME Chapter roles (editable via Admin CMS Form Builder). */
-export const ESME_ROLES = ["High Board", "Head", "Member"] as const;
+export const ESME_ROLES = ["Member", "Director", "Head"] as const;
 export type EsmeRole = (typeof ESME_ROLES)[number];
 
 export function isOtherFaculty(faculty?: string | null): boolean {
@@ -297,13 +297,37 @@ export function parseOgHighlights(raw?: string | null): OgHighlightItem[] {
 export const OFFICIAL_ESME_LINKEDIN_URL =
   "https://www.linkedin.com/company/esme-cairo-university-student-chapter/";
 
-export const LINKEDIN_POST_TEXT = `I'm attending *ESME METRIX*!
+export const LINKEDIN_POST_TEXT = `I'm attending ESME METRIX!
 
 Join us on 12 December 2026 at Cairo University for an exciting event exploring the world of Materials Engineering, innovation, and advanced materials.
 
 Discover, learn, and connect with fellow engineering students.
 
-Register now: https://esme-metrix-registeration.vercel.app/
+Register now: https://esme-metrix-registeration.vercel.app/share/[ticketId]
 Follow ESME Cairo University: ${OFFICIAL_ESME_LINKEDIN_URL}
 
 #ESMEMetrix #MaterialsEngineering #ESMECU #CairoUniversity`;
+
+export function buildPersonalizedLinkedInPostText(
+  template: string | null | undefined,
+  ticketId: string,
+  baseUrl = "https://esme-metrix-registeration.vercel.app"
+): string {
+  const cleanBase = baseUrl.replace(/\/$/, "");
+  const cleanId = encodeURIComponent(ticketId.trim());
+  const shareUrl = cleanId ? `${cleanBase}/share/${cleanId}` : `${cleanBase}/`;
+
+  const raw = (template || "").trim() || LINKEDIN_POST_TEXT;
+  let result = raw
+    .replace(/\[ticketId\]|\{ticketId\}/gi, cleanId)
+    .replace(/I'm attending \*ESME METRIX\*!/g, "I'm attending ESME METRIX!");
+
+  if (cleanId && !result.includes(`/share/${cleanId}`)) {
+    result = result.replace(
+      /(Register now:\s*)(https?:\/\/[^\s]+)/i,
+      `$1${shareUrl}`
+    );
+  }
+
+  return result;
+}

@@ -10,7 +10,7 @@ import {
   adaptInsertRowForSchemaError,
   buildLegacyFacultyValue,
 } from "@/lib/supabase/registrant-compat";
-import { fetchPublicPass } from "@/lib/registrants/public-pass";
+import { fetchPublicPassById } from "@/lib/registrants/public-pass";
 import QRCode from "qrcode";
 import crypto from "crypto";
 
@@ -292,24 +292,19 @@ export async function PATCH(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const rawLookup =
-      searchParams.get("lookup") ||
-      searchParams.get("q") ||
-      searchParams.get("phone") ||
-      searchParams.get("id");
-
-    const result = await fetchPublicPass(rawLookup);
+    const id = searchParams.get("id") || searchParams.get("ticketId");
+    const result = await fetchPublicPassById(id);
 
     if (result.status === "invalid") {
       return NextResponse.json(
-        { error: "Please provide a valid Ticket ID (MX8-XXXXXX) or Egyptian Mobile Phone (01XXXXXXXXX)." },
+        { error: "Valid registration_id (MX8-XXXXXX) is required." },
         { status: 400 }
       );
     }
 
     if (result.status === "not_found") {
       return NextResponse.json(
-        { error: "No registration found matching that Phone Number or Ticket ID." },
+        { error: "Registration not found." },
         { status: 404 }
       );
     }

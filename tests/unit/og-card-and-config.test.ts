@@ -3,6 +3,7 @@ import {
   DEFAULT_OG_HIGHLIGHTS,
   LINKEDIN_POST_TEXT,
   OFFICIAL_ESME_LINKEDIN_URL,
+  buildPersonalizedLinkedInPostText,
   parseOgHighlights,
 } from "@/config/registration";
 import {
@@ -75,21 +76,23 @@ describe("OG Card template slots, highlights & LinkedIn copy", () => {
     expect(getInitials("")).toBe("EM");
   });
 
-  it("keeps exact LinkedIn post copy and tags", () => {
-    expect(LINKEDIN_POST_TEXT).toContain("I'm attending *ESME METRIX*!");
-    expect(LINKEDIN_POST_TEXT).toContain(
+  it("keeps exact LinkedIn post copy, share URL, and tags", () => {
+    const rendered = buildPersonalizedLinkedInPostText(LINKEDIN_POST_TEXT, "MX8-ABC123");
+    expect(rendered).toContain("I'm attending ESME METRIX!");
+    expect(rendered).not.toContain("*ESME METRIX*");
+    expect(rendered).toContain(
       "Join us on 12 December 2026 at Cairo University for an exciting event exploring the world of Materials Engineering, innovation, and advanced materials."
     );
-    expect(LINKEDIN_POST_TEXT).toContain(
+    expect(rendered).toContain(
       "Discover, learn, and connect with fellow engineering students."
     );
-    expect(LINKEDIN_POST_TEXT).toContain(
-      "Register now: https://esme-metrix-registeration.vercel.app/"
+    expect(rendered).toContain(
+      "Register now: https://esme-metrix-registeration.vercel.app/share/MX8-ABC123"
     );
-    expect(LINKEDIN_POST_TEXT).toContain(
+    expect(rendered).toContain(
       `Follow ESME Cairo University: ${OFFICIAL_ESME_LINKEDIN_URL}`
     );
-    expect(LINKEDIN_POST_TEXT).toContain(
+    expect(rendered).toContain(
       "#ESMEMetrix #MaterialsEngineering #ESMECU #CairoUniversity"
     );
   });

@@ -114,7 +114,7 @@ export default function SiteFooter({
               </li>
               <li>
                 <Link href="/dashboard" className="text-emerald-300 hover:text-white transition-colors font-semibold">
-                  Member Dashboard &amp; Pass
+                  Member Dashboard
                 </Link>
               </li>
               <li>

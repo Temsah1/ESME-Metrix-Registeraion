@@ -321,6 +321,9 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
       const serialized = JSON.stringify(result);
       sessionStorage.setItem("esme_metrix_registration", serialized);
       localStorage.setItem("esme_metrix_registration", serialized);
+      if (result.registration_id) {
+        localStorage.setItem("esme_metrix_ticket_id", String(result.registration_id));
+      }
       router.push(`/dashboard?id=${encodeURIComponent(result.registration_id)}`);
     } catch {
       setServerError("Network error. Please verify your connection and try again.");

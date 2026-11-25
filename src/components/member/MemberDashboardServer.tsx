@@ -1,6 +1,6 @@
 import MemberDashboardClient from "@/components/member/MemberDashboardClient";
 import { getFullCmsData } from "@/lib/cms/server";
-import { fetchPublicPass } from "@/lib/registrants/public-pass";
+import { fetchPublicPassById } from "@/lib/registrants/public-pass";
 
 function firstParam(val: string | string[] | undefined): string {
   if (Array.isArray(val)) return val[0] || "";
@@ -12,23 +12,20 @@ export async function renderMemberDashboardPage(params: {
   isPostRegistration?: boolean;
 }) {
   const resolvedSearch = params.searchParams ? await params.searchParams : {};
-  const lookupToken =
-    firstParam(resolvedSearch.id) ||
-    firstParam(resolvedSearch.ticketId) ||
-    firstParam(resolvedSearch.phone) ||
-    firstParam(resolvedSearch.lookup);
+  const ticketIdToken =
+    firstParam(resolvedSearch.id) || firstParam(resolvedSearch.ticketId);
 
   const [cms, lookupRes] = await Promise.all([
     getFullCmsData(),
-    lookupToken
-      ? fetchPublicPass(lookupToken)
+    ticketIdToken
+      ? fetchPublicPassById(ticketIdToken)
       : Promise.resolve({ status: "invalid" as const }),
   ]);
 
   const initialData = lookupRes.status === "found" ? lookupRes.pass : null;
   const initialLookupError =
-    lookupToken && lookupRes.status !== "found"
-      ? "No registration found for the provided Phone Number or Ticket ID."
+    ticketIdToken && lookupRes.status !== "found"
+      ? "No registration found for that Ticket ID. Please sign in below using your Phone Number (or Email) and National ID."
       : null;
 
   return (

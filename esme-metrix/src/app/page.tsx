@@ -115,7 +115,7 @@ export default async function HomePage() {
             className="w-full sm:w-auto px-6 py-4 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-200 hover:text-white hover:border-emerald-400 font-semibold text-sm transition-all flex items-center justify-center gap-2"
           >
             <Ticket className="w-4 h-4 text-emerald-300" />
-            My Pass / Dashboard
+            Member Dashboard
           </Link>
         </div>
 
