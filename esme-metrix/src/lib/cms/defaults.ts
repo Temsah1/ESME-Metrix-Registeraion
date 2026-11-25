@@ -19,6 +19,7 @@ import type {
   LandingCmsConfig,
   RegistrationFormConfig,
 } from "@/lib/cms/types";
+import { DEFAULT_ARABIC_CMS } from "@/lib/cms/arabic";
 
 export const DEFAULT_EVENT_MAPS_URL = "https://maps.app.goo.gl/rZuGj1EEioQNB8K5A?g_st=ic";
 
@@ -518,4 +519,5 @@ export const DEFAULT_FULL_CMS: FullCmsData = {
   form: DEFAULT_FORM_CMS,
   confirmation: DEFAULT_CONFIRMATION_CMS,
   footer: DEFAULT_FOOTER_CMS,
+  ar: DEFAULT_ARABIC_CMS,
 };

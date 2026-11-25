@@ -187,6 +187,74 @@ export interface FooterCmsConfig {
   socialLinks: SocialLinkItem[];
 }
 
+export interface ArabicCmsSessionCopy {
+  time?: string;
+  title: string;
+  speaker: string;
+  role: string;
+  tag: string;
+  description: string;
+}
+
+export interface ArabicCmsFieldCopy {
+  label: string;
+  placeholder?: string;
+  helperText?: string;
+  yesLabel?: string;
+  noLabel?: string;
+}
+
+export interface ArabicCmsData {
+  eventDate: string;
+  eventVenue: string;
+  eventTime: string;
+  landing: LandingCmsConfig;
+  highlights: HighlightMetric[];
+  gallery: { id: string; caption: string; alt: string }[];
+  agenda: {
+    eyebrow: string;
+    title: string;
+    subtitle: string;
+    hall1Name: string;
+    hall1Capacity: string;
+    hall1Subtitle: string;
+    hall2Name: string;
+    hall2Capacity: string;
+    hall2Subtitle: string;
+    sessions: Record<string, ArabicCmsSessionCopy>;
+  };
+  form: {
+    bannerBadge: string;
+    bannerTitle: string;
+    bannerDescription: string;
+    steps: RegistrationFormConfig["steps"];
+    fields: Record<keyof RegistrationFormConfig["fields"], ArabicCmsFieldCopy>;
+    termsLabel: string;
+    submitButtonLabel: string;
+  };
+  confirmation: {
+    badgeLabel: string;
+    heading: string;
+    subheading: string;
+    whatsappBadge: string;
+    whatsappTitle: string;
+    whatsappDescription: string;
+    whatsappButtonLabel: string;
+    checklistTitle: string;
+    checklist: ChecklistItemConfig[];
+    linkedinCaption: string;
+  };
+  footer: {
+    brandTitle: string;
+    chapterName: string;
+    tagline: string;
+    bio: string;
+    eventMeta: string;
+    portalLabel: string;
+    copyrightText: string;
+  };
+}
+
 export interface FullCmsData {
   eventDate: string;
   eventVenue: string;
@@ -201,4 +269,5 @@ export interface FullCmsData {
   form: RegistrationFormConfig;
   confirmation: ConfirmationCmsConfig;
   footer: FooterCmsConfig;
+  ar?: ArabicCmsData;
 }

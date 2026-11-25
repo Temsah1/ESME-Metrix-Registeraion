@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,7 +18,19 @@ import {
   CompleteRegistrationParsed,
 } from "@/lib/validations/registration";
 import { OTHER_DEPARTMENT_GENERIC } from "@/config/registration";
-import type { FormFieldConfig, RegistrationFormConfig } from "@/lib/cms/types";
+import { getLocalizedFormConfig } from "@/lib/cms/arabic";
+import type { ArabicCmsData, FormFieldConfig, RegistrationFormConfig } from "@/lib/cms/types";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { getDictionary } from "@/lib/i18n/dictionary";
+import {
+  localizeAcademicYear,
+  localizeCity,
+  localizeCommittee,
+  localizeDepartment,
+  localizeFaculty,
+  localizeGraduationYear,
+  localizeRole,
+} from "@/lib/i18n/registrationLabels";
 import PhotoUpload from "@/components/PhotoUpload";
 import AnimatedField from "@/components/motion/AnimatedField";
 import { containerStagger, buttonTapMotion } from "@/components/motion/MotionTokens";
@@ -42,9 +55,14 @@ import {
   Users,
 } from "lucide-react";
 
+interface StepMotionCustom {
+  direction: number;
+  isRtl: boolean;
+}
+
 const registrationStepVariants: Variants = {
-  enter: (direction: number) => ({
-    x: direction > 0 ? 32 : -32,
+  enter: ({ direction, isRtl }: StepMotionCustom) => ({
+    x: (direction > 0 ? 32 : -32) * (isRtl ? -1 : 1),
     opacity: 0,
   }),
   center: {
@@ -53,9 +71,9 @@ const registrationStepVariants: Variants = {
     opacity: 1,
     transition: { duration: 0.3, ease: "easeOut" },
   },
-  exit: (direction: number) => ({
+  exit: ({ direction, isRtl }: StepMotionCustom) => ({
     zIndex: 0,
-    x: direction < 0 ? 32 : -32,
+    x: (direction < 0 ? 32 : -32) * (isRtl ? -1 : 1),
     opacity: 0,
     transition: { duration: 0.2, ease: "easeOut" },
   }),
@@ -63,45 +81,64 @@ const registrationStepVariants: Variants = {
 
 interface RegisterFormClientProps {
   formConfig: RegistrationFormConfig;
+  arFormConfig?: ArabicCmsData["form"];
 }
 
-export default function RegisterFormClient({ formConfig }: RegisterFormClientProps) {
+export default function RegisterFormClient({
+  formConfig,
+  arFormConfig,
+}: RegisterFormClientProps) {
   const router = useRouter();
+  const { lang, isRtl } = useLanguage();
+  const t = getDictionary(lang);
+  const activeConfig = useMemo(
+    () => getLocalizedFormConfig(formConfig, arFormConfig, lang),
+    [formConfig, arFormConfig, lang]
+  );
+
   const [currentStep, setCurrentStep] = useState(1);
   const [direction, setDirection] = useState(1);
-  const [serverError, setServerError] = useState<string | null>(null);
+  const [errorState, setErrorState] = useState<{
+    message: string;
+    lang: typeof lang;
+    duplicate?: boolean;
+  } | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const visibleServerError =
+    errorState && errorState.lang === lang ? errorState : null;
 
   const schemas = useMemo(
     () =>
       createRegistrationSchemas({
-        fields: formConfig.fields,
-        faculties: formConfig.faculties,
-        academicYears: formConfig.academicYears,
-        esmeCommittees: formConfig.esmeCommittees,
-        esmeRoles: formConfig.esmeRoles,
+        fields: activeConfig.fields,
+        faculties: activeConfig.faculties,
+        academicYears: activeConfig.academicYears,
+        esmeCommittees: activeConfig.esmeCommittees,
+        esmeRoles: activeConfig.esmeRoles,
+        lang,
       }),
-    [formConfig]
+    [activeConfig, lang]
   );
 
   const stepsMeta = useMemo(
     () => [
-      { id: 1, name: formConfig.steps.step1.navLabel, icon: User },
-      { id: 2, name: formConfig.steps.step2.navLabel, icon: GraduationCap },
-      { id: 3, name: formConfig.steps.step3.navLabel, icon: FileCheck2 },
-      { id: 4, name: formConfig.steps.step4.navLabel, icon: Send },
+      { id: 1, name: activeConfig.steps.step1.navLabel, icon: User },
+      { id: 2, name: activeConfig.steps.step2.navLabel, icon: GraduationCap },
+      { id: 3, name: activeConfig.steps.step3.navLabel, icon: FileCheck2 },
+      { id: 4, name: activeConfig.steps.step4.navLabel, icon: Send },
     ],
-    [formConfig.steps]
+    [activeConfig.steps]
   );
 
-  const defaultCity = formConfig.cities[0] || "Cairo";
+  const defaultCity = activeConfig.cities[0] || "Cairo";
   const defaultAcademicYear =
-    formConfig.academicYears.find((y) => y.value === "3rd")?.value ||
-    formConfig.academicYears[0]?.value ||
+    activeConfig.academicYears.find((y) => y.value === "3rd")?.value ||
+    activeConfig.academicYears[0]?.value ||
     "3rd";
   const defaultGradYear =
-    formConfig.graduationYears.find((y) => y.value === "2026")?.value ||
-    formConfig.graduationYears[0]?.value ||
+    activeConfig.graduationYears.find((y) => y.value === "2026")?.value ||
+    activeConfig.graduationYears[0]?.value ||
     "2026";
 
   const {
@@ -139,9 +176,9 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
     },
   });
 
-  const f = formConfig.fields;
+  const f = activeConfig.fields;
   const formData = watch();
-  const availableDepartments = getDepartmentsForFaculty(formData.faculty, formConfig.faculties);
+  const availableDepartments = getDepartmentsForFaculty(formData.faculty, activeConfig.faculties);
   const showCustomMajorInput = requiresCustomMajor(formData.faculty, formData.department);
   const resolvedMajorDisplay = resolveDepartment({
     faculty: formData.faculty,
@@ -150,11 +187,11 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
   });
 
   const handleFacultyChange = (selectedFaculty: string) => {
-    setServerError(null);
+    setErrorState(null);
     setValue("faculty", selectedFaculty, { shouldValidate: true });
     clearErrors(["faculty", "department", "customMajor"]);
     if (isOtherFaculty(selectedFaculty)) {
-      const otherDepts = getDepartmentsForFaculty(selectedFaculty, formConfig.faculties);
+      const otherDepts = getDepartmentsForFaculty(selectedFaculty, activeConfig.faculties);
       setValue("department", otherDepts[0] || OTHER_DEPARTMENT_GENERIC, { shouldValidate: true });
     } else {
       setValue("department", "", { shouldValidate: false });
@@ -163,7 +200,7 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
   };
 
   const handleDepartmentChange = (selectedDepartment: string) => {
-    setServerError(null);
+    setErrorState(null);
     setValue("department", selectedDepartment, { shouldValidate: true });
     clearErrors(["department", "customMajor"]);
     if (!requiresCustomMajor(getValues("faculty"), selectedDepartment)) {
@@ -172,7 +209,7 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
   };
 
   const handleEsmeMembershipSelect = (isMember: boolean) => {
-    setServerError(null);
+    setErrorState(null);
     setValue("isEsmeMember", isMember, { shouldValidate: true });
     clearErrors(["isEsmeMember", "committee", "role"]);
     if (!isMember) {
@@ -182,7 +219,7 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
   };
 
   const handleNext = async () => {
-    setServerError(null);
+    setErrorState(null);
 
     if (currentStep === 1) {
       const step1Result = schemas.step1Schema.safeParse({
@@ -198,10 +235,10 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
           const field = issue.path[0] as keyof CompleteRegistrationInput;
           setError(field, { type: "manual", message: issue.message });
         });
-        setServerError(
-          step1Result.error.issues[0]?.message ||
-            "Please complete all required personal details."
-        );
+        setErrorState({
+          message: step1Result.error.issues[0]?.message || t.register.missingRequiredError,
+          lang,
+        });
         return;
       }
 
@@ -232,10 +269,10 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
           const field = issue.path[0] as keyof CompleteRegistrationInput;
           setError(field, { type: "manual", message: issue.message });
         });
-        setServerError(
-          step2Result.error.issues[0]?.message ||
-            "Please complete all required academic details before continuing."
-        );
+        setErrorState({
+          message: step2Result.error.issues[0]?.message || t.register.missingRequiredError,
+          lang,
+        });
         return;
       }
 
@@ -269,10 +306,10 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
           const field = issue.path[0] as keyof CompleteRegistrationInput;
           setError(field, { type: "manual", message: issue.message });
         });
-        setServerError(
-          step3Result.error.issues[0]?.message ||
-            "Please complete your verification documents before continuing."
-        );
+        setErrorState({
+          message: step3Result.error.issues[0]?.message || t.register.missingRequiredError,
+          lang,
+        });
         return;
       }
 
@@ -284,7 +321,7 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
   };
 
   const handleBack = () => {
-    setServerError(null);
+    setErrorState(null);
     setDirection(-1);
     setCurrentStep((prev) => Math.max(prev - 1, 1));
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -292,7 +329,7 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
 
   const onSubmit = async (data: CompleteRegistrationParsed) => {
     setSubmitting(true);
-    setServerError(null);
+    setErrorState(null);
 
     try {
       const payload = {
@@ -313,7 +350,15 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
       const result = await response.json();
 
       if (!response.ok) {
-        setServerError(result.error || "Registration could not be completed.");
+        const isDuplicate = response.status === 409;
+        setErrorState({
+          message:
+            lang === "ar" && isDuplicate
+              ? "رقم الهاتف أو البريد الإلكتروني أو الرقم القومي مسجّل بالفعل من قبل."
+              : result.error || t.register.genericSaveError,
+          lang,
+          duplicate: isDuplicate,
+        });
         setSubmitting(false);
         return;
       }
@@ -326,7 +371,7 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
       }
       router.push(`/dashboard?id=${encodeURIComponent(result.registration_id)}`);
     } catch {
-      setServerError("Network error. Please verify your connection and try again.");
+      setErrorState({ message: t.dashboard.networkError, lang });
       setSubmitting(false);
     }
   };
@@ -336,11 +381,23 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
   const isPhoneValid = EGYPTIAN_PHONE_REGEX.test(formData.phone || "");
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email || "");
 
-  const fieldLabelWithOptional = (cfg: FormFieldConfig) =>
-    cfg.required ? cfg.label : `${cfg.label} (Optional)`;
+  const fieldLabelWithOptional = (cfg: FormFieldConfig) => {
+    if (cfg.required) return cfg.label;
+    if (cfg.label.includes("اختياري") || cfg.label.toLowerCase().includes("optional")) {
+      return cfg.label;
+    }
+    return `${cfg.label} (${t.common.optional})`;
+  };
+
+  const matchedAcademicYearObj = activeConfig.academicYears.find(
+    (y) => y.value === formData.academicYear
+  );
+  const matchedGradYearObj = activeConfig.graduationYears.find(
+    (y) => y.value === formData.graduationYear
+  );
 
   return (
-    <div className="max-w-3xl mx-auto w-full px-4 py-8 sm:py-12 relative overflow-hidden">
+    <div className="max-w-3xl mx-auto w-full px-4 py-8 sm:py-12 relative overflow-hidden text-start">
       {/* Official Certificate Announcement Banner */}
       <motion.div
         initial={{ y: -16, opacity: 0 }}
@@ -351,17 +408,17 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D97706] to-[#F59E0B] flex items-center justify-center shrink-0 shadow-md">
           <Award className="w-5 h-5 text-white" />
         </div>
-        <div className="text-left flex-1">
+        <div className="text-start flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-bold text-white font-mono tracking-wide uppercase">
-              {formConfig.bannerTitle}
+            <span className="text-xs sm:text-sm font-bold text-white tracking-wide">
+              {activeConfig.bannerTitle}
             </span>
-            <span className="text-[10px] bg-[#10B981]/30 text-[#10B981] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
-              {formConfig.bannerBadge}
+            <span className="text-[10px] bg-[#10B981]/30 text-[#10B981] px-2 py-0.5 rounded-full font-bold tracking-wider">
+              {activeConfig.bannerBadge}
             </span>
           </div>
           <p className="text-xs text-slate-300 mt-0.5 leading-snug">
-            {formConfig.bannerDescription}
+            {activeConfig.bannerDescription}
           </p>
         </div>
       </motion.div>
@@ -382,7 +439,7 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
                   disabled={step.id > currentStep}
                   onClick={() => {
                     if (step.id < currentStep) {
-                      setServerError(null);
+                      setErrorState(null);
                       setDirection(-1);
                       setCurrentStep(step.id);
                     }
@@ -400,7 +457,7 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
                   {isCompleted ? <CheckCircle2 className="w-5 h-5" /> : <Icon className="w-4 h-4" />}
                 </motion.button>
                 <span
-                  className={`text-[11px] font-medium mt-2 hidden sm:block ${
+                  className={`text-[11px] font-medium mt-2 hidden sm:block text-center ${
                     isActive ? "text-[#D97706] font-semibold" : isCompleted ? "text-slate-200" : "text-slate-500"
                   }`}
                 >
@@ -435,22 +492,35 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
         <input type="hidden" {...register("idPhotoUrl")} />
         <input type="hidden" {...register("avatarUrl")} />
 
-        {serverError && (
+        {visibleServerError && (
           <motion.div
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs sm:text-sm flex items-center gap-2.5"
+            className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs sm:text-sm flex flex-col gap-2"
           >
-            <AlertCircle className="w-5 h-5 shrink-0 text-red-400" />
-            <span>{serverError}</span>
+            <div className="flex items-center gap-2.5">
+              <AlertCircle className="w-5 h-5 shrink-0 text-red-400" />
+              <span>{visibleServerError.message}</span>
+            </div>
+            {visibleServerError.duplicate && (
+              <div className="flex flex-wrap items-center gap-2 ps-7 text-xs">
+                <span className="text-slate-300">{t.register.existingAccountHint}</span>
+                <Link
+                  href="/dashboard"
+                  className="text-[#F59E0B] hover:text-amber-300 font-bold underline underline-offset-2"
+                >
+                  {t.register.accessExistingDashboardCta}
+                </Link>
+              </div>
+            )}
           </motion.div>
         )}
 
-        <AnimatePresence custom={direction} mode="wait">
+        <AnimatePresence custom={{ direction, isRtl }} mode="wait">
           {currentStep === 1 && (
             <motion.div
               key="step1"
-              custom={direction}
+              custom={{ direction, isRtl }}
               variants={registrationStepVariants}
               initial="enter"
               animate="center"
@@ -459,9 +529,9 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
             >
               <div className="border-b border-slate-800 pb-3 mb-1">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <User className="w-5 h-5 text-[#D97706]" /> {formConfig.steps.step1.title}
+                  <User className="w-5 h-5 text-[#D97706]" /> {activeConfig.steps.step1.title}
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">{formConfig.steps.step1.subtitle}</p>
+                <p className="text-xs text-slate-400 mt-1">{activeConfig.steps.step1.subtitle}</p>
               </div>
 
               <motion.div variants={containerStagger} initial="hidden" animate="visible" className="flex flex-col gap-5">
@@ -491,6 +561,7 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
                   <input
                     {...register("nationalId")}
                     type="text"
+                    dir="ltr"
                     maxLength={14}
                     placeholder={f.nationalId.placeholder}
                     className="w-full h-11 px-3.5 rounded-xl bg-[#15304B] border border-[#D97706]/40 focus:border-[#D97706] text-white placeholder:text-gray-500 focus:outline-none text-sm font-mono tracking-wider transition-colors"
@@ -509,6 +580,7 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
                     <input
                       {...register("phone")}
                       type="tel"
+                      dir="ltr"
                       placeholder={f.phone.placeholder}
                       className="w-full h-11 px-3.5 rounded-xl bg-[#15304B] border border-[#D97706]/40 focus:border-[#D97706] text-white placeholder:text-gray-500 focus:outline-none text-sm font-mono transition-colors"
                     />
@@ -525,6 +597,7 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
                     <input
                       {...register("email")}
                       type="email"
+                      dir="ltr"
                       placeholder={f.email.placeholder}
                       className="w-full h-11 px-3.5 rounded-xl bg-[#15304B] border border-[#D97706]/40 focus:border-[#D97706] text-white placeholder:text-gray-500 focus:outline-none text-sm transition-colors"
                     />
@@ -541,9 +614,9 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
                     {...register("city")}
                     className="w-full h-11 px-3 rounded-xl bg-[#15304B] border border-[#D97706]/40 focus:border-[#D97706] text-white focus:outline-none text-sm transition-colors"
                   >
-                    {formConfig.cities.map((city) => (
+                    {activeConfig.cities.map((city) => (
                       <option key={city} value={city}>
-                        {city}
+                        {localizeCity(city, lang)}
                       </option>
                     ))}
                   </select>
@@ -555,7 +628,7 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
           {currentStep === 2 && (
             <motion.div
               key="step2"
-              custom={direction}
+              custom={{ direction, isRtl }}
               variants={registrationStepVariants}
               initial="enter"
               animate="center"
@@ -564,9 +637,9 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
             >
               <div className="border-b border-slate-800 pb-3 mb-1">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <GraduationCap className="w-5 h-5 text-[#D97706]" /> {formConfig.steps.step2.title}
+                  <GraduationCap className="w-5 h-5 text-[#D97706]" /> {activeConfig.steps.step2.title}
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">{formConfig.steps.step2.subtitle}</p>
+                <p className="text-xs text-slate-400 mt-1">{activeConfig.steps.step2.subtitle}</p>
               </div>
 
               <motion.div variants={containerStagger} initial="hidden" animate="visible" className="flex flex-col gap-5">
@@ -596,10 +669,10 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
                       onChange={(e) => handleFacultyChange(e.target.value)}
                       className="w-full h-11 px-3 rounded-xl bg-[#15304B] border border-[#D97706]/40 focus:border-[#D97706] text-white focus:outline-none text-xs sm:text-sm transition-colors"
                     >
-                      <option value="">{f.faculty.placeholder || "Select Faculty / Major Category..."}</option>
-                      {formConfig.faculties.map((fac) => (
+                      <option value="">{f.faculty.placeholder || t.register.selectFaculty}</option>
+                      {activeConfig.faculties.map((fac) => (
                         <option key={fac.name} value={fac.name}>
-                          {fac.name}
+                          {localizeFaculty(fac.name, lang)}
                         </option>
                       ))}
                     </select>
@@ -618,12 +691,12 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
                     >
                       <option value="">
                         {formData.faculty
-                          ? f.department.placeholder || "Select Department / Specialization..."
-                          : "Select Faculty First..."}
+                          ? f.department.placeholder || t.register.selectDepartment
+                          : t.register.selectFacultyFirst}
                       </option>
                       {availableDepartments.map((dept) => (
                         <option key={dept} value={dept}>
-                          {dept}
+                          {localizeDepartment(dept, lang)}
                         </option>
                       ))}
                     </select>
@@ -667,9 +740,9 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
                       {...register("academicYear")}
                       className="w-full h-11 px-3 rounded-xl bg-[#15304B] border border-[#D97706]/40 focus:border-[#D97706] text-white focus:outline-none text-sm transition-colors"
                     >
-                      {formConfig.academicYears.map((yr) => (
+                      {activeConfig.academicYears.map((yr) => (
                         <option key={yr.value} value={yr.value}>
-                          {yr.label}
+                          {localizeAcademicYear(yr.value, yr.label, lang)}
                         </option>
                       ))}
                     </select>
@@ -685,9 +758,9 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
                       {...register("graduationYear")}
                       className="w-full h-11 px-3 rounded-xl bg-[#15304B] border border-[#D97706]/40 focus:border-[#D97706] text-white focus:outline-none text-sm transition-colors"
                     >
-                      {formConfig.graduationYears.map((yr) => (
+                      {activeConfig.graduationYears.map((yr) => (
                         <option key={yr.value} value={yr.value}>
-                          {yr.label}
+                          {localizeGraduationYear(yr.value, yr.label, lang)}
                         </option>
                       ))}
                     </select>
@@ -747,7 +820,7 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
                             : "bg-[#0F243A] border-slate-700 text-slate-300 hover:border-[#D97706]/50"
                         }`}
                       >
-                        {f.isEsmeMember.yesLabel}
+                        {lang === "ar" ? t.register.yesEsmeMember : f.isEsmeMember.yesLabel}
                       </button>
                       <button
                         type="button"
@@ -760,7 +833,7 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
                             : "bg-[#0F243A] border-slate-700 text-slate-300 hover:border-slate-500"
                         }`}
                       >
-                        {f.isEsmeMember.noLabel}
+                        {lang === "ar" ? t.register.noEsmeMember : f.isEsmeMember.noLabel}
                       </button>
                     </div>
                     {errors.isEsmeMember?.message && (
@@ -792,14 +865,16 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
                             onChange={(e) => {
                               setValue("committee", e.target.value, { shouldValidate: true });
                               clearErrors("committee");
-                              setServerError(null);
+                              setErrorState(null);
                             }}
                             className="w-full h-11 px-3 rounded-xl bg-[#0F243A] border border-[#D97706]/40 focus:border-[#D97706] text-white focus:outline-none text-xs sm:text-sm transition-colors"
                           >
-                            <option value="">{f.committee.placeholder || "Select Committee..."}</option>
-                            {formConfig.esmeCommittees.map((comm) => (
+                            <option value="">
+                              {f.committee.placeholder || t.register.committeePlaceholder}
+                            </option>
+                            {activeConfig.esmeCommittees.map((comm) => (
                               <option key={comm} value={comm}>
-                                {comm}
+                                {localizeCommittee(comm, lang)}
                               </option>
                             ))}
                           </select>
@@ -816,14 +891,16 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
                             onChange={(e) => {
                               setValue("role", e.target.value, { shouldValidate: true });
                               clearErrors("role");
-                              setServerError(null);
+                              setErrorState(null);
                             }}
                             className="w-full h-11 px-3 rounded-xl bg-[#0F243A] border border-[#D97706]/40 focus:border-[#D97706] text-white focus:outline-none text-xs sm:text-sm transition-colors"
                           >
-                            <option value="">{f.role.placeholder || "Select Role / Position..."}</option>
-                            {formConfig.esmeRoles.map((r) => (
+                            <option value="">
+                              {f.role.placeholder || t.register.rolePlaceholder}
+                            </option>
+                            {activeConfig.esmeRoles.map((r) => (
                               <option key={r} value={r}>
-                                {r}
+                                {localizeRole(r, lang)}
                               </option>
                             ))}
                           </select>
@@ -839,7 +916,7 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
           {currentStep === 3 && (
             <motion.div
               key="step3"
-              custom={direction}
+              custom={{ direction, isRtl }}
               variants={registrationStepVariants}
               initial="enter"
               animate="center"
@@ -848,9 +925,9 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
             >
               <div className="border-b border-slate-800 pb-3 mb-1">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <FileCheck2 className="w-5 h-5 text-[#D97706]" /> {formConfig.steps.step3.title}
+                  <FileCheck2 className="w-5 h-5 text-[#D97706]" /> {activeConfig.steps.step3.title}
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">{formConfig.steps.step3.subtitle}</p>
+                <p className="text-xs text-slate-400 mt-1">{activeConfig.steps.step3.subtitle}</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -872,13 +949,15 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
                   description={f.avatarUrl.helperText}
                 />
               </div>
+
+              <p className="text-[11px] text-slate-400 leading-relaxed">{t.register.privacyHint}</p>
             </motion.div>
           )}
 
           {currentStep === 4 && (
             <motion.div
               key="step4"
-              custom={direction}
+              custom={{ direction, isRtl }}
               variants={registrationStepVariants}
               initial="enter"
               animate="center"
@@ -887,84 +966,116 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
             >
               <div className="border-b border-slate-800 pb-3 mb-1">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Send className="w-5 h-5 text-[#D97706]" /> {formConfig.steps.step4.title}
+                  <Send className="w-5 h-5 text-[#D97706]" /> {activeConfig.steps.step4.title}
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">{formConfig.steps.step4.subtitle}</p>
+                <p className="text-xs text-slate-400 mt-1">{activeConfig.steps.step4.subtitle}</p>
               </div>
 
-              <div className="rounded-xl bg-[#15304B] p-4 sm:p-5 border border-slate-800 space-y-3 font-mono text-xs text-slate-300">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pb-3 border-b border-slate-800">
+              <div className="rounded-xl bg-[#15304B] p-4 sm:p-5 border border-slate-800 space-y-3 text-xs text-slate-300">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pb-3 border-b border-slate-800">
                   <div>
-                    <span className="text-slate-500">Name:</span>{" "}
+                    <span className="text-slate-400">{t.register.reviewNamesLabel}:</span>{" "}
                     <strong className="text-white">{formData.fullName}</strong>
                   </div>
                   <div>
-                    <span className="text-slate-500">National ID:</span>{" "}
-                    <strong className="text-amber-400">{formData.nationalId || "N/A"}</strong>
+                    <span className="text-slate-400">{t.register.reviewNationalIdLabel}:</span>{" "}
+                    <strong dir="ltr" className="text-amber-400 font-mono">
+                      {formData.nationalId || "—"}
+                    </strong>
                   </div>
                   <div>
-                    <span className="text-slate-500">Phone:</span>{" "}
-                    <strong className="text-white">{formData.phone}</strong>
+                    <span className="text-slate-400">{t.register.reviewPhoneLabel}:</span>{" "}
+                    <strong dir="ltr" className="text-white font-mono">
+                      {formData.phone}
+                    </strong>
                   </div>
                   <div>
-                    <span className="text-slate-500">Email:</span>{" "}
-                    <strong className="text-white">{formData.email}</strong>
+                    <span className="text-slate-400">{t.register.reviewEmailLabel}:</span>{" "}
+                    <strong dir="ltr" className="text-white font-mono">
+                      {formData.email}
+                    </strong>
                   </div>
                   <div>
-                    <span className="text-slate-500">City:</span>{" "}
-                    <strong className="text-white">{formData.city}</strong>
+                    <span className="text-slate-400">{t.register.reviewCityLabel}:</span>{" "}
+                    <strong className="text-white">
+                      {localizeCity(formData.city || "", lang)}
+                    </strong>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pb-3 border-b border-slate-800">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pb-3 border-b border-slate-800">
                   <div>
-                    <span className="text-slate-500">University:</span>{" "}
+                    <span className="text-slate-400">{t.register.reviewUniversityLabel}:</span>{" "}
                     <strong className="text-white">{formData.university}</strong>
                   </div>
                   <div>
-                    <span className="text-slate-500">Faculty:</span>{" "}
-                    <strong className="text-white">{formData.faculty}</strong>
+                    <span className="text-slate-400">{t.register.reviewFacultyLabel}:</span>{" "}
+                    <strong className="text-white">
+                      {localizeFaculty(formData.faculty || "", lang)}
+                    </strong>
                   </div>
                   <div className="sm:col-span-2">
-                    <span className="text-slate-500">Department / Major:</span>{" "}
-                    <strong className="text-[#F59E0B]">{resolvedMajorDisplay}</strong>
+                    <span className="text-slate-400">{t.register.reviewDepartmentLabel}:</span>{" "}
+                    <strong className="text-[#F59E0B]">
+                      {formData.customMajor?.trim()
+                        ? formData.customMajor.trim()
+                        : localizeDepartment(resolvedMajorDisplay, lang)}
+                    </strong>
                   </div>
                   <div>
-                    <span className="text-slate-500">Academic Year:</span>{" "}
-                    <strong className="text-white">{formData.academicYear}</strong>
+                    <span className="text-slate-400">{t.register.reviewYearLabel}:</span>{" "}
+                    <strong className="text-white">
+                      {localizeAcademicYear(
+                        formData.academicYear || "",
+                        matchedAcademicYearObj?.label || formData.academicYear || "",
+                        lang
+                      )}
+                    </strong>
                   </div>
                   <div>
-                    <span className="text-slate-500">Graduation Year:</span>{" "}
-                    <strong className="text-emerald-400">{formData.graduationYear}</strong>
+                    <span className="text-slate-400">{t.register.reviewGradYearLabel}:</span>{" "}
+                    <strong className="text-emerald-400">
+                      {localizeGraduationYear(
+                        formData.graduationYear || "",
+                        matchedGradYearObj?.label || formData.graduationYear || "",
+                        lang
+                      )}
+                    </strong>
                   </div>
                   <div>
-                    <span className="text-slate-500">Role / Title:</span>{" "}
+                    <span className="text-slate-400">{t.register.reviewRoleLabel}:</span>{" "}
                     <strong className="text-white">{formData.jobTitle}</strong>
                   </div>
                   {formData.company && (
                     <div>
-                      <span className="text-slate-500">Company:</span>{" "}
+                      <span className="text-slate-400">{t.register.reviewCompanyLabel}:</span>{" "}
                       <strong className="text-white">{formData.company}</strong>
                     </div>
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pb-3 border-b border-slate-800">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pb-3 border-b border-slate-800">
                   <div>
-                    <span className="text-slate-500">ESME Chapter Member:</span>{" "}
+                    <span className="text-slate-400">{t.register.reviewEsmeLabel}:</span>{" "}
                     <strong className={formData.isEsmeMember ? "text-[#F59E0B]" : "text-slate-200"}>
-                      {formData.isEsmeMember ? "Yes" : "No"}
+                      {formData.isEsmeMember
+                        ? t.register.yesEsmeMember
+                        : t.register.noEsmeMember}
                     </strong>
                   </div>
                   {formData.isEsmeMember && (
                     <>
                       <div>
-                        <span className="text-slate-500">Committee:</span>{" "}
-                        <strong className="text-white">{formData.committee}</strong>
+                        <span className="text-slate-400">{t.register.committeeLabel}:</span>{" "}
+                        <strong className="text-white">
+                          {localizeCommittee(formData.committee || "", lang)}
+                        </strong>
                       </div>
                       <div>
-                        <span className="text-slate-500">Role / Position:</span>{" "}
-                        <strong className="text-white">{formData.role}</strong>
+                        <span className="text-slate-400">{t.register.roleLabel}:</span>{" "}
+                        <strong className="text-white">
+                          {localizeRole(formData.role || "", lang)}
+                        </strong>
                       </div>
                     </>
                   )}
@@ -973,11 +1084,9 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
                 <div className="flex items-center gap-2 pt-1 text-emerald-400">
                   <CheckCircle2 className="w-4 h-4 shrink-0" />
                   <span>
-                    {formData.idPhotoUrl ? "National ID uploaded" : "No ID uploaded"}
-                    {formData.avatarUrl
-                      ? " + badge portrait loaded"
-                      : " (default badge silhouette will be used)"}{" "}
-                    — ready for QR signing.
+                    {formData.idPhotoUrl && formData.avatarUrl
+                      ? t.register.reviewDocsReady
+                      : t.register.reviewDocsIdOnly}
                   </span>
                 </div>
               </div>
@@ -993,7 +1102,7 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
                   htmlFor="termsAccepted"
                   className="text-xs text-slate-300 leading-relaxed cursor-pointer select-none"
                 >
-                  {formConfig.termsLabel}
+                  {activeConfig.termsLabel}
                 </label>
               </div>
               {errors.termsAccepted && (
@@ -1015,7 +1124,7 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
               onClick={handleBack}
               className="px-5 py-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-300 hover:text-white hover:border-slate-500 font-bold text-xs transition-all flex items-center gap-2 cursor-pointer"
             >
-              <ArrowLeft className="w-4 h-4" /> Back
+              <ArrowLeft className="w-4 h-4 rtl:rotate-180" /> {t.common.back}
             </motion.button>
           ) : (
             <div />
@@ -1028,7 +1137,7 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
               onClick={handleNext}
               className="liquid-btn px-7 py-3 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold text-xs hover:brightness-110 shadow-[0_0_15px_rgba(217,119,6,0.3)] transition-all flex items-center gap-2 cursor-pointer"
             >
-              Continue <ArrowRight className="w-4 h-4" />
+              {t.common.continue} <ArrowRight className="w-4 h-4 rtl:rotate-180" />
             </motion.button>
           ) : (
             <motion.button
@@ -1039,11 +1148,11 @@ export default function RegisterFormClient({ formConfig }: RegisterFormClientPro
             >
               {submitting ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" /> GENERATING CREDENTIALS...
+                  <Loader2 className="w-4 h-4 animate-spin" /> {t.register.submittingButton}
                 </>
               ) : (
                 <>
-                  <Send className="w-4 h-4" /> {formConfig.submitButtonLabel}
+                  <Send className="w-4 h-4" /> {activeConfig.submitButtonLabel}
                 </>
               )}
             </motion.button>

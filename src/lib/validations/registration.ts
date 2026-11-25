@@ -10,6 +10,7 @@ import {
   requiresCustomMajor,
 } from "@/config/registration";
 import type { RegistrationFormConfig } from "@/lib/cms/types";
+import type { AppLanguage } from "@/lib/i18n/types";
 
 export {
   FACULTIES,
@@ -33,7 +34,63 @@ export interface SchemaBuildOptions {
   academicYears?: readonly { value: string; label: string }[];
   esmeCommittees?: readonly string[];
   esmeRoles?: readonly string[];
+  lang?: AppLanguage;
 }
+
+const VALIDATION_MESSAGES = {
+  en: {
+    fullNameMin: "Full name must be at least 3 characters",
+    fullNameMax: "Full name is too long",
+    nationalIdInvalid: "Enter a valid 14-digit Egyptian National ID",
+    phoneInvalid: "Enter a valid Egyptian mobile number (01XXXXXXXXX)",
+    emailInvalid: "Enter a valid email address",
+    cityRequired: "Please select your governorate / city",
+    universityRequired: "University name is required",
+    facultyRequired: "Please select your Faculty / Major Category",
+    facultyInvalid: "Please select a valid Faculty / Major Category",
+    departmentRequired: "Please select your Department / Specialization",
+    departmentInvalid: "Please select a valid Department for the chosen Faculty",
+    customMajorRequired: "Please specify your Major / Department",
+    customMajorMax: "Major / Department must be 150 characters or fewer",
+    academicYearRequired: "Please select your academic year",
+    academicYearInvalid: "Please select a valid academic year",
+    graduationYearRequired: "Graduation year is required (e.g. 2026)",
+    jobTitleRequired: "Current role / job title is required (e.g. Student)",
+    companyRequired: "Company / Organization is required",
+    esmeMemberRequired: "Please indicate whether you are a member of the ESME Chapter",
+    committeeRequired: "Please select your ESME Committee",
+    roleRequired: "Please select your ESME Role / Position",
+    idPhotoRequired: "National ID front photo is required",
+    avatarRequired: "Profile badge photo is required",
+    termsRequired: "You must accept the terms and conditions",
+  },
+  ar: {
+    fullNameMin: "يُرجى إدخال الاسم بالكامل (3 أحرف على الأقل)",
+    fullNameMax: "الاسم المدخل طويل جداً",
+    nationalIdInvalid: "يُرجى إدخال الرقم القومي المصري المكوّن من 14 رقم بشكل صحيح",
+    phoneInvalid: "يُرجى إدخال رقم هاتف مصري صحيح يبدأ بـ 010 أو 011 أو 012 أو 015",
+    emailInvalid: "يُرجى إدخال بريد إلكتروني صحيح",
+    cityRequired: "يُرجى اختيار محافظة الإقامة",
+    universityRequired: "اسم الجامعة مطلوب",
+    facultyRequired: "يُرجى اختيار الكلية أو المجال الدراسي",
+    facultyInvalid: "يُرجى اختيار كلية صالحة من القائمة",
+    departmentRequired: "يُرجى اختيار القسم أو التخصص",
+    departmentInvalid: "القسم المختار غير مطابق للكلية المحددة",
+    customMajorRequired: "يُرجى كتابة التخصص أو القسم يدويًا",
+    customMajorMax: "اسم التخصص يجب ألا يتجاوز 150 حرفاً",
+    academicYearRequired: "يُرجى اختيار الفرقة الدراسية",
+    academicYearInvalid: "يُرجى اختيار فرقة دراسية صالحة",
+    graduationYearRequired: "يُرجى تحديد سنة التخرج المتوقعة (مثال: 2026)",
+    jobTitleRequired: "المسمى الوظيفي أو الصفة الحالية مطلوبة (مثال: طالب)",
+    companyRequired: "اسم الشركة أو الجهة مطلوب",
+    esmeMemberRequired: "يُرجى تحديد ما إذا كنت عضواً في شابتر ESME",
+    committeeRequired: "يُرجى اختيار لجنتك داخل الشابتر",
+    roleRequired: "يُرجى اختيار منصبك داخل الشابتر",
+    idPhotoRequired: "صورة بطاقة الرقم القومي (الوجه الأمامي) مطلوبة للمتابعة",
+    avatarRequired: "الصورة الشخصية مطلوبة للبادج",
+    termsRequired: "يجب الموافقة على الشروط والأحكام لإتمام التسجيل",
+  },
+} as const;
 
 function validateDynamicStep2(
   data: {
@@ -52,8 +109,10 @@ function validateDynamicStep2(
   ctx: z.RefinementCtx,
   opts: Required<Pick<SchemaBuildOptions, "faculties" | "academicYears" | "esmeCommittees" | "esmeRoles">> & {
     fields?: Partial<RegistrationFormConfig["fields"]>;
+    lang: AppLanguage;
   }
 ) {
+  const m = VALIDATION_MESSAGES[opts.lang];
   const fCfg = opts.fields;
   const facultyRequired = fCfg?.faculty?.required ?? true;
   const departmentRequired = fCfg?.department?.required ?? true;
@@ -72,7 +131,7 @@ function validateDynamicStep2(
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["university"],
-      message: "University name is required",
+      message: m.universityRequired,
     });
   }
 
@@ -84,13 +143,13 @@ function validateDynamicStep2(
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["faculty"],
-      message: "Please select your Faculty / Major Category",
+      message: m.facultyRequired,
     });
   } else if (faculty.length > 0 && !validFaculty) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["faculty"],
-      message: "Please select a valid Faculty / Major Category",
+      message: m.facultyInvalid,
     });
   }
 
@@ -102,7 +161,7 @@ function validateDynamicStep2(
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["department"],
-          message: "Please select your Department / Specialization",
+          message: m.departmentRequired,
         });
       }
     } else if (validFaculty) {
@@ -111,7 +170,7 @@ function validateDynamicStep2(
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["department"],
-          message: "Please select a valid Department for the chosen Faculty",
+          message: m.departmentInvalid,
         });
       }
     }
@@ -123,13 +182,13 @@ function validateDynamicStep2(
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["customMajor"],
-        message: "Please specify your Major / Department",
+        message: m.customMajorRequired,
       });
     } else if (custom.length > 150) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["customMajor"],
-        message: "Major / Department must be 150 characters or fewer",
+        message: m.customMajorMax,
       });
     }
   }
@@ -140,13 +199,13 @@ function validateDynamicStep2(
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["academicYear"],
-      message: "Please select your academic year",
+      message: m.academicYearRequired,
     });
   } else if (acadYear && !validAcademicValues.includes(acadYear)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["academicYear"],
-      message: "Please select a valid academic year",
+      message: m.academicYearInvalid,
     });
   }
 
@@ -155,7 +214,7 @@ function validateDynamicStep2(
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["graduationYear"],
-      message: "Graduation year is required (e.g. 2026)",
+      message: m.graduationYearRequired,
     });
   }
 
@@ -164,7 +223,7 @@ function validateDynamicStep2(
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["jobTitle"],
-      message: "Current role / job title is required (e.g. Student)",
+      message: m.jobTitleRequired,
     });
   }
 
@@ -173,7 +232,7 @@ function validateDynamicStep2(
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["company"],
-      message: "Company / Organization is required",
+      message: m.companyRequired,
     });
   }
 
@@ -181,7 +240,7 @@ function validateDynamicStep2(
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["isEsmeMember"],
-      message: "Please indicate whether you are a member of the ESME Chapter",
+      message: m.esmeMemberRequired,
     });
   }
 
@@ -190,14 +249,14 @@ function validateDynamicStep2(
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["committee"],
-        message: "Please select your ESME Committee",
+        message: m.committeeRequired,
       });
     }
     if (roleRequired && !opts.esmeRoles.includes(data.role || "")) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["role"],
-        message: "Please select your ESME Role / Position",
+        message: m.roleRequired,
       });
     }
   }
@@ -208,6 +267,8 @@ function validateDynamicStep2(
  * Both client form validation and `POST /api/register` share this exact builder.
  */
 export function createRegistrationSchemas(options: SchemaBuildOptions = {}) {
+  const lang: AppLanguage = options.lang ?? "en";
+  const m = VALIDATION_MESSAGES[lang];
   const fCfg = options.fields;
   const faculties =
     options.faculties && options.faculties.length > 0
@@ -239,47 +300,44 @@ export function createRegistrationSchemas(options: SchemaBuildOptions = {}) {
       ? z
           .string()
           .trim()
-          .min(3, "Full name must be at least 3 characters")
-          .max(100, "Full name is too long")
+          .min(3, m.fullNameMin)
+          .max(100, m.fullNameMax)
       : z.string().trim().max(100).optional().default(""),
     nationalId: nationalIdRequired
       ? z
           .string()
-          .regex(
-            EGYPTIAN_NATIONAL_ID_REGEX,
-            "Enter a valid 14-digit Egyptian National ID"
-          )
+          .regex(EGYPTIAN_NATIONAL_ID_REGEX, m.nationalIdInvalid)
       : z
           .string()
           .optional()
           .default("")
           .refine(
             (v) => !v || EGYPTIAN_NATIONAL_ID_REGEX.test(v),
-            "Enter a valid 14-digit Egyptian National ID"
+            m.nationalIdInvalid
           ),
     phone: phoneRequired
       ? z
           .string()
-          .regex(EGYPTIAN_PHONE_REGEX, "Enter a valid Egyptian mobile number (01XXXXXXXXX)")
+          .regex(EGYPTIAN_PHONE_REGEX, m.phoneInvalid)
       : z
           .string()
           .optional()
           .default("")
           .refine(
             (v) => !v || EGYPTIAN_PHONE_REGEX.test(v),
-            "Enter a valid Egyptian mobile number (01XXXXXXXXX)"
+            m.phoneInvalid
           ),
     email: emailRequired
-      ? z.string().trim().email("Enter a valid email address").toLowerCase()
+      ? z.string().trim().email(m.emailInvalid).toLowerCase()
       : z
           .string()
           .trim()
           .toLowerCase()
           .optional()
           .default("")
-          .refine((v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), "Enter a valid email address"),
+          .refine((v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), m.emailInvalid),
     city: cityRequired
-      ? z.string().min(2, "Please select your governorate / city")
+      ? z.string().min(2, m.cityRequired)
       : z.string().optional().default(""),
   });
 
@@ -307,23 +365,24 @@ export function createRegistrationSchemas(options: SchemaBuildOptions = {}) {
       academicYears,
       esmeCommittees,
       esmeRoles,
+      lang,
     });
 
   const step2 = step2Base.superRefine(step2Refine);
 
   const step3 = z.object({
     idPhotoUrl: idPhotoRequired
-      ? z.string().min(1, "National ID front photo is required")
+      ? z.string().min(1, m.idPhotoRequired)
       : z.string().optional().default(""),
     avatarUrl: avatarRequired
-      ? z.string().min(1, "Profile badge photo is required")
+      ? z.string().min(1, m.avatarRequired)
       : z.string().optional(),
   });
 
   const step4 = z.object({
     termsAccepted: z
       .boolean()
-      .refine((val) => val === true, "You must accept the terms and conditions"),
+      .refine((val) => val === true, m.termsRequired),
   });
 
   const complete = step1

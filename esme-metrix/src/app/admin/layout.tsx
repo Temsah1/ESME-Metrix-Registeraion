@@ -16,19 +16,24 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-
-const NAV_ITEMS = [
-  { name: "Overview Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-  { name: "Registrants", href: "/admin/registrants", icon: Users },
-  { name: "Attendance Feed", href: "/admin/attendance", icon: CheckSquare },
-  { name: "Live Scanner", href: "/admin/scanner", icon: QrCode },
-  { name: "Search & Verify", href: "/admin/search", icon: Search },
-];
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { getDictionary } from "@/lib/i18n/dictionary";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { lang } = useLanguage();
+  const t = getDictionary(lang);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const navItems = [
+    { name: t.admin.navDashboard, href: "/admin/dashboard", icon: LayoutDashboard },
+    { name: t.admin.navRegistrants, href: "/admin/registrants", icon: Users },
+    { name: t.admin.navAttendance, href: "/admin/attendance", icon: CheckSquare },
+    { name: t.admin.navScanner, href: "/admin/scanner", icon: QrCode },
+    { name: t.admin.navSearch, href: "/admin/search", icon: Search },
+  ];
 
   // If on login page, don't show the dashboard shell
   const isLoginPage = pathname === "/admin" || pathname === "/admin/login";
@@ -47,39 +52,46 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   return (
-    <div className="flex-1 flex flex-col md:flex-row min-h-[calc(100vh-4rem)]">
+    <div className="flex-1 flex flex-col md:flex-row min-h-[calc(100vh-4rem)] text-start">
       {/* Mobile Header Bar */}
-      <div className="md:hidden flex items-center justify-between p-4 bg-[#0F243A] border-b border-[#D97706]/20">
+      <div className="md:hidden flex items-center justify-between p-4 bg-[#0F243A] border-b border-[#D97706]/20 gap-2">
         <div className="flex items-center gap-2">
           <ShieldAlert className="w-5 h-5 text-[#D97706]" />
-          <span className="text-sm font-bold text-white">METRIX ADMIN CONSOLE</span>
+          <span className="text-sm font-bold text-white">{t.admin.consoleTitle}</span>
         </div>
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-1.5 rounded-lg border border-slate-700 text-slate-300"
-        >
-          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <LanguageSwitcher compact />
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle admin menu"
+            className="p-1.5 rounded-lg border border-slate-700 text-slate-300"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Sidebar Navigation */}
       <aside
         className={`${
           mobileMenuOpen ? "block" : "hidden"
-        } md:block w-full md:w-64 bg-[#0F243A]/95 border-r border-[#D97706]/20 p-4 flex flex-col shrink-0`}
+        } md:flex w-full md:w-64 bg-[#0F243A]/95 border-e border-[#D97706]/20 p-4 flex-col shrink-0`}
       >
-        <div className="hidden md:flex items-center gap-3 px-3 py-4 border-b border-slate-800 mb-6">
-          <div className="w-8 h-8 rounded-lg bg-[#D97706]/15 border border-[#D97706]/35 flex items-center justify-center p-1">
-            <Image src="/esme_logo.png" alt="Logo" width={28} height={28} className="object-contain" />
+        <div className="hidden md:flex items-center justify-between gap-2 px-2 py-3 border-b border-slate-800 mb-5">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-[#D97706]/15 border border-[#D97706]/35 flex items-center justify-center p-1 shrink-0">
+              <Image src="/esme_logo.png" alt="Logo" width={28} height={28} className="object-contain" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-bold text-white truncate">{t.admin.consoleTitle}</div>
+              <div className="text-[10px] text-[#F59E0B] truncate">{t.admin.consoleSubtitle}</div>
+            </div>
           </div>
-          <div>
-            <div className="text-xs font-bold text-white tracking-wider">ADMIN PANEL</div>
-            <div className="text-[10px] text-[#F59E0B] font-mono">ESME CU CHAPTER</div>
-          </div>
+          <LanguageSwitcher compact />
         </div>
 
         <nav className="flex-1 space-y-1.5">
-          {NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
 
@@ -105,9 +117,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="border-t border-slate-800 pt-4 mt-6">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs font-medium text-red-400 hover:bg-red-500/10 transition-colors"
+            className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs font-medium text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
           >
-            <LogOut className="w-4 h-4" /> Sign Out
+            <LogOut className="w-4 h-4" /> {t.admin.signOut}
           </button>
         </div>
       </aside>

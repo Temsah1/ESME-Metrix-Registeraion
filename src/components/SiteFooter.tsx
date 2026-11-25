@@ -14,7 +14,10 @@ import {
   FaYoutube,
 } from "react-icons/fa";
 import { ArrowUpRight } from "lucide-react";
-import type { FooterCmsConfig, SocialPlatform } from "@/lib/cms/types";
+import { DEFAULT_ARABIC_CMS } from "@/lib/cms/arabic";
+import type { ArabicCmsData, FooterCmsConfig, SocialPlatform } from "@/lib/cms/types";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { getDictionary } from "@/lib/i18n/dictionary";
 
 function SocialIcon({ platform }: { platform: SocialPlatform }) {
   switch (platform) {
@@ -38,20 +41,40 @@ function SocialIcon({ platform }: { platform: SocialPlatform }) {
 
 interface SiteFooterProps {
   footer: FooterCmsConfig;
+  arFooter?: ArabicCmsData["footer"];
   logoUrl?: string;
 }
 
 export default function SiteFooter({
   footer,
+  arFooter,
   logoUrl = "/esme_logo.png",
 }: SiteFooterProps) {
-  const visibleSocials = footer.socialLinks.filter(
+  const { lang } = useLanguage();
+  const t = getDictionary(lang);
+  const arFallback = DEFAULT_ARABIC_CMS.footer;
+
+  const activeFooter =
+    lang === "ar"
+      ? {
+          ...footer,
+          brandTitle: arFooter?.brandTitle?.trim() || arFallback.brandTitle,
+          chapterName: arFooter?.chapterName?.trim() || arFallback.chapterName,
+          tagline: arFooter?.tagline?.trim() || arFallback.tagline,
+          bio: arFooter?.bio?.trim() || arFallback.bio,
+          eventMeta: arFooter?.eventMeta?.trim() || arFallback.eventMeta,
+          portalLabel: arFooter?.portalLabel?.trim() || arFallback.portalLabel,
+          copyrightText: arFooter?.copyrightText?.trim() || arFallback.copyrightText,
+        }
+      : footer;
+
+  const visibleSocials = activeFooter.socialLinks.filter(
     (s) => s.enabled && s.url.trim().length > 0
   );
 
   return (
     <footer className="relative z-10 border-t border-[#D97706]/20 bg-[#0B1B2D] mt-auto">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-start">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 pb-10 border-b border-slate-800/90">
           {/* Column 1: Chapter & Event Identity */}
           <div className="md:col-span-5 space-y-4">
@@ -67,54 +90,57 @@ export default function SiteFooter({
                 />
               </div>
               <div>
-                <div className="text-base font-extrabold tracking-wider text-white">
-                  {footer.brandTitle}
+                <div dir="ltr" className="text-base font-extrabold tracking-wider text-white">
+                  {activeFooter.brandTitle}
                 </div>
-                <div className="text-[11px] font-mono text-[#F59E0B] uppercase tracking-wider">
-                  {footer.chapterName}
+                <div className="text-[11px] text-[#F59E0B] font-semibold tracking-wider">
+                  {activeFooter.chapterName}
                 </div>
               </div>
             </div>
 
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-md">
-              {footer.bio}
+              {activeFooter.bio}
             </p>
 
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#0F243A] border border-slate-800 text-[11px] font-mono text-slate-300">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#0F243A] border border-slate-800 text-[11px] text-slate-300">
               <span className="w-2 h-2 rounded-full bg-[#10B981]" />
-              {footer.eventMeta}
+              {activeFooter.eventMeta}
             </div>
           </div>
 
           {/* Column 2: Quick Navigation */}
           <div className="md:col-span-3 space-y-3">
-            <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-[#F59E0B]">
-              Quick Navigation
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[#F59E0B]">
+              {t.footer.quickLinksTitle}
             </h3>
             <ul className="space-y-2 text-xs sm:text-sm">
               <li>
                 <Link href="/#about" className="text-slate-300 hover:text-white transition-colors">
-                  About Summit
+                  {t.footer.aboutLink}
                 </Link>
               </li>
               <li>
                 <Link href="/#story" className="text-slate-300 hover:text-white transition-colors">
-                  Our Story &amp; Vision
+                  {t.footer.storyLink}
                 </Link>
               </li>
               <li>
                 <Link href="/#gallery" className="text-slate-300 hover:text-white transition-colors">
-                  Event Gallery
+                  {t.footer.galleryLink}
                 </Link>
               </li>
               <li>
                 <Link href="/#agenda" className="text-slate-300 hover:text-white transition-colors">
-                  Event Agenda
+                  {t.footer.agendaLink}
                 </Link>
               </li>
               <li>
-                <Link href="/dashboard" className="text-emerald-300 hover:text-white transition-colors font-semibold">
-                  Member Dashboard
+                <Link
+                  href="/dashboard"
+                  className="text-emerald-300 hover:text-white transition-colors font-semibold"
+                >
+                  {t.footer.memberDashboardLink}
                 </Link>
               </li>
               <li>
@@ -122,7 +148,8 @@ export default function SiteFooter({
                   href="/register"
                   className="text-[#F59E0B] hover:text-amber-300 font-semibold transition-colors inline-flex items-center gap-1"
                 >
-                  Register Now <ArrowUpRight className="w-3.5 h-3.5" />
+                  {t.footer.registerNowLink}
+                  <ArrowUpRight className="w-3.5 h-3.5 rtl:-scale-x-100" />
                 </Link>
               </li>
             </ul>
@@ -130,24 +157,24 @@ export default function SiteFooter({
 
           {/* Column 3: Chapter Hub & Social Media */}
           <div className="md:col-span-4 space-y-4">
-            <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-[#F59E0B]">
-              Chapter Hub &amp; Social Media
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[#F59E0B]">
+              {t.footer.followUsTitle}
             </h3>
 
-            {footer.portalUrl && (
+            {activeFooter.portalUrl && (
               <motion.a
                 whileHover={{ y: -2 }}
                 transition={{ duration: 0.15 }}
-                href={footer.portalUrl}
+                href={activeFooter.portalUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full px-4 py-3 rounded-xl bg-[#0F243A] border border-[#D97706]/40 hover:border-[#F59E0B] text-white text-xs font-bold flex items-center justify-between gap-2 transition-colors shadow-sm"
               >
                 <span className="flex items-center gap-2">
                   <FaGlobe className="w-4 h-4 text-[#F59E0B]" />
-                  {footer.portalLabel}
+                  {activeFooter.portalLabel}
                 </span>
-                <ArrowUpRight className="w-4 h-4 text-[#F59E0B]" />
+                <ArrowUpRight className="w-4 h-4 text-[#F59E0B] rtl:-scale-x-100" />
               </motion.a>
             )}
 
@@ -175,10 +202,10 @@ export default function SiteFooter({
         </div>
 
         {/* Bottom Copyright Bar */}
-        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400 font-mono">
-          <div>{footer.copyrightText}</div>
-          <div className="text-[#D97706] font-semibold tracking-wider uppercase">
-            {footer.tagline}
+        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+          <div>{activeFooter.copyrightText}</div>
+          <div dir="ltr" className="text-[#D97706] font-mono font-semibold tracking-wider uppercase">
+            {activeFooter.tagline}
           </div>
         </div>
       </div>

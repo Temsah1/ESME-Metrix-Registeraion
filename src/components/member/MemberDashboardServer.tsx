@@ -23,15 +23,13 @@ export async function renderMemberDashboardPage(params: {
   ]);
 
   const initialData = lookupRes.status === "found" ? lookupRes.pass : null;
-  const initialLookupError =
-    ticketIdToken && lookupRes.status !== "found"
-      ? "No registration found for that Ticket ID. Please sign in below using your Phone Number (or Email) and National ID."
-      : null;
+  const initialLookupNotFound = Boolean(ticketIdToken && lookupRes.status !== "found");
 
   return (
     <MemberDashboardClient
       initialData={initialData}
-      initialLookupError={initialLookupError}
+      initialLookupNotFound={initialLookupNotFound}
+      cms={cms}
       agenda={cms.agenda}
       confirmationCms={cms.confirmation}
       eventDate={cms.eventDate}

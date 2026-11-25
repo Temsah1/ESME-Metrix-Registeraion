@@ -324,7 +324,7 @@ export function buildPersonalizedLinkedInPostText(
 
   if (cleanId && !result.includes(`/share/${cleanId}`)) {
     result = result.replace(
-      /(Register now:\s*)(https?:\/\/[^\s]+)/i,
+      /((?:Register now:|سجّل[^:\n]*:)\s*)(https?:\/\/[^\s]+)/i,
       `$1${shareUrl}`
     );
   }

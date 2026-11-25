@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { Upload, CheckCircle2, AlertCircle, X, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { getDictionary } from "@/lib/i18n/dictionary";
 
 interface PhotoUploadProps {
   label: string;
@@ -24,25 +26,28 @@ export default function PhotoUpload({
   error,
   required = true,
 }: PhotoUploadProps) {
+  const { lang } = useLanguage();
+  const t = getDictionary(lang);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const previewFailed = Boolean(value) && failedUrl === value;
 
+  const hasOptionalSuffix =
+    label.includes("اختياري") || label.toLowerCase().includes("optional");
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
-      setUploadError("Image must be smaller than 5MB.");
+      setUploadError(t.upload.fileTooLarge);
       return;
     }
 
-    // Check mime type
     if (!["image/jpeg", "image/png", "image/jpg"].includes(file.type)) {
-      setUploadError("Only JPEG and PNG formats are accepted.");
+      setUploadError(t.upload.invalidFormat);
       return;
     }
 
@@ -68,7 +73,7 @@ export default function PhotoUpload({
 
       if (storageError) {
         console.error("Photo upload failed:", storageError);
-        setUploadError("Upload failed. Please check your connection and try again.");
+        setUploadError(t.upload.uploadFailed);
         setProgress(0);
         return;
       }
@@ -80,7 +85,7 @@ export default function PhotoUpload({
       setProgress(100);
     } catch (err) {
       console.error("Photo upload error:", err);
-      setUploadError("Upload failed. Please check your connection and try again.");
+      setUploadError(t.upload.uploadFailed);
       setProgress(0);
     } finally {
       setTimeout(() => setUploading(false), 300);
@@ -94,14 +99,14 @@ export default function PhotoUpload({
   };
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 text-start">
       <label className="text-sm font-semibold text-slate-200">
         {label}{" "}
         {required ? (
           <span className="text-[#D97706]">*</span>
-        ) : (
-          <span className="text-slate-400 font-normal text-xs">(Optional)</span>
-        )}
+        ) : !hasOptionalSuffix ? (
+          <span className="text-slate-400 font-normal text-xs">({t.common.optional})</span>
+        ) : null}
       </label>
       <span className="text-xs text-slate-400">{sublabel || description}</span>
 
@@ -119,13 +124,13 @@ export default function PhotoUpload({
           ) : (
             <div className="flex flex-col items-center justify-center p-4 text-center">
               <AlertCircle className="w-6 h-6 text-amber-400 mb-1.5" />
-              <p className="text-xs text-slate-300">Preview unavailable, image uploaded.</p>
+              <p className="text-xs text-slate-300">{t.upload.ready}</p>
               <button
                 type="button"
                 onClick={handleClear}
                 className="mt-2 px-3 py-1 rounded-lg bg-red-500/20 text-red-300 border border-red-500/30 text-xs font-semibold hover:bg-red-500/40 transition-colors"
               >
-                Remove & Re-upload
+                {t.upload.removeReupload}
               </button>
             </div>
           )}
@@ -133,13 +138,13 @@ export default function PhotoUpload({
             <button
               type="button"
               onClick={handleClear}
-              className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-300 border border-red-500/30 text-xs font-semibold flex items-center gap-1.5 hover:bg-red-500/40 transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-300 border border-red-500/30 text-xs font-semibold flex items-center gap-1.5 hover:bg-red-500/40 transition-colors cursor-pointer"
             >
-              <X className="w-3.5 h-3.5" /> Remove
+              <X className="w-3.5 h-3.5" /> {t.upload.removeReupload}
             </button>
           </div>
-          <div className="absolute top-2 right-2 px-2.5 py-0.5 rounded-md bg-[#10B981] text-white text-[10px] font-bold flex items-center gap-1 shadow-sm">
-            <CheckCircle2 className="w-3 h-3" /> Ready
+          <div className="absolute top-2 end-2 px-2.5 py-0.5 rounded-md bg-[#10B981] text-white text-[10px] font-bold flex items-center gap-1 shadow-sm">
+            <CheckCircle2 className="w-3 h-3" /> {t.upload.ready}
           </div>
         </div>
       ) : (
@@ -153,8 +158,8 @@ export default function PhotoUpload({
                   style={{ width: `${progress}%` }}
                 />
               </div>
-              <span className="text-xs font-mono text-[#F59E0B]">
-                Uploading... {progress}%
+              <span dir="ltr" className="text-xs font-mono text-[#F59E0B]">
+                {t.upload.uploading} {progress}%
               </span>
             </div>
           ) : (
@@ -162,10 +167,8 @@ export default function PhotoUpload({
               <div className="w-10 h-10 rounded-full bg-[#D97706]/10 flex items-center justify-center text-[#D97706] mb-2 group-hover:scale-110 transition-transform">
                 <Upload className="w-5 h-5" />
               </div>
-              <p className="text-xs font-medium text-slate-300">
-                <span className="text-[#D97706] font-semibold">Click to upload</span> or drag and drop
-              </p>
-              <p className="text-[11px] text-slate-400 mt-1">JPEG or PNG (Max 5MB)</p>
+              <p className="text-xs font-medium text-slate-300">{t.upload.dropPrompt}</p>
+              <p className="text-[11px] text-slate-400 mt-1">{t.upload.hint}</p>
             </div>
           )}
           <input
@@ -180,7 +183,7 @@ export default function PhotoUpload({
 
       {(error || uploadError) && (
         <span className="text-xs text-red-400 flex items-center gap-1 mt-0.5">
-          <AlertCircle className="w-3.5 h-3.5" />
+          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
           {error || uploadError}
         </span>
       )}

@@ -1,12 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import crypto from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isMissingColumnError } from "@/lib/supabase/registrant-compat";
-import { ArrowRight, Calendar, Download, MapPin, Ticket } from "lucide-react";
-import { FaLinkedin } from "react-icons/fa";
-import { OFFICIAL_ESME_LINKEDIN_URL } from "@/config/registration";
 import { formatRoleOrMajor } from "@/lib/og/card-data";
+import ShareBadgeClient from "@/components/ShareBadgeClient";
 
 export interface SharePageProps {
   params: Promise<{ ticketId?: string; id?: string }>;
@@ -204,80 +201,11 @@ export async function ShareBadgeLanding({
   const ogSrc = `/api/og?${ogQuery.toString()}`;
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center px-4 py-10 sm:py-14 bg-[#15304B]">
-      <div className="max-w-4xl w-full flex flex-col items-center text-center">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-[#D97706]/40 bg-[#0F243A] text-[#F59E0B] font-mono text-xs mb-4 font-semibold uppercase tracking-wider">
-          <Ticket className="w-3.5 h-3.5" />
-          ESME METRIX 2026 • OFFICIAL ATTENDING CARD
-        </div>
-
-        <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mb-2">
-          {attendee.name} is Attending <span className="text-[#F59E0B]">ESME METRIX</span>!
-        </h1>
-        {attendee.university ? (
-          <p className="text-xs sm:text-sm font-mono text-amber-200/90 mb-3">
-            {attendee.university}
-          </p>
-        ) : null}
-        <p className="text-slate-300 text-sm sm:text-base max-w-2xl mb-7 leading-relaxed">
-          Join us on 12 December 2026 at Cairo University for an exciting event exploring the
-          world of Materials Engineering, innovation, and advanced materials.
-        </p>
-
-        {/* Standalone 16:9 Personalized Card Display */}
-        <div className="w-full rounded-2xl overflow-hidden border-2 border-[#D97706]/50 shadow-[0_0_45px_rgba(217,119,6,0.22)] bg-[#07111E] mb-7">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={ogSrc}
-            alt={`${attendee.name} — ESME METRIX Attendance Card`}
-            className="w-full h-auto block"
-          />
-        </div>
-
-        <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-slate-300 font-mono mb-8">
-          <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0F243A] border border-slate-800">
-            <Calendar className="w-4 h-4 text-[#F59E0B]" /> Saturday, 12 December 2026
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0F243A] border border-slate-800">
-            <MapPin className="w-4 h-4 text-[#F59E0B]" /> Cairo University
-          </span>
-        </div>
-
-        {/* Focused Public Actions (Public Event Landing & Registration + Official Chapter LinkedIn + Card PNG) */}
-        <div className="flex flex-wrap items-center justify-center gap-3">
-          <Link
-            href="/register"
-            className="px-7 py-3.5 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold text-xs sm:text-sm hover:brightness-110 shadow-[0_0_20px_rgba(217,119,6,0.35)] transition-all flex items-center gap-2"
-          >
-            Register Now <ArrowRight className="w-4 h-4" />
-          </Link>
-          <Link
-            href="/"
-            className="px-6 py-3.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-200 hover:text-white hover:border-emerald-400 text-xs sm:text-sm font-bold transition-colors"
-          >
-            Explore Event Homepage
-          </Link>
-          <a
-            href={OFFICIAL_ESME_LINKEDIN_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-6 py-3.5 rounded-xl bg-[#0077B5] hover:bg-[#006097] text-white font-bold text-xs sm:text-sm transition-colors flex items-center gap-2 shadow-[0_0_20px_rgba(0,119,181,0.3)]"
-          >
-            <FaLinkedin className="w-4 h-4" /> Follow ESME Cairo University
-          </a>
-          <a
-            href={ogSrc}
-            download={`ESME-METRIX-Attending-${ticketId || "Card"}.png`}
-            className="px-5 py-3.5 rounded-xl border border-slate-700 bg-[#0F243A] text-slate-200 hover:text-white hover:border-[#D97706] text-xs sm:text-sm font-semibold transition-colors flex items-center gap-2"
-          >
-            <Download className="w-4 h-4 text-[#F59E0B]" /> Download Card (PNG)
-          </a>
-        </div>
-
-        <p className="mt-8 text-[11px] font-mono text-slate-400">
-          ESME Cairo University Student Chapter • Materials Engineering Event
-        </p>
-      </div>
-    </div>
+    <ShareBadgeClient
+      attendeeName={attendee.name}
+      attendeeUniversity={attendee.university}
+      ticketId={ticketId}
+      ogSrc={ogSrc}
+    />
   );
 }

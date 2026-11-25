@@ -5,9 +5,14 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Shield, Lock, Mail, Loader2, AlertCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { getDictionary } from "@/lib/i18n/dictionary";
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const { lang } = useLanguage();
+  const t = getDictionary(lang);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -26,29 +31,37 @@ export default function AdminLoginPage() {
       });
 
       if (authError) {
-        setError(authError.message || "Invalid administrative credentials.");
+        setError(
+          lang === "ar"
+            ? "بيانات الدخول غير صحيحة، يُرجى التأكد من البريد وكلمة المرور."
+            : authError.message || "Invalid administrative credentials."
+        );
         setLoading(false);
         return;
       }
 
       router.push("/admin/dashboard");
     } catch {
-      setError("Unable to reach the authentication service. Please try again.");
+      setError(t.dashboard.networkError);
       setLoading(false);
     }
   };
 
   return (
     <div className="flex-1 flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md p-6 sm:p-8 rounded-2xl bg-[#0F243A]/90 border border-[#D97706]/25 backdrop-blur-md shadow-2xl">
+      <div className="w-full max-w-md p-6 sm:p-8 rounded-2xl bg-[#0F243A]/90 border border-[#D97706]/25 backdrop-blur-md shadow-2xl text-start">
+        <div className="flex justify-end mb-2">
+          <LanguageSwitcher compact />
+        </div>
+
         <div className="flex flex-col items-center text-center mb-6">
           <div className="w-14 h-14 rounded-2xl bg-[#D97706]/10 border border-[#D97706]/30 flex items-center justify-center p-2 mb-3">
             <Image src="/esme_logo.png" alt="ESME Logo" width={42} height={42} className="object-contain" />
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Admin Console Login</h1>
-          <p className="text-xs text-slate-400 mt-1 font-mono">
-            Authorized organizers & gate operators only
-          </p>
+          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+            {t.admin.loginTitle}
+          </h1>
+          <p className="text-xs text-slate-400 mt-1">{t.admin.loginSubtitle}</p>
         </div>
 
         {error && (
@@ -61,10 +74,11 @@ export default function AdminLoginPage() {
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-              <Mail className="w-3.5 h-3.5 text-[#D97706]" /> Admin Email
+              <Mail className="w-3.5 h-3.5 text-[#D97706]" /> {t.admin.emailLabel}
             </label>
             <input
               type="email"
+              dir="ltr"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -75,10 +89,11 @@ export default function AdminLoginPage() {
 
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-              <Lock className="w-3.5 h-3.5 text-[#D97706]" /> Password
+              <Lock className="w-3.5 h-3.5 text-[#D97706]" /> {t.admin.passwordLabel}
             </label>
             <input
               type="password"
+              dir="ltr"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -90,16 +105,14 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-11 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold text-xs sm:text-sm hover:brightness-110 transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(217,119,6,0.35)] disabled:opacity-50 mt-2"
+            className="w-full h-11 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold text-xs sm:text-sm hover:brightness-110 transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(217,119,6,0.35)] disabled:opacity-50 mt-2 cursor-pointer"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Shield className="w-4 h-4" />}
-            SIGN IN TO DASHBOARD
+            {loading ? t.admin.signingIn : t.admin.signInButton}
           </button>
         </form>
 
-        <div className="mt-6 text-center text-[11px] text-slate-500 font-mono">
-          Single sign-on protected by Supabase Auth RLS.
-        </div>
+        <div className="mt-6 text-center text-[11px] text-slate-500">{t.admin.rlsNotice}</div>
       </div>
     </div>
   );

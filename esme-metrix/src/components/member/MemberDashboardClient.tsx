@@ -32,7 +32,16 @@ import {
 import { FaLinkedin, FaWhatsapp } from "react-icons/fa";
 import DualHallAgenda from "@/components/DualHallAgenda";
 import { buildPersonalizedLinkedInPostText } from "@/config/registration";
-import type { ConfirmationCmsConfig, DualHallAgendaConfig } from "@/lib/cms/types";
+import { getLocalizedCms } from "@/lib/cms/arabic";
+import type { ConfirmationCmsConfig, DualHallAgendaConfig, FullCmsData } from "@/lib/cms/types";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { getDictionary } from "@/lib/i18n/dictionary";
+import {
+  localizeCommittee,
+  localizeDepartment,
+  localizeFaculty,
+  localizeRole,
+} from "@/lib/i18n/registrationLabels";
 import { createClient } from "@/lib/supabase/client";
 import type { PublicAttendeePass } from "@/lib/registrants/public-pass";
 import { getInitials } from "@/lib/og/card-data";
@@ -47,6 +56,8 @@ const TICKET_ID_STORAGE_KEY = "esme_metrix_ticket_id";
 interface MemberDashboardClientProps {
   initialData?: PublicAttendeePass | null;
   initialLookupError?: string | null;
+  initialLookupNotFound?: boolean;
+  cms?: FullCmsData;
   agenda: DualHallAgendaConfig;
   confirmationCms: ConfirmationCmsConfig;
   eventDate: string;
@@ -79,6 +90,8 @@ function clearStoredPass() {
 export default function MemberDashboardClient({
   initialData = null,
   initialLookupError = null,
+  initialLookupNotFound = false,
+  cms,
   agenda,
   confirmationCms,
   eventDate,
@@ -88,6 +101,22 @@ export default function MemberDashboardClient({
   ticketBgUrl,
   isPostRegistration = false,
 }: MemberDashboardClientProps) {
+  const { lang } = useLanguage();
+  const t = getDictionary(lang);
+
+  const viewCms = useMemo(() => {
+    if (!cms) return null;
+    return getLocalizedCms(cms, lang);
+  }, [cms, lang]);
+
+  const activeAgenda = viewCms ? viewCms.agenda : agenda;
+  const activeConf = viewCms ? viewCms.confirmation : confirmationCms;
+  const activeDate = viewCms ? viewCms.eventDate : eventDate;
+  const activeVenue = viewCms ? viewCms.eventVenue : eventVenue;
+  const activeTime = viewCms ? viewCms.eventTime : eventTime;
+  const activeMapsUrl = viewCms ? viewCms.eventMapsUrl : eventMapsUrl;
+  const activeTicketBgUrl = viewCms ? viewCms.ticketBgUrl : ticketBgUrl;
+
   const clientStoredRaw = useSyncExternalStore(
     subscribeToStorage,
     () => {
@@ -127,7 +156,18 @@ export default function MemberDashboardClient({
   const [identifierInput, setIdentifierInput] = useState("");
   const [nationalIdInput, setNationalIdInput] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
-  const [loginError, setLoginError] = useState<string | null>(initialLookupError);
+  const [loginErrorState, setLoginErrorState] = useState<{
+    message: string;
+    lang: typeof lang;
+  } | null>(null);
+
+  const visibleLoginError =
+    (loginErrorState && loginErrorState.lang === lang ? loginErrorState.message : null) ||
+    (initialLookupNotFound
+      ? lang === "ar"
+        ? "لم يتم العثور على تسجيل مطابق لرقم التذكرة المطلوب. يُرجى تسجيل الدخول أدناه باستخدام الهاتف أو البريد والرقم القومي."
+        : "No registration found for that Ticket ID. Please sign in below using your Phone Number (or Email) and National ID."
+      : initialLookupError);
 
   const [avatarOverrideUrl, setAvatarOverrideUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -144,7 +184,7 @@ export default function MemberDashboardClient({
   const syncedTicketRef = useRef<string | null>(null);
 
   const effectiveAvatarUrl = avatarOverrideUrl || activePass?.avatar_url || null;
-  const whatsappUrl = confirmationCms.postRegistrationWhatsappUrl;
+  const whatsappUrl = activeConf.postRegistrationWhatsappUrl;
 
   const baseAppUrl = (
     process.env.NEXT_PUBLIC_APP_URL ||
@@ -156,11 +196,11 @@ export default function MemberDashboardClient({
   const personalizedPostText = useMemo(
     () =>
       buildPersonalizedLinkedInPostText(
-        confirmationCms.linkedinCaption,
+        activeConf.linkedinCaption,
         activePass?.registration_id || "",
         baseAppUrl
       ),
-    [confirmationCms.linkedinCaption, activePass?.registration_id, baseAppUrl]
+    [activeConf.linkedinCaption, activePass?.registration_id, baseAppUrl]
   );
 
   // Hydrate / refresh saved ticketId session directly from Supabase on return visits
@@ -232,7 +272,7 @@ export default function MemberDashboardClient({
       canvas: ticketCanvasRef.current,
       data: activePass,
       avatarUrl: effectiveAvatarUrl,
-      ticketBgUrl,
+      ticketBgUrl: activeTicketBgUrl,
       isCancelled: () => cancelled,
     }).then((res) => {
       revokers = res.revokers;
@@ -245,7 +285,7 @@ export default function MemberDashboardClient({
       cancelled = true;
       revokers.forEach((fn) => fn());
     };
-  }, [activePass, effectiveAvatarUrl, ticketBgUrl]);
+  }, [activePass, effectiveAvatarUrl, activeTicketBgUrl]);
 
   // Render 1600x900 "I'm Attending" LinkedIn master template card
   useEffect(() => {
@@ -282,14 +322,12 @@ export default function MemberDashboardClient({
     const nationalId = nationalIdInput.trim();
 
     if (!identifier || !nationalId) {
-      setLoginError(
-        "Please enter both your registered Phone Number (or Email) and your 14-digit National ID."
-      );
+      setLoginErrorState({ message: t.dashboard.missingInputError, lang });
       return;
     }
 
     setLoginLoading(true);
-    setLoginError(null);
+    setLoginErrorState(null);
 
     try {
       const res = await fetch("/api/member/login", {
@@ -300,10 +338,13 @@ export default function MemberDashboardClient({
       const payload = await res.json();
 
       if (!res.ok || !payload?.registration_id) {
-        setLoginError(
-          payload?.error ||
-            "No registration found matching these details. Please verify your Phone Number and National ID, or register now."
-        );
+        setLoginErrorState({
+          message:
+            lang === "ar"
+              ? t.dashboard.badCredentialsError
+              : payload?.error || t.dashboard.badCredentialsError,
+          lang,
+        });
         return;
       }
 
@@ -312,7 +353,7 @@ export default function MemberDashboardClient({
       setAvatarOverrideUrl(payload.avatar_url || null);
       setLoggedOut(false);
     } catch {
-      setLoginError("Network error while verifying your registration. Please try again.");
+      setLoginErrorState({ message: t.dashboard.networkError, lang });
     } finally {
       setLoginLoading(false);
     }
@@ -324,7 +365,7 @@ export default function MemberDashboardClient({
     setManualPass(null);
     setAvatarOverrideUrl(null);
     setLoggedOut(true);
-    setLoginError(null);
+    setLoginErrorState(null);
     setIdentifierInput("");
     setNationalIdInput("");
     setTicketReady(false);
@@ -339,12 +380,12 @@ export default function MemberDashboardClient({
     if (!file || !activePass) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      alert("Image must be smaller than 5MB.");
+      alert(t.upload.fileTooLarge);
       return;
     }
 
     if (!["image/jpeg", "image/png", "image/jpg"].includes(file.type)) {
-      alert("Please upload a JPEG or PNG image.");
+      alert(t.upload.invalidFormat);
       return;
     }
 
@@ -384,7 +425,12 @@ export default function MemberDashboardClient({
         persistPassLocally(updated);
         setManualPass(updated);
         setAvatarOverrideUrl(publicUrl);
-        showToast("Badge photo updated across your ticket & LinkedIn card!", 5000);
+        showToast(
+          lang === "ar"
+            ? "تم تحديث صورتك الشخصية على التذكرة وبادج LinkedIn!"
+            : "Badge photo updated across your ticket & LinkedIn card!",
+          5000
+        );
       }
     } catch (err) {
       console.error("Avatar upload error:", err);
@@ -486,12 +532,14 @@ export default function MemberDashboardClient({
     }
 
     showToast(
-      "Post text copied! Opening LinkedIn composer pre-filled with your personalized caption and card preview.",
+      lang === "ar"
+        ? "تم نسخ نص المنشور! جاري فتح LinkedIn مجهزاً بالنص ومعاينة بطاقتك الخاصة."
+        : "Post text copied! Opening LinkedIn composer pre-filled with your personalized caption and card preview.",
       7000
     );
     setTimeout(() => setCopiedCaption(false), 7000);
 
-    // Pre-fill LinkedIn's "Share your thoughts..." composer directly (no PNG auto-download)
+    // Pre-fill LinkedIn composer directly (no PNG auto-download)
     const linkedInUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(
       personalizedPostText
     )}`;
@@ -511,35 +559,33 @@ export default function MemberDashboardClient({
   if (!activePass) {
     return (
       <div className="max-w-3xl mx-auto w-full px-4 py-12 sm:py-16">
-        <div className="max-w-lg mx-auto p-6 sm:p-8 rounded-3xl bg-[#0F243A]/95 border border-[#D97706]/35 shadow-2xl space-y-6">
+        <div className="max-w-lg mx-auto p-6 sm:p-8 rounded-3xl bg-[#0F243A]/95 border border-[#D97706]/35 shadow-2xl space-y-6 text-start">
           <div className="flex flex-col items-center text-center">
             <div className="w-16 h-16 rounded-2xl bg-[#D97706]/15 border border-[#D97706]/40 flex items-center justify-center text-[#F59E0B] shadow-lg mb-4">
               <QrCode className="w-8 h-8" />
             </div>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/35 text-emerald-300 font-mono text-[11px] font-bold uppercase mb-3">
-              <Lock className="w-3 h-3" /> Verified Member Portal
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/35 text-emerald-300 text-[11px] font-bold mb-3">
+              <Lock className="w-3 h-3" /> {t.dashboard.loginEyebrow}
             </span>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              Access Your Member Dashboard
+              {t.dashboard.loginTitle}
             </h1>
             <p className="text-slate-300 text-xs sm:text-sm mt-2 leading-relaxed">
-              Sign in with your registered <strong>Phone Number</strong> (or{" "}
-              <strong>Email Address</strong>) and <strong>14-digit National ID</strong>{" "}
-              to open your personal QR pass, download PDF tickets, and follow the live hall agenda.
+              {t.dashboard.loginSubtitle}
             </p>
           </div>
 
-          {loginError && (
-            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/35 text-red-300 text-xs flex flex-col gap-2 text-left">
+          {visibleLoginError && (
+            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/35 text-red-300 text-xs flex flex-col gap-2 text-start">
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0 text-red-400 mt-0.5" />
-                <span>{loginError}</span>
+                <span>{visibleLoginError}</span>
               </div>
               <Link
                 href="/register"
-                className="text-[#F59E0B] hover:text-amber-300 font-bold inline-flex items-center gap-1 pl-6"
+                className="text-[#F59E0B] hover:text-amber-300 font-bold inline-flex items-center gap-1 ps-6"
               >
-                Register Now <ArrowRight className="w-3.5 h-3.5" />
+                {t.nav.registerNow} <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
               </Link>
             </div>
           )}
@@ -550,15 +596,16 @@ export default function MemberDashboardClient({
                 htmlFor="member-identifier"
                 className="text-xs font-semibold text-slate-300 flex items-center gap-1.5"
               >
-                <Mail className="w-3.5 h-3.5 text-[#D97706]" /> Phone Number or Email Address
+                <Mail className="w-3.5 h-3.5 text-[#D97706]" /> {t.dashboard.phoneOrEmailLabel}
               </label>
               <input
                 id="member-identifier"
                 type="text"
+                dir="ltr"
                 required
                 value={identifierInput}
                 onChange={(e) => setIdentifierInput(e.target.value)}
-                placeholder="01012345678 or student@cu.edu.eg"
+                placeholder={t.dashboard.phoneOrEmailPlaceholder}
                 className="w-full h-11 px-4 rounded-xl bg-[#15304B] border border-[#D97706]/35 focus:border-[#F59E0B] text-white placeholder-slate-400 text-sm focus:outline-none"
               />
             </div>
@@ -568,17 +615,18 @@ export default function MemberDashboardClient({
                 htmlFor="member-national-id"
                 className="text-xs font-semibold text-slate-300 flex items-center gap-1.5"
               >
-                <CreditCard className="w-3.5 h-3.5 text-[#D97706]" /> National ID (14 Digits)
+                <CreditCard className="w-3.5 h-3.5 text-[#D97706]" /> {t.dashboard.nationalIdLabel}
               </label>
               <input
                 id="member-national-id"
                 type="text"
+                dir="ltr"
                 required
                 inputMode="numeric"
                 maxLength={14}
                 value={nationalIdInput}
                 onChange={(e) => setNationalIdInput(e.target.value)}
-                placeholder="29912010101234"
+                placeholder={t.dashboard.nationalIdPlaceholder}
                 className="w-full h-11 px-4 rounded-xl bg-[#15304B] border border-[#D97706]/35 focus:border-[#F59E0B] text-white placeholder-slate-400 font-mono tracking-wider text-sm focus:outline-none"
               />
             </div>
@@ -590,23 +638,23 @@ export default function MemberDashboardClient({
             >
               {loginLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" /> Verifying in Supabase...
+                  <Loader2 className="w-4 h-4 animate-spin" /> {t.dashboard.verifyingButton}
                 </>
               ) : (
                 <>
-                  <ShieldCheck className="w-4 h-4" /> Open My Member Dashboard
+                  <ShieldCheck className="w-4 h-4" /> {t.dashboard.accessButton}
                 </>
               )}
             </button>
           </form>
 
           <div className="pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
-            <span className="text-slate-400">Haven&apos;t registered for ESME METRIX yet?</span>
+            <span className="text-slate-400">{t.dashboard.notRegisteredYet}</span>
             <Link
               href="/register"
               className="text-[#F59E0B] hover:text-amber-300 font-bold inline-flex items-center gap-1"
             >
-              Register Now <ArrowRight className="w-3.5 h-3.5" />
+              {t.nav.registerNow} <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
             </Link>
           </div>
         </div>
@@ -615,17 +663,20 @@ export default function MemberDashboardClient({
   }
 
   const attendeeInitials = getInitials(activePass.full_name);
-  const majorSummary =
-    activePass.department || activePass.faculty || activePass.job_title || "Engineering Delegate";
+  const localizedDept = activePass.department
+    ? localizeDepartment(activePass.department, lang)
+    : activePass.faculty
+    ? localizeFaculty(activePass.faculty, lang)
+    : activePass.job_title || (lang === "ar" ? "مشارك في الملتقى" : "Engineering Delegate");
 
   return (
-    <div className="max-w-5xl mx-auto w-full px-3 sm:px-4 py-8 sm:py-12 flex flex-col items-center">
+    <div className="max-w-5xl mx-auto w-full px-3 sm:px-4 py-8 sm:py-12 flex flex-col items-center text-start">
       {toastMessage && (
-        <div className="fixed top-6 right-6 z-50 max-w-md p-4 rounded-xl bg-[#0F243A] border-2 border-[#10B981] shadow-2xl text-left flex items-start gap-3">
+        <div className="fixed top-6 end-6 z-50 max-w-md p-4 rounded-xl bg-[#0F243A] border-2 border-[#10B981] shadow-2xl text-start flex items-start gap-3">
           <CheckCircle2 className="w-5 h-5 text-[#10B981] shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="text-xs font-bold text-white uppercase tracking-wider">
-              {toastMessage.includes("copied") ? "POST TEXT COPIED!" : "UPDATED"}
+              {t.common.copied}
             </p>
             <p className="text-xs text-slate-300 mt-0.5 leading-relaxed">{toastMessage}</p>
           </div>
@@ -641,30 +692,31 @@ export default function MemberDashboardClient({
 
       {/* Top Pass Controls */}
       <div className="w-full flex flex-wrap items-center justify-between gap-3 mb-6">
-        <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 font-mono text-xs font-bold">
+        <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 text-xs font-bold">
           <CheckCircle2 className="w-3.5 h-3.5" />
-          MEMBER &amp; ATTENDEE DASHBOARD
+          {t.nav.memberDashboard}
         </span>
         <button
           type="button"
           onClick={handleLogoutSwitch}
           className="px-3.5 py-1.5 rounded-xl border border-slate-700 bg-[#0F243A] text-slate-300 hover:text-white hover:border-[#D97706] text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-colors"
         >
-          <LogOut className="w-3.5 h-3.5" /> Logout / Switch Account
+          <LogOut className="w-3.5 h-3.5" /> {t.dashboard.logoutButton}
         </button>
       </div>
 
       {/* Welcome Header */}
       <div className="text-center mb-8">
-        <div className="inline-block px-3.5 py-1 rounded-full border border-[#D97706]/35 bg-[#0F243A] text-[#F59E0B] font-mono text-xs mb-3 font-semibold uppercase">
-          {confirmationCms.badgeLabel}
+        <div className="inline-block px-3.5 py-1 rounded-full border border-[#D97706]/35 bg-[#0F243A] text-[#F59E0B] text-xs mb-3 font-semibold">
+          {activeConf.badgeLabel}
         </div>
         <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mb-2">
-          {confirmationCms.heading}
+          {activeConf.heading}
         </h1>
         <p className="text-slate-300 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
-          Welcome <span className="text-[#F59E0B] font-bold">{activePass.full_name}</span>.{" "}
-          {confirmationCms.subheading}
+          {lang === "ar" ? "أهلاً بك يا " : "Welcome "}
+          <span className="text-[#F59E0B] font-bold">{activePass.full_name}</span>.{" "}
+          {activeConf.subheading}
         </p>
       </div>
 
@@ -674,19 +726,22 @@ export default function MemberDashboardClient({
           {/* Attendee Identity Details & ESME Chapter Badge */}
           <div className="lg:col-span-7 space-y-4">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="px-3 py-1 rounded-lg bg-[#D97706]/20 border border-[#F59E0B]/45 text-[#FEF08A] font-mono text-xs font-extrabold">
-                TICKET ID: {activePass.registration_id}
+              <span className="px-3 py-1 rounded-lg bg-[#D97706]/20 border border-[#F59E0B]/45 text-[#FEF08A] text-xs font-extrabold">
+                {t.dashboard.ticketIdLabel}:{" "}
+                <span dir="ltr" className="font-mono">
+                  {activePass.registration_id}
+                </span>
               </span>
               {activePass.is_esme_member ? (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 font-mono text-xs font-bold">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 text-xs font-bold">
                   <Award className="w-3.5 h-3.5" />
-                  ESME CHAPTER
-                  {activePass.committee ? ` • ${activePass.committee}` : ""}
-                  {activePass.role ? ` (${activePass.role})` : ""}
+                  {t.dashboard.esmeMemberBadge}
+                  {activePass.committee ? ` • ${localizeCommittee(activePass.committee, lang)}` : ""}
+                  {activePass.role ? ` — ${localizeRole(activePass.role, lang)}` : ""}
                 </span>
               ) : (
-                <span className="px-3 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 font-mono text-xs font-semibold">
-                  OFFICIAL DELEGATE
+                <span className="px-3 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-xs font-semibold">
+                  {t.dashboard.passVerifiedBadge}
                 </span>
               )}
             </div>
@@ -716,27 +771,27 @@ export default function MemberDashboardClient({
                   {activePass.full_name}
                 </h2>
                 <p className="text-xs sm:text-sm text-[#F59E0B] font-semibold mt-0.5 truncate">
-                  {activePass.university || "Cairo University"}
+                  {activePass.university || (lang === "ar" ? "جامعة القاهرة" : "Cairo University")}
                 </p>
-                <p className="text-xs text-slate-300 mt-0.5 truncate">{majorSummary}</p>
+                <p className="text-xs text-slate-300 mt-0.5 truncate">{localizedDept}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               <div className="p-3 rounded-xl bg-[#15304B]/80 border border-slate-800">
-                <span className="text-[10px] font-mono text-slate-400 uppercase block">
-                  Event Date &amp; Check-In
+                <span className="text-[10px] text-slate-400 font-semibold uppercase block">
+                  {t.landing.statDateLabel}
                 </span>
-                <span className="font-bold text-white mt-0.5 block">{eventDate}</span>
-                <span className="text-slate-300 text-[11px]">{eventTime}</span>
+                <span className="font-bold text-white mt-0.5 block">{activeDate}</span>
+                <span className="text-slate-300 text-[11px]">{activeTime}</span>
               </div>
               <div className="p-3 rounded-xl bg-[#15304B]/80 border border-slate-800">
-                <span className="text-[10px] font-mono text-slate-400 uppercase block">
-                  Venue &amp; Parallel Halls
+                <span className="text-[10px] text-slate-400 font-semibold uppercase block">
+                  {t.landing.statVenueLabel}
                 </span>
-                <span className="font-bold text-white mt-0.5 block">{eventVenue}</span>
+                <span className="font-bold text-white mt-0.5 block">{activeVenue}</span>
                 <span className="text-emerald-300 text-[11px]">
-                  Hall 1 (250 Cap) &amp; Hall 2 (150 Cap)
+                  {activeAgenda.hall1Name} • {activeAgenda.hall2Name}
                 </span>
               </div>
             </div>
@@ -747,13 +802,23 @@ export default function MemberDashboardClient({
                 <User className="w-4 h-4 text-[#F59E0B] shrink-0" />
                 <span>
                   {effectiveAvatarUrl
-                    ? "Your portrait photo is applied to your ticket & LinkedIn card."
+                    ? lang === "ar"
+                      ? "صورتك الشخصية مفعّلة على التذكرة وبادج LinkedIn."
+                      : "Your portrait photo is applied to your ticket & LinkedIn card."
+                    : lang === "ar"
+                    ? "اختياري: أضف صورة شخصية لتظهر داخل تذكرتك وبادج LinkedIn."
                     : "Optional: Add a portrait photo for your ticket stub & LinkedIn badge."}
                 </span>
               </div>
               <label className="px-3.5 py-2 rounded-lg bg-[#15304B] border border-[#D97706]/40 hover:border-[#F59E0B] text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-colors shrink-0">
                 <Camera className="w-3.5 h-3.5 text-[#F59E0B]" />
-                {effectiveAvatarUrl ? "Change Photo" : "Add Badge Photo"}
+                {effectiveAvatarUrl
+                  ? lang === "ar"
+                    ? "تغيير الصورة"
+                    : "Change Photo"
+                  : lang === "ar"
+                  ? "إضافة صورة للبادج"
+                  : "Add Badge Photo"}
                 <input
                   type="file"
                   accept="image/png, image/jpeg, image/jpg"
@@ -767,8 +832,8 @@ export default function MemberDashboardClient({
 
           {/* High-Contrast Gate QR Code Box */}
           <div className="lg:col-span-5 flex flex-col items-center justify-center p-5 rounded-2xl bg-[#091727] border border-emerald-500/35">
-            <div className="text-[11px] font-mono font-extrabold text-emerald-300 uppercase tracking-wider mb-3">
-              ● GATE SCANNER QR PASS
+            <div className="text-[11px] font-extrabold text-emerald-300 tracking-wider mb-3">
+              ● {t.dashboard.passVerifiedBadge}
             </div>
             <div className="bg-white p-3.5 rounded-2xl shadow-[0_0_25px_rgba(255,255,255,0.12)]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -779,11 +844,13 @@ export default function MemberDashboardClient({
               />
             </div>
             <div className="mt-3 text-center">
-              <div className="font-mono text-sm font-black text-[#FEF08A] tracking-wider">
+              <div dir="ltr" className="font-mono text-sm font-black text-[#FEF08A] tracking-wider">
                 {activePass.registration_id}
               </div>
               <div className="text-[11px] text-slate-400 mt-0.5">
-                Present this code + original National ID at entrance gate
+                {lang === "ar"
+                  ? "أبرز هذا الرمز مع أصل بطاقة الرقم القومي عند بوابة الدخول"
+                  : "Present this code + original National ID at entrance gate"}
               </div>
             </div>
           </div>
@@ -797,7 +864,7 @@ export default function MemberDashboardClient({
             className="px-4 py-3 rounded-xl bg-[#15304B] border border-slate-700 hover:border-[#F59E0B] text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
           >
             <QrCode className="w-4 h-4 text-[#F59E0B] shrink-0" />
-            Download QR (PNG)
+            {t.dashboard.downloadQrPng}
           </button>
 
           <button
@@ -807,7 +874,11 @@ export default function MemberDashboardClient({
             className="px-4 py-3 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold text-xs flex items-center justify-center gap-2 hover:brightness-110 transition-all shadow-[0_0_15px_rgba(217,119,6,0.3)] disabled:opacity-50 cursor-pointer"
           >
             <Download className="w-4 h-4 shrink-0" />
-            {ticketReady ? "Download Ticket (PDF)" : "Preparing PDF..."}
+            {ticketReady
+              ? t.dashboard.downloadTicketPdf
+              : lang === "ar"
+              ? "جاري تجهيز PDF..."
+              : "Preparing PDF..."}
           </button>
 
           <button
@@ -816,35 +887,39 @@ export default function MemberDashboardClient({
             className="px-4 py-3 rounded-xl bg-[#0077B5] hover:bg-[#006097] text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors shadow-[0_0_18px_rgba(0,119,181,0.3)] cursor-pointer"
           >
             <FaLinkedin className="w-4 h-4 shrink-0" />
-            {shared ? "Shared on LinkedIn" : "Share on LinkedIn"}
+            {shared
+              ? lang === "ar"
+                ? "تم فتح LinkedIn!"
+                : "Shared on LinkedIn"
+              : t.dashboard.shareOnLinkedin}
           </button>
 
           <a
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs flex items-center justify-center gap-2 transition-colors shadow-[0_0_16px_rgba(16,185,129,0.25)]"
+            className="px-4 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs flex items-center justify-center gap-2 transition-colors shadow-[0_0_16px_rgba(16,185,129,0.25)] text-center"
           >
             <FaWhatsapp className="w-4 h-4 shrink-0" />
-            Join WhatsApp Group
+            {t.dashboard.joinWhatsapp}
           </a>
 
           <a
-            href={eventMapsUrl}
+            href={activeMapsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-3 rounded-xl bg-[#15304B] border border-emerald-500/40 hover:border-emerald-400 text-emerald-200 hover:text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors"
+            className="px-4 py-3 rounded-xl bg-[#15304B] border border-emerald-500/40 hover:border-emerald-400 text-emerald-200 hover:text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors text-center"
           >
             <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />
-            Open Venue Maps
+            {t.dashboard.openVenueMaps}
             <ExternalLink className="w-3 h-3 shrink-0" />
           </a>
         </div>
       </section>
 
-      {/* ── LIVE EVENT DAY AGENDA (EXACT WIREFRAME SYNCED WITH ADMIN CMS) ── */}
+      {/* ── LIVE EVENT DAY AGENDA (SYNCED WITH ADMIN CMS & BILINGUAL SWITCHER) ── */}
       <section className="w-full p-4 sm:p-7 rounded-3xl bg-[#0A1A2B]/90 border border-slate-800 shadow-2xl mb-10">
-        <DualHallAgenda agenda={agenda} compact id="live-agenda" />
+        <DualHallAgenda agenda={activeAgenda} compact id="live-agenda" />
       </section>
 
       {/* ── OFFICIAL WHATSAPP COMMUNITY BANNER ── */}
@@ -853,13 +928,13 @@ export default function MemberDashboardClient({
           <div className="flex-1">
             <div className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs px-3 py-1 rounded-full inline-flex items-center gap-2 font-bold mb-2.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-              {confirmationCms.whatsappBadge}
+              {activeConf.whatsappBadge}
             </div>
             <h3 className="text-lg sm:text-xl font-bold text-white">
-              {confirmationCms.whatsappTitle}
+              {activeConf.whatsappTitle}
             </h3>
             <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl leading-relaxed">
-              {confirmationCms.whatsappDescription}
+              {activeConf.whatsappDescription}
             </p>
           </div>
           <a
@@ -869,7 +944,7 @@ export default function MemberDashboardClient({
             className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-6 py-3.5 rounded-xl inline-flex items-center gap-2.5 shadow-lg shadow-emerald-500/25 transition shrink-0 text-sm"
           >
             <FaWhatsapp className="w-5 h-5 shrink-0" />
-            {confirmationCms.whatsappButtonLabel}
+            {t.dashboard.joinWhatsapp}
           </a>
         </div>
       </div>
@@ -879,11 +954,9 @@ export default function MemberDashboardClient({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div>
             <h2 className="text-xl font-black text-white flex items-center gap-2">
-              <Ticket className="w-5 h-5 text-[#D97706]" /> Widescreen Official Ticket Stub
+              <Ticket className="w-5 h-5 text-[#D97706]" /> {t.dashboard.ticketPreviewTitle}
             </h2>
-            <p className="text-xs text-slate-300 mt-0.5">
-              High-resolution ticket canvas exported into your printable PDF pass.
-            </p>
+            <p className="text-xs text-slate-300 mt-0.5">{t.dashboard.ticketPreviewSubtitle}</p>
           </div>
           <button
             type="button"
@@ -891,7 +964,7 @@ export default function MemberDashboardClient({
             disabled={!ticketReady}
             className="px-4 py-2 rounded-xl bg-[#0F243A] border border-[#D97706]/40 text-xs font-bold text-[#F59E0B] hover:text-white hover:border-[#D97706] flex items-center gap-2 cursor-pointer self-start sm:self-auto disabled:opacity-50"
           >
-            <Download className="w-3.5 h-3.5" /> Export Ticket PDF
+            <Download className="w-3.5 h-3.5" /> {t.dashboard.downloadTicketPdf}
           </button>
         </div>
 
@@ -908,11 +981,9 @@ export default function MemberDashboardClient({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div>
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <Share2 className="w-5 h-5 text-[#F59E0B]" /> LinkedIn &ldquo;I&apos;m Attending&rdquo; Card
+              <Share2 className="w-5 h-5 text-[#F59E0B]" /> {t.dashboard.linkedinStudioTitle}
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Download badge PNG separately or click Share on LinkedIn to open a pre-filled LinkedIn post with your card preview.
-            </p>
+            <p className="text-xs text-slate-400 mt-0.5">{t.dashboard.linkedinStudioSubtitle}</p>
           </div>
           <button
             type="button"
@@ -920,7 +991,7 @@ export default function MemberDashboardClient({
             disabled={!cardReady}
             className="px-4 py-2 rounded-xl bg-[#0F243A] border border-[#D97706]/40 text-xs font-bold text-[#F59E0B] hover:text-white hover:border-[#D97706] flex items-center gap-2 transition-colors cursor-pointer self-start sm:self-auto disabled:opacity-50"
           >
-            <Download className="w-3.5 h-3.5" /> Download Badge (PNG)
+            <Download className="w-3.5 h-3.5" /> {t.dashboard.downloadBadgePng}
           </button>
         </div>
 
@@ -928,10 +999,10 @@ export default function MemberDashboardClient({
           <canvas ref={linkedInCanvasRef} className="w-full h-auto block" />
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/20 text-left">
+        <div className="p-4 sm:p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/20 text-start">
           <div className="flex flex-wrap items-center justify-between mb-2 gap-3">
-            <span className="text-xs font-mono font-bold text-slate-300 uppercase flex items-center gap-1.5">
-              <Copy className="w-3.5 h-3.5 text-[#D97706]" /> Pre-filled LinkedIn Post Text
+            <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+              <Copy className="w-3.5 h-3.5 text-[#D97706]" /> {t.dashboard.linkedinCaptionLabel}
             </span>
             <div className="flex items-center gap-2">
               <button
@@ -939,18 +1010,18 @@ export default function MemberDashboardClient({
                 onClick={() => {
                   navigator.clipboard.writeText(personalizedPostText);
                   setCopiedCaption(true);
-                  showToast("LinkedIn post text copied to clipboard!", 4000);
+                  showToast(t.dashboard.copiedPostText, 4000);
                   setTimeout(() => setCopiedCaption(false), 4000);
                 }}
                 className="px-3 py-1.5 rounded-lg bg-[#15304B] border border-slate-700 text-xs font-semibold text-slate-200 hover:text-white hover:border-[#D97706] flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 {copiedCaption ? (
                   <>
-                    <Check className="w-3.5 h-3.5 text-[#10B981]" /> Copied!
+                    <Check className="w-3.5 h-3.5 text-[#10B981]" /> {t.dashboard.copiedPostText}
                   </>
                 ) : (
                   <>
-                    <Copy className="w-3.5 h-3.5" /> Copy Post Text
+                    <Copy className="w-3.5 h-3.5" /> {t.dashboard.copyPostText}
                   </>
                 )}
               </button>
@@ -959,58 +1030,65 @@ export default function MemberDashboardClient({
                 onClick={handleLinkedInShare}
                 className="px-3 py-1.5 rounded-lg bg-[#0077B5] hover:bg-[#006097] text-xs font-bold text-white flex items-center gap-1.5 transition-colors cursor-pointer"
               >
-                <FaLinkedin className="w-3.5 h-3.5" /> Share on LinkedIn
+                <FaLinkedin className="w-3.5 h-3.5" /> {t.dashboard.shareOnLinkedin}
               </button>
             </div>
           </div>
-          <pre className="text-xs text-slate-300 font-sans whitespace-pre-wrap leading-relaxed bg-[#15304B]/60 p-3.5 rounded-xl border border-slate-800">
+          <pre
+            dir="auto"
+            className="text-xs text-slate-300 font-sans whitespace-pre-wrap leading-relaxed bg-[#15304B]/60 p-3.5 rounded-xl border border-slate-800"
+          >
             {personalizedPostText}
           </pre>
         </div>
       </div>
 
       {/* ── EVENT METADATA & ADMISSION CHECKLIST ── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full text-left mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full text-start mb-8">
         <div className="p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/25">
-          <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#F59E0B] uppercase mb-2">
-            <Calendar className="w-4 h-4 text-[#D97706]" /> Event Date
+          <div className="flex items-center gap-2 text-xs font-bold text-[#F59E0B] uppercase mb-2">
+            <Calendar className="w-4 h-4 text-[#D97706]" /> {t.landing.statDateLabel}
           </div>
-          <div className="text-lg font-extrabold text-white">{eventDate}</div>
-          <div className="text-xs font-semibold text-slate-300 mt-1">{eventTime}</div>
+          <div className="text-lg font-extrabold text-white">{activeDate}</div>
+          <div className="text-xs font-semibold text-slate-300 mt-1">{activeTime}</div>
         </div>
 
         <div className="p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/25">
-          <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#F59E0B] uppercase mb-2">
-            <MapPin className="w-4 h-4 text-[#D97706]" /> Venue &amp; Maps
+          <div className="flex items-center gap-2 text-xs font-bold text-[#F59E0B] uppercase mb-2">
+            <MapPin className="w-4 h-4 text-[#D97706]" /> {t.landing.statVenueLabel}
           </div>
-          <div className="text-lg font-extrabold text-white">{eventVenue}</div>
+          <div className="text-lg font-extrabold text-white">{activeVenue}</div>
           <a
-            href={eventMapsUrl}
+            href={activeMapsUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs font-bold text-emerald-300 hover:text-emerald-200 inline-flex items-center gap-1 mt-1.5"
           >
-            Open Directions in Google Maps <ExternalLink className="w-3 h-3" />
+            {t.dashboard.openVenueMaps} <ExternalLink className="w-3 h-3" />
           </a>
         </div>
 
         <div className="p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/25">
-          <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#F59E0B] uppercase mb-2">
-            <Clock className="w-4 h-4 text-[#D97706]" /> Gate Check-In
+          <div className="flex items-center gap-2 text-xs font-bold text-[#F59E0B] uppercase mb-2">
+            <Clock className="w-4 h-4 text-[#D97706]" />{" "}
+            {lang === "ar" ? "تسجيل الوصول عند البوابة" : "Gate Check-In"}
           </div>
-          <div className="text-lg font-extrabold text-white">Fast-Track QR Scan</div>
+          <div className="text-lg font-extrabold text-white">
+            {lang === "ar" ? "دخول سريع برمز QR" : "Fast-Track QR Scan"}
+          </div>
           <div className="text-xs font-semibold text-[#10B981] flex items-center gap-1.5 mt-1">
-            <CheckCircle2 className="w-4 h-4" /> Bring original National ID
+            <CheckCircle2 className="w-4 h-4" />{" "}
+            {lang === "ar" ? "أحضر أصل بطاقة الرقم القومي" : "Bring original National ID"}
           </div>
         </div>
       </div>
 
-      <div className="w-full p-6 rounded-2xl bg-[#0F243A]/90 border border-[#D97706]/25 text-left mb-8">
+      <div className="w-full p-6 rounded-2xl bg-[#0F243A]/90 border border-[#D97706]/25 text-start mb-8">
         <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-          <ShieldCheck className="w-5 h-5 text-[#D97706]" /> {confirmationCms.checklistTitle}
+          <ShieldCheck className="w-5 h-5 text-[#D97706]" /> {activeConf.checklistTitle}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs sm:text-sm text-slate-300">
-          {confirmationCms.checklist.map((item, idx) => (
+          {activeConf.checklist.map((item, idx) => (
             <div
               key={idx}
               className="flex items-start gap-3 p-3.5 rounded-xl bg-[#15304B]/70 border border-slate-800"
@@ -1034,7 +1112,7 @@ export default function MemberDashboardClient({
           href="/"
           className="px-6 py-3 rounded-xl border border-slate-700 text-slate-300 hover:text-white hover:border-slate-500 text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-colors"
         >
-          Back to Home <ArrowRight className="w-4 h-4" />
+          {t.share.backToSummit} <ArrowRight className="w-4 h-4 rtl:rotate-180" />
         </Link>
       </div>
     </div>

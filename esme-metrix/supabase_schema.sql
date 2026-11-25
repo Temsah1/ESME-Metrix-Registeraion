@@ -102,5 +102,6 @@ INSERT INTO public.site_content (key, value, label, category, field_type) VALUES
   ('hero_logo_url', '/esme_logo.png', 'Hero / Navbar Logo', 'media', 'image'),
   ('ticket_bg_url', '/images/ticket-bg.jpg', 'Ticket Background Image', 'media', 'image'),
   ('post_registration_whatsapp_url', 'https://chat.whatsapp.com/KOT8wY8h2lK5p0mNN7NcNW', 'Post-Registration WhatsApp Invite URL', 'Confirmation', 'text'),
-  ('whatsapp_group_url', 'https://chat.whatsapp.com/KOT8wY8h2lK5p0mNN7NcNW', 'Attendee WhatsApp Group Link', 'social', 'text')
+  ('whatsapp_group_url', 'https://chat.whatsapp.com/KOT8wY8h2lK5p0mNN7NcNW', 'Attendee WhatsApp Group Link', 'social', 'text'),
+  ('cms_arabic', '{}', 'Arabic Bilingual Content Config (JSON)', 'CMS JSON', 'json')
 ON CONFLICT (key) DO NOTHING;

@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { fieldEntrance } from "@/components/motion/MotionTokens";
 import { CheckCircle2, AlertCircle } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { getDictionary } from "@/lib/i18n/dictionary";
 
 interface AnimatedFieldProps {
   label: string;
@@ -26,12 +28,14 @@ export default function AnimatedField({
   standalone = false,
   children,
 }: AnimatedFieldProps) {
+  const { lang } = useLanguage();
+  const t = getDictionary(lang);
   const [isFocused, setIsFocused] = useState(false);
 
   return (
     <motion.div
       variants={standalone ? undefined : fieldEntrance}
-      className="flex flex-col gap-1.5 relative"
+      className="flex flex-col gap-1.5 relative text-start"
       onFocusCapture={() => setIsFocused(true)}
       onBlurCapture={() => setIsFocused(false)}
     >
@@ -52,10 +56,10 @@ export default function AnimatedField({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0, opacity: 0 }}
               transition={{ type: "spring", stiffness: 400, damping: 25 }}
-              className="text-[#10B981] flex items-center gap-1 text-[10px] font-mono font-bold"
+              className="text-[#10B981] flex items-center gap-1 text-[10px] font-bold"
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Valid</span>
+              <span>{t.common.valid}</span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -87,7 +91,15 @@ export default function AnimatedField({
             {error}
           </motion.span>
         ) : helperText ? (
-          <span className="text-[10px] text-slate-400 font-mono mt-0.5">{helperText}</span>
+          <span
+            className={
+              lang === "ar"
+                ? "text-[11px] text-slate-400 mt-0.5"
+                : "text-[10px] text-slate-400 font-mono mt-0.5"
+            }
+          >
+            {helperText}
+          </span>
         ) : null}
       </AnimatePresence>
     </motion.div>

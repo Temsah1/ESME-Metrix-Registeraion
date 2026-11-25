@@ -1,4 +1,5 @@
 import { OFFICIAL_ESME_LINKEDIN_URL } from "@/config/registration";
+import { DEFAULT_ARABIC_CMS } from "@/lib/cms/arabic";
 import {
   DEFAULT_AGENDA_CMS,
   DEFAULT_CONFIRMATION_CMS,
@@ -12,6 +13,7 @@ import {
 import type {
   AgendaHallType,
   AgendaSession,
+  ArabicCmsData,
   ConfirmationCmsConfig,
   DualHallAgendaConfig,
   FooterCmsConfig,
@@ -31,6 +33,7 @@ export const CMS_KEYS = {
   form: "cms_form_config",
   confirmation: "cms_confirmation",
   footer: "cms_footer",
+  arabic: "cms_arabic",
   eventMapsUrl: "event_maps_url",
   postRegistrationWhatsappUrl: "post_registration_whatsapp_url",
 } as const;
@@ -194,6 +197,7 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
   const parsedForm = safeJsonParse<RegistrationFormConfig>(raw[CMS_KEYS.form]);
   const parsedConfirmation = safeJsonParse<ConfirmationCmsConfig>(raw[CMS_KEYS.confirmation]);
   const parsedFooter = safeJsonParse<FooterCmsConfig>(raw[CMS_KEYS.footer]);
+  const parsedArabic = safeJsonParse<ArabicCmsData>(raw[CMS_KEYS.arabic]);
 
   const landing: LandingCmsConfig = {
     ...DEFAULT_LANDING_CMS,
@@ -350,6 +354,81 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
     socialLinks,
   };
 
+  const ar: ArabicCmsData = {
+    eventDate: parsedArabic?.eventDate?.trim() || DEFAULT_ARABIC_CMS.eventDate,
+    eventVenue: parsedArabic?.eventVenue?.trim() || DEFAULT_ARABIC_CMS.eventVenue,
+    eventTime: parsedArabic?.eventTime?.trim() || DEFAULT_ARABIC_CMS.eventTime,
+    landing: {
+      ...DEFAULT_ARABIC_CMS.landing,
+      ...(parsedArabic?.landing || {}),
+      storyPillars:
+        Array.isArray(parsedArabic?.landing?.storyPillars) &&
+        parsedArabic.landing.storyPillars.length > 0
+          ? parsedArabic.landing.storyPillars
+          : DEFAULT_ARABIC_CMS.landing.storyPillars,
+      experienceBullets:
+        Array.isArray(parsedArabic?.landing?.experienceBullets) &&
+        parsedArabic.landing.experienceBullets.length > 0
+          ? parsedArabic.landing.experienceBullets
+          : DEFAULT_ARABIC_CMS.landing.experienceBullets,
+    },
+    highlights:
+      Array.isArray(parsedArabic?.highlights) && parsedArabic.highlights.length > 0
+        ? parsedArabic.highlights
+        : DEFAULT_ARABIC_CMS.highlights,
+    gallery:
+      Array.isArray(parsedArabic?.gallery) && parsedArabic.gallery.length > 0
+        ? parsedArabic.gallery
+        : DEFAULT_ARABIC_CMS.gallery,
+    agenda: {
+      ...DEFAULT_ARABIC_CMS.agenda,
+      ...(parsedArabic?.agenda || {}),
+      sessions: {
+        ...DEFAULT_ARABIC_CMS.agenda.sessions,
+        ...(parsedArabic?.agenda?.sessions || {}),
+      },
+    },
+    form: {
+      ...DEFAULT_ARABIC_CMS.form,
+      ...(parsedArabic?.form || {}),
+      steps: {
+        step1: {
+          ...DEFAULT_ARABIC_CMS.form.steps.step1,
+          ...(parsedArabic?.form?.steps?.step1 || {}),
+        },
+        step2: {
+          ...DEFAULT_ARABIC_CMS.form.steps.step2,
+          ...(parsedArabic?.form?.steps?.step2 || {}),
+        },
+        step3: {
+          ...DEFAULT_ARABIC_CMS.form.steps.step3,
+          ...(parsedArabic?.form?.steps?.step3 || {}),
+        },
+        step4: {
+          ...DEFAULT_ARABIC_CMS.form.steps.step4,
+          ...(parsedArabic?.form?.steps?.step4 || {}),
+        },
+      },
+      fields: {
+        ...DEFAULT_ARABIC_CMS.form.fields,
+        ...(parsedArabic?.form?.fields || {}),
+      },
+    },
+    confirmation: {
+      ...DEFAULT_ARABIC_CMS.confirmation,
+      ...(parsedArabic?.confirmation || {}),
+      checklist:
+        Array.isArray(parsedArabic?.confirmation?.checklist) &&
+        parsedArabic.confirmation.checklist.length > 0
+          ? parsedArabic.confirmation.checklist
+          : DEFAULT_ARABIC_CMS.confirmation.checklist,
+    },
+    footer: {
+      ...DEFAULT_ARABIC_CMS.footer,
+      ...(parsedArabic?.footer || {}),
+    },
+  };
+
   return {
     eventDate: raw.event_date?.trim() || DEFAULT_FULL_CMS.eventDate,
     eventVenue: raw.event_venue?.trim() || DEFAULT_FULL_CMS.eventVenue,
@@ -364,6 +443,7 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
     form,
     confirmation,
     footer,
+    ar,
   };
 }
 
@@ -544,6 +624,14 @@ export function serializeFullCmsToSiteContentRows(cms: FullCmsData): SiteContent
       key: CMS_KEYS.footer,
       value: JSON.stringify(cms.footer),
       label: "Footer & Chapter Social Links Config (JSON)",
+      category: "CMS JSON",
+      field_type: "json",
+      updated_at: now,
+    },
+    {
+      key: CMS_KEYS.arabic,
+      value: JSON.stringify(cms.ar ?? DEFAULT_ARABIC_CMS),
+      label: "Arabic Bilingual Content Config (JSON)",
       category: "CMS JSON",
       field_type: "json",
       updated_at: now,

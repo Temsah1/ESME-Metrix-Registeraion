@@ -9,6 +9,7 @@ import {
   ExternalLink,
   Images,
   LayoutTemplate,
+  Languages,
   Loader2,
   Plus,
   RotateCcw,
@@ -25,6 +26,9 @@ import {
   FormBuilderSection,
   WireframeAgendaEditor,
 } from "@/components/admin/cms/CmsFormFields";
+import ArabicCmsEditorSections from "@/components/admin/cms/ArabicCmsEditorSections";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { getDictionary } from "@/lib/i18n/dictionary";
 
 type CmsSectionTab =
   | "landing"
@@ -69,23 +73,50 @@ export default function CmsEditor({
   onSave,
   onReset,
 }: CmsEditorProps) {
+  const { lang } = useLanguage();
+  const dict = getDictionary(lang);
   const [subTab, setSubTab] = useState<CmsSectionTab>("landing");
+  const [editLang, setEditLang] = useState<"en" | "ar">("en");
 
   const subTabs: Array<{
     id: CmsSectionTab;
     label: string;
     icon: React.ComponentType<{ className?: string }>;
   }> = [
-    { id: "landing", label: "Landing & Story", icon: LayoutTemplate },
-    { id: "gallery", label: "8-Photo Gallery", icon: Images },
-    { id: "agenda", label: "Dual-Hall Agenda", icon: CalendarDays },
-    { id: "form", label: "Form Builder", icon: ClipboardList },
-    { id: "confirmation", label: "Confirmation & Social", icon: Share2 },
-    { id: "footer", label: "Footer & Links", icon: Sparkles },
+    {
+      id: "landing",
+      label: lang === "ar" ? "الصفحة الرئيسية والقصة" : "Landing & Story",
+      icon: LayoutTemplate,
+    },
+    {
+      id: "gallery",
+      label: lang === "ar" ? "معرض الـ 8 صور" : "8-Photo Gallery",
+      icon: Images,
+    },
+    {
+      id: "agenda",
+      label: lang === "ar" ? "جدول القاعتين" : "Dual-Hall Agenda",
+      icon: CalendarDays,
+    },
+    {
+      id: "form",
+      label: lang === "ar" ? "نموذج التسجيل" : "Form Builder",
+      icon: ClipboardList,
+    },
+    {
+      id: "confirmation",
+      label: lang === "ar" ? "التأكيد و LinkedIn" : "Confirmation & Social",
+      icon: Share2,
+    },
+    {
+      id: "footer",
+      label: lang === "ar" ? "التذييل والروابط" : "Footer & Links",
+      icon: Sparkles,
+    },
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-start">
       {successMessage && (
         <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
@@ -101,55 +132,104 @@ export default function CmsEditor({
       )}
 
       {/* Top Sticky Action Header */}
-      <div className="p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/20 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-[#D97706]" />
-            <h2 className="text-base font-bold text-white">
-              Total Site &amp; Form CMS Control
-            </h2>
+      <div className="p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/20 flex flex-col gap-4">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-[#D97706]" />
+              <h2 className="text-base font-bold text-white">
+                {lang === "ar"
+                  ? "التحكم الكامل في محتوى المنصة ونموذج التسجيل (CMS)"
+                  : "Total Site & Form CMS Control"}
+              </h2>
+            </div>
+            <p className="text-xs text-slate-400 mt-1">
+              {lang === "ar"
+                ? "عدّل نصوص الواجهة، صور المعرض، جلسات القاعتين، حقول التسجيل، التذكرة والروابط باللغتين الإنجليزية والعربية."
+                : "Edit landing copy, 8-photo gallery, Hall 1 & Hall 2 sessions, registration form fields & dropdowns, confirmation copy, and footer links."}
+            </p>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
-            Edit landing copy, 8-photo gallery, Hall 1 &amp; Hall 2 sessions, registration form fields &amp; dropdowns, confirmation copy, and footer links.
-          </p>
+
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              type="button"
+              onClick={onReset}
+              className="px-3.5 py-2 rounded-xl border border-slate-700 text-slate-300 hover:text-white hover:border-slate-500 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />{" "}
+              {lang === "ar" ? "استعادة الافتراضي" : "Reset Defaults"}
+            </button>
+
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={saving || loading}
+              className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold text-xs flex items-center gap-2 hover:brightness-110 transition-all shadow-[0_0_15px_rgba(217,119,6,0.3)] disabled:opacity-50 cursor-pointer"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" /> {dict.admin.cmsSaving}
+                </>
+              ) : (
+                <>
+                  <Save className="w-3.5 h-3.5" /> {dict.admin.cmsSaveAll}
+                </>
+              )}
+            </button>
+
+            <a
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 rounded-xl border border-slate-700 text-slate-400 hover:text-[#D97706] hover:border-[#D97706] transition-colors"
+              title={lang === "ar" ? "معاينة الموقع" : "Preview live site"}
+            >
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          <button
-            type="button"
-            onClick={onReset}
-            className="px-3.5 py-2 rounded-xl border border-slate-700 text-slate-300 hover:text-white hover:border-slate-500 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+        {/* Content Language Mode Switcher */}
+        <div className="pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-xs text-slate-300">
+            <Languages className="w-4 h-4 text-[#F59E0B]" />
+            <span className="font-semibold">{dict.admin.cmsLanguageModeLabel}</span>
+          </div>
+          <div
+            role="group"
+            aria-label="CMS content language selector"
+            className="inline-flex items-center rounded-xl border border-[#D97706]/35 bg-[#15304B] p-1 text-xs font-bold"
           >
-            <RotateCcw className="w-3.5 h-3.5" /> Reset Defaults
-          </button>
-
-          <button
-            type="button"
-            onClick={onSave}
-            disabled={saving || loading}
-            className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold text-xs flex items-center gap-2 hover:brightness-110 transition-all shadow-[0_0_15px_rgba(217,119,6,0.3)] disabled:opacity-50 cursor-pointer"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...
-              </>
-            ) : (
-              <>
-                <Save className="w-3.5 h-3.5" /> Save &amp; Publish Changes
-              </>
-            )}
-          </button>
-
-          <a
-            href="/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-2 rounded-xl border border-slate-700 text-slate-400 hover:text-[#D97706] hover:border-[#D97706] transition-colors"
-            title="Preview live site"
-          >
-            <ExternalLink className="w-4 h-4" />
-          </a>
+            <button
+              type="button"
+              onClick={() => setEditLang("en")}
+              className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer ${
+                editLang === "en"
+                  ? "bg-[#D97706] text-white shadow-sm"
+                  : "text-slate-300 hover:text-white"
+              }`}
+            >
+              {dict.admin.cmsLanguageModeEn}
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditLang("ar")}
+              className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer ${
+                editLang === "ar"
+                  ? "bg-emerald-600 text-white shadow-sm"
+                  : "text-slate-300 hover:text-white"
+              }`}
+            >
+              {dict.admin.cmsLanguageModeAr}
+            </button>
+          </div>
         </div>
+
+        {editLang === "ar" && (
+          <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-200 text-xs leading-relaxed">
+            {dict.admin.cmsArabicModeHint}
+          </div>
+        )}
       </div>
 
       {/* Sub-Navigation Pills */}
@@ -175,7 +255,11 @@ export default function CmsEditor({
         })}
       </div>
 
-      {/* TAB 1: LANDING & STORYTELLING */}
+      {editLang === "ar" ? (
+        <ArabicCmsEditorSections subTab={subTab} cms={cms} onChange={onChange} />
+      ) : (
+        <>
+          {/* TAB 1: LANDING & STORYTELLING */}
       {subTab === "landing" && (
         <div className="space-y-6">
           <div className="p-6 rounded-2xl bg-[#0F243A] border border-[#D97706]/20 space-y-4">
@@ -1063,6 +1147,8 @@ export default function CmsEditor({
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

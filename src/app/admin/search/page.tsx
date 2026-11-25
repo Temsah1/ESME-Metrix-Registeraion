@@ -7,6 +7,15 @@ import { createClient } from "@/lib/supabase/client";
 import { Registrant } from "@/types/database";
 import { REGISTRATION_ID_REGEX } from "@/lib/registration-id";
 import { getAdminPhotoUrl } from "@/lib/utils";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { getDictionary } from "@/lib/i18n/dictionary";
+import {
+  localizeCity,
+  localizeCommittee,
+  localizeDepartment,
+  localizeFaculty,
+  localizeRole,
+} from "@/lib/i18n/registrationLabels";
 
 const PHONE_REGEX = /^01[0125][0-9]{8}$/;
 
@@ -21,6 +30,8 @@ interface SearchResult {
 }
 
 export default function AdminSearchPage() {
+  const { lang } = useLanguage();
+  const t = getDictionary(lang);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SearchResult | null>(null);
@@ -56,7 +67,7 @@ export default function AdminSearchPage() {
 
       if (error) {
         setResult(null);
-        setSearchError("Search failed. Check your connection and try again.");
+        setSearchError(t.dashboard.networkError);
         return;
       }
 
@@ -73,7 +84,7 @@ export default function AdminSearchPage() {
       }
     } catch {
       setResult(null);
-      setSearchError("Search failed. Check your connection and try again.");
+      setSearchError(t.dashboard.networkError);
     } finally {
       setLoading(false);
     }
@@ -110,51 +121,60 @@ export default function AdminSearchPage() {
             : prev
         );
         if (data.status === "ALREADY_SCANNED") {
-          setCheckInError("This attendee was already checked in. Showing the recorded check-in.");
+          setCheckInError(
+            lang === "ar"
+              ? "هذا المشارك مسجّل حضور مسبقاً. يتم عرض بيانات تسجيل الحضور."
+              : "This attendee was already checked in. Showing the recorded check-in."
+          );
         }
       } else if (data.status === "UNAUTHORIZED") {
-        setCheckInError("Your admin session expired. Sign in again to record attendance.");
+        setCheckInError(
+          lang === "ar"
+            ? "انتهت صلاحية جلسة المشرف، يُرجى إعادة تسجيل الدخول لتسجيل الحضور."
+            : "Your admin session expired. Sign in again to record attendance."
+        );
       } else {
-        setCheckInError(data.error || "Check-in failed. Please retry.");
+        setCheckInError(
+          data.error ||
+            (lang === "ar" ? "فشل تسجيل الحضور، يُرجى المحاولة مجدداً." : "Check-in failed. Please retry.")
+        );
       }
     } catch (e) {
       console.error(e);
-      setCheckInError("Network error during check-in. Please retry.");
+      setCheckInError(t.dashboard.networkError);
     } finally {
       setCheckingIn(false);
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6 text-start">
       <div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">Attendee Search &amp; Gate Verification</h1>
-        <p className="text-xs text-slate-400 font-mono mt-1">
-          Instant manual identity verification by Egyptian phone number, attendee name, or Registration ID.
-        </p>
+        <h1 className="text-2xl font-bold text-white tracking-tight">{t.admin.searchTitle}</h1>
+        <p className="text-xs text-slate-400 mt-1">{t.admin.searchSubtitle}</p>
       </div>
 
       {/* Search Input Bar */}
       <form onSubmit={handleSearch} className="flex gap-2">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+          <Search className="w-4 h-4 absolute start-3.5 top-3.5 text-slate-400" />
           <input
             type="text"
             required
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Enter Phone (01XXXXXXXXX), Name, or MX8-XXXXXX"
-            className="w-full h-11 pl-10 pr-3.5 rounded-xl bg-[#0F243A] border border-[#D97706]/30 text-white placeholder-slate-400 focus:outline-none focus:border-[#D97706] text-xs sm:text-sm font-mono"
+            placeholder={t.admin.searchInputPlaceholder}
+            className="w-full h-11 ps-10 pe-3.5 rounded-xl bg-[#0F243A] border border-[#D97706]/30 text-white placeholder-slate-400 focus:outline-none focus:border-[#D97706] text-xs sm:text-sm"
           />
         </div>
         <button
           type="submit"
           disabled={loading}
-          className="px-6 h-11 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold text-xs sm:text-sm hover:brightness-110 transition-all flex items-center gap-1.5 shadow-[0_0_15px_rgba(217,119,6,0.3)] shrink-0 disabled:opacity-50"
+          className="px-6 h-11 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold text-xs sm:text-sm hover:brightness-110 transition-all flex items-center gap-1.5 shadow-[0_0_15px_rgba(217,119,6,0.3)] shrink-0 disabled:opacity-50 cursor-pointer"
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-          SEARCH
+          {lang === "ar" ? "بحث" : "SEARCH"}
         </button>
       </form>
 
@@ -171,16 +191,17 @@ export default function AdminSearchPage() {
               {/* Profile Card Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
                 <div>
-                  <span className="font-mono text-xs font-bold text-[#F59E0B] px-2 py-0.5 rounded bg-[#F59E0B]/10">
+                  <span dir="ltr" className="font-mono text-xs font-bold text-[#F59E0B] px-2 py-0.5 rounded bg-[#F59E0B]/10">
                     {result.registrant.registration_id}
                   </span>
                   <h2 className="text-xl font-bold text-white mt-1">
                     {result.registrant.full_name}
                   </h2>
-                  <div className="text-xs text-slate-400 font-mono">
-                    {result.registrant.university} • {result.registrant.faculty}
-                    {result.registrant.department && result.registrant.department !== result.registrant.faculty
-                      ? ` (${result.registrant.department})`
+                  <div className="text-xs text-slate-400 mt-0.5">
+                    {result.registrant.university} • {localizeFaculty(result.registrant.faculty, lang)}
+                    {result.registrant.department &&
+                    result.registrant.department !== result.registrant.faculty
+                      ? ` (${localizeDepartment(result.registrant.department, lang)})`
                       : ""}
                   </div>
                 </div>
@@ -188,30 +209,57 @@ export default function AdminSearchPage() {
                 {/* Attendance Status Badge */}
                 <div>
                   {result.attendance ? (
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold font-mono">
-                      <CheckCircle2 className="w-4 h-4" /> CHECKED IN
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
+                      <CheckCircle2 className="w-4 h-4" /> {t.admin.alreadyCheckedIn}
                     </div>
                   ) : (
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 text-xs font-bold font-mono">
-                      <Clock className="w-4 h-4" /> NOT YET SCANNED
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 text-xs font-bold">
+                      <Clock className="w-4 h-4" />{" "}
+                      {lang === "ar" ? "لم يسجل الدخول بعد" : "NOT YET SCANNED"}
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Detailed Contact & Academic Credentials */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono bg-[#15304B] p-4 rounded-xl border border-slate-800 text-slate-300">
-                <div><span className="text-slate-400">Phone:</span> {result.registrant.phone}</div>
-                <div><span className="text-slate-400">Email:</span> {result.registrant.email}</div>
-                <div><span className="text-slate-400">City:</span> {result.registrant.city}</div>
-                <div><span className="text-slate-400">Year:</span> {result.registrant.academic_year}</div>
-                <div><span className="text-slate-400">Job Title:</span> {result.registrant.job_title}</div>
-                <div><span className="text-slate-400">Company:</span> {result.registrant.company || "None"}</div>
-                <div><span className="text-slate-400">ESME Member:</span> {result.registrant.is_esme_member ? "Yes" : "No"}</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-[#15304B] p-4 rounded-xl border border-slate-800 text-slate-300">
+                <div>
+                  <span className="text-slate-400">{t.register.reviewPhoneLabel}:</span>{" "}
+                  <span dir="ltr" className="font-mono">{result.registrant.phone}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400">{t.register.reviewEmailLabel}:</span>{" "}
+                  <span dir="ltr" className="font-mono">{result.registrant.email}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400">{t.register.reviewCityLabel}:</span>{" "}
+                  {localizeCity(result.registrant.city, lang)}
+                </div>
+                <div>
+                  <span className="text-slate-400">{t.register.reviewYearLabel}:</span>{" "}
+                  {result.registrant.academic_year}
+                </div>
+                <div>
+                  <span className="text-slate-400">{t.register.reviewRoleLabel}:</span>{" "}
+                  {result.registrant.job_title}
+                </div>
+                <div>
+                  <span className="text-slate-400">{t.register.reviewCompanyLabel}:</span>{" "}
+                  {result.registrant.company || "—"}
+                </div>
+                <div>
+                  <span className="text-slate-400">{t.register.reviewEsmeLabel}:</span>{" "}
+                  {result.registrant.is_esme_member
+                    ? t.register.yesEsmeMember
+                    : t.register.noEsmeMember}
+                </div>
                 {result.registrant.is_esme_member && (
                   <div>
-                    <span className="text-slate-400">Chapter Role:</span>{" "}
-                    {result.registrant.committee || "N/A"} ({result.registrant.role || "Member"})
+                    <span className="text-slate-400">{t.register.committeeLabel}:</span>{" "}
+                    {result.registrant.committee
+                      ? localizeCommittee(result.registrant.committee, lang)
+                      : "—"}{" "}
+                    ({result.registrant.role ? localizeRole(result.registrant.role, lang) : "—"})
                   </div>
                 )}
               </div>
@@ -219,7 +267,9 @@ export default function AdminSearchPage() {
               {/* Verification & Portrait Photos */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <div className="text-xs font-semibold text-slate-300 mb-1">National ID Photo:</div>
+                  <div className="text-xs font-semibold text-slate-300 mb-1">
+                    {lang === "ar" ? "صورة بطاقة الرقم القومي:" : "National ID Photo:"}
+                  </div>
                   <div className="relative w-full h-40 rounded-xl bg-[#15304B] border border-slate-800 overflow-hidden">
                     <Image
                       src={getAdminPhotoUrl(result.registrant.id_photo_url)}
@@ -232,7 +282,9 @@ export default function AdminSearchPage() {
                 </div>
 
                 <div>
-                  <div className="text-xs font-semibold text-slate-300 mb-1">Badge Portrait Photo:</div>
+                  <div className="text-xs font-semibold text-slate-300 mb-1">
+                    {lang === "ar" ? "الصورة الشخصية للبادج:" : "Badge Portrait Photo:"}
+                  </div>
                   <div className="relative w-full h-40 rounded-xl bg-[#15304B] border border-slate-800 overflow-hidden flex items-center justify-center">
                     {result.registrant.avatar_url ? (
                       <Image
@@ -245,7 +297,7 @@ export default function AdminSearchPage() {
                     ) : (
                       <div className="flex flex-col items-center gap-1.5 text-slate-500 text-xs">
                         <User className="w-6 h-6" />
-                        <span>No portrait uploaded</span>
+                        <span>{lang === "ar" ? "لم تُرفع صورة شخصية" : "No portrait uploaded"}</span>
                       </div>
                     )}
                   </div>
@@ -263,14 +315,14 @@ export default function AdminSearchPage() {
                   <button
                     onClick={handleManualCheckIn}
                     disabled={checkingIn}
-                    className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-extrabold text-xs sm:text-sm hover:brightness-110 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(217,119,6,0.35)] disabled:opacity-50"
+                    className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-extrabold text-xs sm:text-sm hover:brightness-110 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(217,119,6,0.35)] disabled:opacity-50 cursor-pointer"
                   >
                     {checkingIn ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <ShieldCheck className="w-4 h-4" />
                     )}
-                    MARK ATTENDANCE MANUALLY
+                    {t.admin.checkInButton}
                   </button>
                 </div>
               )}
@@ -278,7 +330,17 @@ export default function AdminSearchPage() {
           ) : (
             <div className="p-8 rounded-2xl bg-[#0F243A] border border-slate-800 text-center text-slate-400 text-sm">
               <XCircle className="w-8 h-8 text-slate-500 mx-auto mb-2" />
-              No matching attendee registration found for &quot;<span className="text-white font-mono">{query}</span>&quot;.
+              {lang === "ar" ? (
+                <>
+                  لم يتم العثور على مشارك مطابق للبحث &quot;
+                  <span dir="ltr" className="text-white font-mono">{query}</span>&quot;.
+                </>
+              ) : (
+                <>
+                  No matching attendee registration found for &quot;
+                  <span className="text-white font-mono">{query}</span>&quot;.
+                </>
+              )}
             </div>
           )}
         </>
