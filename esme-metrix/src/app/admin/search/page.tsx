@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Search, CheckCircle2, XCircle, Clock, ShieldCheck, Loader2, AlertCircle } from "lucide-react";
+import { Search, CheckCircle2, XCircle, Clock, ShieldCheck, Loader2, AlertCircle, User } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Registrant } from "@/types/database";
 import { REGISTRATION_ID_REGEX } from "@/lib/registration-id";
@@ -128,7 +128,7 @@ export default function AdminSearchPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">Attendee Search & Gate Verification</h1>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Attendee Search &amp; Gate Verification</h1>
         <p className="text-xs text-slate-400 font-mono mt-1">
           Instant manual identity verification by Egyptian phone number, attendee name, or Registration ID.
         </p>
@@ -179,6 +179,9 @@ export default function AdminSearchPage() {
                   </h2>
                   <div className="text-xs text-slate-400 font-mono">
                     {result.registrant.university} • {result.registrant.faculty}
+                    {result.registrant.department && result.registrant.department !== result.registrant.faculty
+                      ? ` (${result.registrant.department})`
+                      : ""}
                   </div>
                 </div>
 
@@ -197,16 +200,23 @@ export default function AdminSearchPage() {
               </div>
 
               {/* Detailed Contact & Academic Credentials */}
-              <div className="grid grid-cols-2 gap-3 text-xs font-mono bg-[#15304B] p-4 rounded-xl border border-slate-800 text-slate-300">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono bg-[#15304B] p-4 rounded-xl border border-slate-800 text-slate-300">
                 <div><span className="text-slate-400">Phone:</span> {result.registrant.phone}</div>
                 <div><span className="text-slate-400">Email:</span> {result.registrant.email}</div>
                 <div><span className="text-slate-400">City:</span> {result.registrant.city}</div>
                 <div><span className="text-slate-400">Year:</span> {result.registrant.academic_year}</div>
                 <div><span className="text-slate-400">Job Title:</span> {result.registrant.job_title}</div>
                 <div><span className="text-slate-400">Company:</span> {result.registrant.company || "None"}</div>
+                <div><span className="text-slate-400">ESME Member:</span> {result.registrant.is_esme_member ? "Yes" : "No"}</div>
+                {result.registrant.is_esme_member && (
+                  <div>
+                    <span className="text-slate-400">Chapter Role:</span>{" "}
+                    {result.registrant.committee || "N/A"} ({result.registrant.role || "Member"})
+                  </div>
+                )}
               </div>
 
-              {/* Verification Photos */}
+              {/* Verification & Portrait Photos */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <div className="text-xs font-semibold text-slate-300 mb-1">National ID Photo:</div>
@@ -222,15 +232,22 @@ export default function AdminSearchPage() {
                 </div>
 
                 <div>
-                  <div className="text-xs font-semibold text-slate-300 mb-1">Student Karnet Card:</div>
-                  <div className="relative w-full h-40 rounded-xl bg-[#15304B] border border-slate-800 overflow-hidden">
-                    <Image
-                      src={getAdminPhotoUrl(result.registrant.karnet_photo_url)}
-                      alt="Karnet Card"
-                      fill
-                      className="object-contain"
-                      unoptimized
-                    />
+                  <div className="text-xs font-semibold text-slate-300 mb-1">Badge Portrait Photo:</div>
+                  <div className="relative w-full h-40 rounded-xl bg-[#15304B] border border-slate-800 overflow-hidden flex items-center justify-center">
+                    {result.registrant.avatar_url ? (
+                      <Image
+                        src={getAdminPhotoUrl(result.registrant.avatar_url)}
+                        alt="Badge Portrait"
+                        fill
+                        className="object-contain"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center gap-1.5 text-slate-500 text-xs">
+                        <User className="w-6 h-6" />
+                        <span>No portrait uploaded</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

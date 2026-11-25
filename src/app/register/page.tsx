@@ -10,9 +10,17 @@ import {
   step1Schema,
   step2Schema,
   step3Schema,
-  CAIRO_ENG_DEPARTMENTS,
+  FACULTIES,
+  ESME_COMMITTEES,
+  ESME_ROLES,
+  getDepartmentsForFaculty,
+  isOtherFaculty,
+  requiresCustomMajor,
+  resolveDepartment,
   CompleteRegistrationInput,
+  CompleteRegistrationParsed,
 } from "@/lib/validations/registration";
+import { OTHER_DEPARTMENT_GENERIC } from "@/config/registration";
 import PhotoUpload from "@/components/PhotoUpload";
 import AnimatedField from "@/components/motion/AnimatedField";
 import {
@@ -37,6 +45,7 @@ import {
   CreditCard,
   Calendar,
   Award,
+  Users,
 } from "lucide-react";
 
 const STEPS = [
@@ -84,7 +93,7 @@ export default function RegisterPage() {
     setError,
     clearErrors,
     formState: { errors },
-  } = useForm<CompleteRegistrationInput>({
+  } = useForm<CompleteRegistrationInput, unknown, CompleteRegistrationParsed>({
     resolver: zodResolver(completeRegistrationSchema),
     mode: "onChange",
     defaultValues: {
@@ -94,19 +103,58 @@ export default function RegisterPage() {
       email: "",
       city: "Cairo",
       university: "Cairo University",
-      faculty: CAIRO_ENG_DEPARTMENTS[0],
+      faculty: "",
+      department: "",
+      customMajor: "",
       academicYear: "3rd",
       graduationYear: "2026",
       jobTitle: "Student",
       company: "",
+      isEsmeMember: undefined,
+      committee: "",
+      role: "",
       idPhotoUrl: "",
-      karnetPhotoUrl: "",
       avatarUrl: "",
       termsAccepted: false,
     },
   });
 
   const formData = watch();
+  const availableDepartments = getDepartmentsForFaculty(formData.faculty);
+  const showCustomMajorInput = requiresCustomMajor(formData.faculty, formData.department);
+  const resolvedMajorDisplay = resolveDepartment({
+    faculty: formData.faculty,
+    department: formData.department,
+    customMajor: formData.customMajor,
+  });
+
+  const handleFacultyChange = (selectedFaculty: string) => {
+    setValue("faculty", selectedFaculty, { shouldValidate: true });
+    clearErrors(["faculty", "department", "customMajor"]);
+    if (isOtherFaculty(selectedFaculty)) {
+      setValue("department", OTHER_DEPARTMENT_GENERIC, { shouldValidate: true });
+    } else {
+      setValue("department", "", { shouldValidate: false });
+      setValue("customMajor", "", { shouldValidate: false });
+    }
+  };
+
+  const handleDepartmentChange = (selectedDepartment: string) => {
+    setValue("department", selectedDepartment, { shouldValidate: true });
+    clearErrors(["department", "customMajor"]);
+    if (!requiresCustomMajor(getValues("faculty"), selectedDepartment)) {
+      setValue("customMajor", "", { shouldValidate: false });
+    }
+  };
+
+  const handleEsmeMembershipSelect = (isMember: boolean) => {
+    setValue("isEsmeMember", isMember, { shouldValidate: true });
+    clearErrors(["isEsmeMember", "committee", "role"]);
+    if (!isMember) {
+      setValue("committee", "", { shouldValidate: false });
+      setValue("role", "", { shouldValidate: false });
+    }
+  };
 
   const handleNext = async () => {
     setServerError(null);
@@ -143,10 +191,15 @@ export default function RegisterPage() {
       const step2Result = step2Schema.safeParse({
         university: getValues("university"),
         faculty: getValues("faculty"),
+        department: getValues("department"),
+        customMajor: getValues("customMajor"),
         academicYear: getValues("academicYear"),
         graduationYear: getValues("graduationYear"),
         jobTitle: getValues("jobTitle"),
         company: getValues("company") || undefined,
+        isEsmeMember: getValues("isEsmeMember"),
+        committee: getValues("committee"),
+        role: getValues("role"),
       });
 
       if (!step2Result.success) {
@@ -161,7 +214,19 @@ export default function RegisterPage() {
         return;
       }
 
-      clearErrors(["university", "faculty", "academicYear", "graduationYear", "jobTitle", "company"]);
+      clearErrors([
+        "university",
+        "faculty",
+        "department",
+        "customMajor",
+        "academicYear",
+        "graduationYear",
+        "jobTitle",
+        "company",
+        "isEsmeMember",
+        "committee",
+        "role",
+      ]);
       setDirection(1);
       setCurrentStep(3);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -171,7 +236,6 @@ export default function RegisterPage() {
     if (currentStep === 3) {
       const step3Result = step3Schema.safeParse({
         idPhotoUrl: getValues("idPhotoUrl"),
-        karnetPhotoUrl: getValues("karnetPhotoUrl"),
         avatarUrl: getValues("avatarUrl") || undefined,
       });
 
@@ -182,12 +246,12 @@ export default function RegisterPage() {
         });
         setServerError(
           step3Result.error.issues[0]?.message ||
-            "Please upload both required verification documents before continuing."
+            "Please upload your National ID Card (Front) before continuing."
         );
         return;
       }
 
-      clearErrors(["idPhotoUrl", "karnetPhotoUrl", "avatarUrl"]);
+      clearErrors(["idPhotoUrl", "avatarUrl"]);
       setDirection(1);
       setCurrentStep(4);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -202,15 +266,24 @@ export default function RegisterPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const onSubmit = async (data: CompleteRegistrationInput) => {
+  const onSubmit = async (data: CompleteRegistrationParsed) => {
     setSubmitting(true);
     setServerError(null);
 
     try {
+      const payload = {
+        ...data,
+        department: data.department || "",
+        customMajor: data.customMajor || "",
+        committee: data.isEsmeMember ? data.committee || "" : "",
+        role: data.isEsmeMember ? data.role || "" : "",
+        avatarUrl: data.avatarUrl || undefined,
+      };
+
       const response = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       const result = await response.json();
@@ -221,7 +294,6 @@ export default function RegisterPage() {
         return;
       }
 
-      // Store registration data in sessionStorage for the Success Page
       sessionStorage.setItem("esme_metrix_registration", JSON.stringify(result));
       router.push("/success");
     } catch {
@@ -331,7 +403,7 @@ export default function RegisterPage() {
         className="rounded-2xl border border-[#D97706]/20 bg-[#0F243A]/95 p-5 sm:p-8 backdrop-blur-md shadow-2xl relative"
       >
         <input type="hidden" {...register("idPhotoUrl")} />
-        <input type="hidden" {...register("karnetPhotoUrl")} />
+        <input type="hidden" {...register("avatarUrl")} />
 
         {serverError && (
           <motion.div
@@ -364,7 +436,6 @@ export default function RegisterPage() {
               </div>
 
               <motion.div variants={containerStagger} initial="hidden" animate="visible" className="flex flex-col gap-5">
-                {/* Full Name Field */}
                 <AnimatedField
                   label="Full Name (الاسم ثلاثي أو رباعي)"
                   required
@@ -379,7 +450,6 @@ export default function RegisterPage() {
                   />
                 </AnimatedField>
 
-                {/* National ID Field */}
                 <AnimatedField
                   label="National ID (الرقم القومي - 14 رقم)"
                   icon={<CreditCard className="w-3.5 h-3.5 text-[#D97706]" />}
@@ -397,7 +467,6 @@ export default function RegisterPage() {
                   />
                 </AnimatedField>
 
-                {/* Phone & Email Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <AnimatedField
                     label="Phone Number"
@@ -425,13 +494,12 @@ export default function RegisterPage() {
                     <input
                       {...register("email")}
                       type="email"
-                      placeholder="student@eng.cu.edu.eg"
+                      placeholder="student@cu.edu.eg"
                       className="w-full h-11 px-3.5 rounded-xl bg-[#15304B] border border-[#D97706]/40 focus:border-[#D97706] text-white placeholder:text-gray-500 focus:outline-none text-sm transition-colors"
                     />
                   </AnimatedField>
                 </div>
 
-                {/* City Selection */}
                 <AnimatedField
                   label="City of Residence (المحافظة)"
                   icon={<MapPin className="w-3.5 h-3.5 text-[#D97706]" />}
@@ -482,38 +550,66 @@ export default function RegisterPage() {
             >
               <div className="border-b border-slate-800 pb-3 mb-1">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <GraduationCap className="w-5 h-5 text-[#D97706]" /> Academic & Department Info
+                  <GraduationCap className="w-5 h-5 text-[#D97706]" /> Academic &amp; Department Info
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">Specify your university, engineering department, and graduation year.</p>
+                <p className="text-xs text-slate-400 mt-1">
+                  Specify your university, faculty, specialization, graduation year, and ESME Chapter status.
+                </p>
               </div>
 
               <motion.div variants={containerStagger} initial="hidden" animate="visible" className="flex flex-col gap-5">
+                <AnimatedField
+                  label="University"
+                  icon={<Building className="w-3.5 h-3.5 text-[#D97706]" />}
+                  required
+                  error={errors.university?.message}
+                >
+                  <input
+                    {...register("university")}
+                    type="text"
+                    placeholder="e.g. Cairo University"
+                    className="w-full h-11 px-3.5 rounded-xl bg-[#15304B] border border-[#D97706]/40 focus:border-[#D97706] text-white placeholder:text-gray-500 focus:outline-none text-sm transition-colors"
+                  />
+                </AnimatedField>
+
+                {/* Cascading Faculty -> Department Selection */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <AnimatedField
-                    label="University"
-                    icon={<Building className="w-3.5 h-3.5 text-[#D97706]" />}
-                    required
-                    error={errors.university?.message}
-                  >
-                    <input
-                      {...register("university")}
-                      type="text"
-                      placeholder="e.g. Cairo University"
-                      className="w-full h-11 px-3.5 rounded-xl bg-[#15304B] border border-[#D97706]/40 focus:border-[#D97706] text-white placeholder:text-gray-500 focus:outline-none text-sm transition-colors"
-                    />
-                  </AnimatedField>
-
-                  {/* Department with Chemical, Mechanical, Civil prominent */}
-                  <AnimatedField
-                    label="Engineering Department (القسم الهندسي)"
+                    label="Faculty / Major Category"
                     required
                     error={errors.faculty?.message}
                   >
                     <select
-                      {...register("faculty")}
+                      value={formData.faculty || ""}
+                      onChange={(e) => handleFacultyChange(e.target.value)}
                       className="w-full h-11 px-3 rounded-xl bg-[#15304B] border border-[#D97706]/40 focus:border-[#D97706] text-white focus:outline-none text-xs sm:text-sm transition-colors"
                     >
-                      {CAIRO_ENG_DEPARTMENTS.map((dept) => (
+                      <option value="">Select Faculty / Major Category...</option>
+                      {FACULTIES.map((fac) => (
+                        <option key={fac} value={fac}>
+                          {fac}
+                        </option>
+                      ))}
+                    </select>
+                  </AnimatedField>
+
+                  <AnimatedField
+                    label="Department / Specialization"
+                    required
+                    error={errors.department?.message}
+                  >
+                    <select
+                      value={formData.department || ""}
+                      disabled={!formData.faculty}
+                      onChange={(e) => handleDepartmentChange(e.target.value)}
+                      className="w-full h-11 px-3 rounded-xl bg-[#15304B] border border-[#D97706]/40 focus:border-[#D97706] text-white focus:outline-none text-xs sm:text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <option value="">
+                        {formData.faculty
+                          ? "Select Department / Specialization..."
+                          : "Select Faculty First..."}
+                      </option>
+                      {availableDepartments.map((dept) => (
                         <option key={dept} value={dept}>
                           {dept}
                         </option>
@@ -521,6 +617,31 @@ export default function RegisterPage() {
                     </select>
                   </AnimatedField>
                 </div>
+
+                {/* Custom Major / Department Fallback Input */}
+                <AnimatePresence>
+                  {showCustomMajorInput && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <AnimatedField
+                        label="Specify Your Major / Department"
+                        required
+                        error={errors.customMajor?.message}
+                      >
+                        <input
+                          {...register("customMajor")}
+                          type="text"
+                          placeholder="Enter your exact major or specialization (e.g. Nanotechnology, Architecture...)"
+                          className="w-full h-11 px-3.5 rounded-xl bg-[#15304B] border border-[#D97706]/50 focus:border-[#D97706] text-white placeholder:text-gray-500 focus:outline-none text-sm transition-colors"
+                        />
+                      </AnimatedField>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <AnimatedField label="Academic Year (السنة الدراسية)" required>
@@ -562,6 +683,7 @@ export default function RegisterPage() {
                     label="Job Title"
                     icon={<Briefcase className="w-3.5 h-3.5 text-[#D97706]" />}
                     required
+                    error={errors.jobTitle?.message}
                   >
                     <input
                       {...register("jobTitle")}
@@ -579,6 +701,109 @@ export default function RegisterPage() {
                       className="w-full h-11 px-3.5 rounded-xl bg-[#15304B] border border-[#D97706]/40 focus:border-[#D97706] text-white placeholder:text-gray-500 focus:outline-none text-sm transition-colors"
                     />
                   </AnimatedField>
+                </div>
+
+                {/* Conditional ESME Chapter Membership */}
+                <div className="p-4 rounded-xl bg-[#15304B]/70 border border-[#D97706]/30 flex flex-col gap-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-[#D97706]" />
+                      <span>Are you a member of the ESME Chapter?</span>
+                      <span className="text-[#D97706] font-bold">*</span>
+                    </label>
+                    <div
+                      role="radiogroup"
+                      aria-label="Are you a member of the ESME Chapter?"
+                      className="grid grid-cols-2 gap-3"
+                    >
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={formData.isEsmeMember === true}
+                        onClick={() => handleEsmeMembershipSelect(true)}
+                        className={`h-11 rounded-xl border text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                          formData.isEsmeMember === true
+                            ? "bg-[#D97706]/20 border-[#F59E0B] text-white shadow-[0_0_12px_rgba(217,119,6,0.25)]"
+                            : "bg-[#0F243A] border-slate-700 text-slate-300 hover:border-[#D97706]/50"
+                        }`}
+                      >
+                        Yes — ESME Member
+                      </button>
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={formData.isEsmeMember === false}
+                        onClick={() => handleEsmeMembershipSelect(false)}
+                        className={`h-11 rounded-xl border text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                          formData.isEsmeMember === false
+                            ? "bg-[#10B981]/15 border-[#10B981] text-white shadow-[0_0_12px_rgba(16,185,129,0.2)]"
+                            : "bg-[#0F243A] border-slate-700 text-slate-300 hover:border-slate-500"
+                        }`}
+                      >
+                        No — External Attendee
+                      </button>
+                    </div>
+                    {errors.isEsmeMember?.message && (
+                      <span className="text-xs text-amber-400 flex items-center gap-1 font-medium">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0 text-red-400" />
+                        {errors.isEsmeMember.message}
+                      </span>
+                    )}
+                  </div>
+
+                  <AnimatePresence>
+                    {formData.isEsmeMember === true && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-800/80"
+                      >
+                        <AnimatedField
+                          label="Committee"
+                          required
+                          error={errors.committee?.message}
+                        >
+                          <select
+                            value={formData.committee || ""}
+                            onChange={(e) =>
+                              setValue("committee", e.target.value, { shouldValidate: true })
+                            }
+                            className="w-full h-11 px-3 rounded-xl bg-[#0F243A] border border-[#D97706]/40 focus:border-[#D97706] text-white focus:outline-none text-xs sm:text-sm transition-colors"
+                          >
+                            <option value="">Select Committee...</option>
+                            {ESME_COMMITTEES.map((comm) => (
+                              <option key={comm} value={comm}>
+                                {comm}
+                              </option>
+                            ))}
+                          </select>
+                        </AnimatedField>
+
+                        <AnimatedField
+                          label="Role / Position"
+                          required
+                          error={errors.role?.message}
+                        >
+                          <select
+                            value={formData.role || ""}
+                            onChange={(e) =>
+                              setValue("role", e.target.value, { shouldValidate: true })
+                            }
+                            className="w-full h-11 px-3 rounded-xl bg-[#0F243A] border border-[#D97706]/40 focus:border-[#D97706] text-white focus:outline-none text-xs sm:text-sm transition-colors"
+                          >
+                            <option value="">Select Role / Position...</option>
+                            {ESME_ROLES.map((r) => (
+                              <option key={r} value={r}>
+                                {r}
+                              </option>
+                            ))}
+                          </select>
+                        </AnimatedField>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </motion.div>
             </motion.div>
@@ -598,7 +823,9 @@ export default function RegisterPage() {
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
                   <FileCheck2 className="w-5 h-5 text-[#D97706]" /> Verification Documents
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">Upload official documents for identity verification and admission scanning.</p>
+                <p className="text-xs text-slate-400 mt-1">
+                  Upload your Egyptian National ID for identity verification. Your portrait photo is optional and appears on your event badge.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -612,20 +839,11 @@ export default function RegisterPage() {
                 />
 
                 <PhotoUpload
-                  label="Student Karnet / Academic Card"
-                  required
-                  value={formData.karnetPhotoUrl}
-                  onChange={(url) => setValue("karnetPhotoUrl", url, { shouldValidate: true })}
-                  error={errors.karnetPhotoUrl?.message}
-                  description="Valid university ID card or registration certificate."
-                />
-              </div>
-
-              <div className="pt-2 border-t border-slate-800/80">
-                <PhotoUpload
                   label="Profile Photo (For Event Badge)"
+                  required={false}
                   value={formData.avatarUrl || ""}
                   onChange={(url) => setValue("avatarUrl", url, { shouldValidate: true })}
+                  error={errors.avatarUrl?.message}
                   description="Optional: Appears directly on your personalized attendance badge."
                 />
               </div>
@@ -644,9 +862,11 @@ export default function RegisterPage() {
             >
               <div className="border-b border-slate-800 pb-3 mb-1">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Send className="w-5 h-5 text-[#D97706]" /> Final Review & Submission
+                  <Send className="w-5 h-5 text-[#D97706]" /> Final Review &amp; Submission
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">Please confirm all information before submitting your registration.</p>
+                <p className="text-xs text-slate-400 mt-1">
+                  Please confirm all information before submitting your registration.
+                </p>
               </div>
 
               <div className="rounded-xl bg-[#15304B] p-4 sm:p-5 border border-slate-800 space-y-3 font-mono text-xs text-slate-300">
@@ -655,18 +875,41 @@ export default function RegisterPage() {
                   <div><span className="text-slate-500">National ID:</span> <strong className="text-amber-400">{formData.nationalId}</strong></div>
                   <div><span className="text-slate-500">Phone:</span> <strong className="text-white">{formData.phone}</strong></div>
                   <div><span className="text-slate-500">Email:</span> <strong className="text-white">{formData.email}</strong></div>
+                  <div><span className="text-slate-500">City:</span> <strong className="text-white">{formData.city}</strong></div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pb-3 border-b border-slate-800">
                   <div><span className="text-slate-500">University:</span> <strong className="text-white">{formData.university}</strong></div>
-                  <div><span className="text-slate-500">Department:</span> <strong className="text-white">{formData.faculty}</strong></div>
+                  <div><span className="text-slate-500">Faculty:</span> <strong className="text-white">{formData.faculty}</strong></div>
+                  <div className="sm:col-span-2"><span className="text-slate-500">Department / Major:</span> <strong className="text-[#F59E0B]">{resolvedMajorDisplay}</strong></div>
                   <div><span className="text-slate-500">Year:</span> <strong className="text-white">{formData.academicYear}</strong></div>
                   <div><span className="text-slate-500">Graduation Year:</span> <strong className="text-emerald-400">{formData.graduationYear}</strong></div>
+                  <div><span className="text-slate-500">Job Title:</span> <strong className="text-white">{formData.jobTitle}</strong></div>
+                  {formData.company && (
+                    <div><span className="text-slate-500">Company:</span> <strong className="text-white">{formData.company}</strong></div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pb-3 border-b border-slate-800">
+                  <div>
+                    <span className="text-slate-500">ESME Chapter Member:</span>{" "}
+                    <strong className={formData.isEsmeMember ? "text-[#F59E0B]" : "text-slate-200"}>
+                      {formData.isEsmeMember ? "Yes" : "No"}
+                    </strong>
+                  </div>
+                  {formData.isEsmeMember && (
+                    <>
+                      <div><span className="text-slate-500">Committee:</span> <strong className="text-white">{formData.committee}</strong></div>
+                      <div><span className="text-slate-500">Role / Position:</span> <strong className="text-white">{formData.role}</strong></div>
+                    </>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2 pt-1 text-emerald-400">
                   <CheckCircle2 className="w-4 h-4 shrink-0" />
-                  <span>Documents attached & ready for cryptographic signing.</span>
+                  <span>
+                    National ID attached{formData.avatarUrl ? " + badge portrait loaded" : " (default badge avatar will be used)"} — ready for cryptographic signing.
+                  </span>
                 </div>
               </div>
 

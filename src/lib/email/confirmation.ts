@@ -3,9 +3,13 @@ export interface ConfirmationEmailInput {
   registrationId: string;
   university: string;
   faculty?: string;
+  department?: string;
   academicYear?: string;
   graduationYear?: string;
   nationalId?: string;
+  isEsmeMember?: boolean;
+  committee?: string | null;
+  role?: string | null;
   qrDataUrl: string;
 }
 
@@ -40,9 +44,15 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
   const name = escapeHtml(input.fullName);
   const university = escapeHtml(input.university || "Cairo University");
   const faculty = escapeHtml(input.faculty || "Engineering");
+  const department = input.department ? escapeHtml(input.department) : "";
+  const facultyDisplay = department && department !== faculty ? `${faculty} — ${department}` : faculty;
   const academicYear = escapeHtml(input.academicYear || "Undergraduate");
   const graduationYear = escapeHtml(input.graduationYear || "2026");
   const nationalId = escapeHtml(input.nationalId || "N/A");
+  const esmeLine =
+    input.isEsmeMember && (input.committee || input.role)
+      ? `${escapeHtml(input.committee || "")}${input.role ? ` (${escapeHtml(input.role)})` : ""}`
+      : "";
 
   const registrationId = escapeHtml(input.registrationId);
 
@@ -137,9 +147,17 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
                         <td style="color: #FFFFFF;">${university}</td>
                       </tr>
                       <tr>
-                        <td style="color: #94A3B8;">القسم والتخصص:</td>
-                        <td style="color: #FFFFFF;">${faculty}</td>
+                        <td style="color: #94A3B8;">الكلية والتخصص:</td>
+                        <td style="color: #FFFFFF;">${facultyDisplay}</td>
                       </tr>
+                      ${
+                        esmeLine
+                          ? `<tr>
+                        <td style="color: #94A3B8;">عضوية ESME:</td>
+                        <td style="color: #F59E0B; font-weight: bold;">${esmeLine}</td>
+                      </tr>`
+                          : ""
+                      }
                       <tr>
                         <td style="color: #94A3B8;">السنة وسنة التخرج:</td>
                         <td style="color: #FFFFFF;">${academicYear} (دفعة ${graduationYear})</td>
@@ -215,7 +233,10 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
     `رقم التسجيل: ${input.registrationId}`,
     `الاسم: ${input.fullName}`,
     `الجامعة: ${input.university}`,
-    `القسم: ${input.faculty || "الهندسة"}`,
+    `الكلية والتخصص: ${input.department && input.department !== input.faculty ? `${input.faculty || ""} — ${input.department}` : input.faculty || "الهندسة"}`,
+    ...(input.isEsmeMember && (input.committee || input.role)
+      ? [`عضوية ESME: ${input.committee || ""}${input.role ? ` (${input.role})` : ""}`]
+      : []),
     `السنة وسنة التخرج: ${input.academicYear || "غير محدد"} (دفعة ${input.graduationYear || "غير محدد"})`,
     `الرقم القومي: ${input.nationalId || "غير متاح"}`,
     `تاريخ الفعالية: ${eventDate}`,

@@ -1,30 +1,33 @@
 import { z } from "zod";
+import {
+  FACULTIES,
+  ESME_COMMITTEES,
+  ESME_ROLES,
+  getDepartmentsForFaculty,
+  isOtherFaculty,
+  requiresCustomMajor,
+} from "@/config/registration";
+
+export {
+  FACULTIES,
+  DEPARTMENTS_BY_FACULTY,
+  ESME_COMMITTEES,
+  ESME_ROLES,
+  getDepartmentsForFaculty,
+  isOtherFaculty,
+  isOtherDepartment,
+  requiresCustomMajor,
+  resolveDepartment,
+} from "@/config/registration";
 
 export const EGYPTIAN_PHONE_REGEX = /^01[0125][0-9]{8}$/;
 
 export const EGYPTIAN_NATIONAL_ID_REGEX = /^[23][0-9]{13}$/;
 
-export const CAIRO_ENG_DEPARTMENTS = [
-  "Chemical Engineering (هندسة الكيمياء)",
-  "Mechanical Engineering (هندسة الميكانيكا - عام / قوى / إنتاج)",
-  "Civil Engineering (الهندسة المدنية)",
-  "Metallurgical & Materials Engineering (هندسة الفلزات والمواد)",
-  "Petroleum & Mining Engineering (هندسة البترول والتعدين)",
-  "Mechatronics Engineering (هندسة الميكاترونكس)",
-  "Mechanical Power Engineering (هندسة القوى الميكانيكية)",
-  "Mechanical Design & Production (هندسة التصميم الميكانيكي والإنتاج)",
-  "Electrical Power & Machines (هندسة القوى والآلات الكهربية)",
-  "Electronics & Electrical Communications (هندسة الإلكترونيات والاتصالات)",
-  "Computer Engineering (هندسة الحاسبات)",
-  "Architectural Engineering (الهندسة المعمارية)",
-  "Aerospace Engineering (هندسة الطيران والفضاء)",
-  "Biomedical Engineering (الهندسة الطبية والحيوية)",
-  "Other Engineering Discipline / Faculty (قسم أو كلية أخرى)",
-] as const;
-
 export const step1Schema = z.object({
   fullName: z
     .string()
+    .trim()
     .min(3, "Full name must be at least 3 characters")
     .max(100, "Full name is too long"),
   nationalId: z
@@ -38,6 +41,7 @@ export const step1Schema = z.object({
     .regex(EGYPTIAN_PHONE_REGEX, "Enter a valid Egyptian mobile number (01XXXXXXXXX)"),
   email: z
     .string()
+    .trim()
     .email("Enter a valid email address")
     .toLowerCase(),
   city: z
@@ -45,13 +49,25 @@ export const step1Schema = z.object({
     .min(2, "Please select or enter your city of residence"),
 });
 
-export const step2Schema = z.object({
+export const step2BaseSchema = z.object({
   university: z
     .string()
+    .trim()
     .min(2, "University name is required"),
   faculty: z
     .string()
-    .min(2, "Department / Specialization is required"),
+    .trim()
+    .min(2, "Please select your Faculty / Major Category"),
+  department: z
+    .string()
+    .trim()
+    .optional()
+    .default(""),
+  customMajor: z
+    .string()
+    .trim()
+    .optional()
+    .default(""),
   academicYear: z
     .enum(["1st", "2nd", "3rd", "4th", "Graduate", "Alumni"], {
       message: "Please select your academic year",
@@ -62,19 +78,100 @@ export const step2Schema = z.object({
     .max(4, "Enter a 4-digit year"),
   jobTitle: z
     .string()
+    .trim()
     .min(2, "Job title is required (e.g. Student)"),
   company: z
     .string()
     .optional(),
+  isEsmeMember: z.boolean({
+    message: "Please indicate whether you are a member of the ESME Chapter",
+  }),
+  committee: z
+    .string()
+    .trim()
+    .optional()
+    .default(""),
+  role: z
+    .string()
+    .trim()
+    .optional()
+    .default(""),
 });
+
+function validateStep2Fields(
+  data: z.infer<typeof step2BaseSchema>,
+  ctx: z.RefinementCtx
+) {
+  const validFaculty = (FACULTIES as readonly string[]).includes(data.faculty);
+  if (!validFaculty) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["faculty"],
+      message: "Please select a valid Faculty / Major Category",
+    });
+  }
+
+  const otherFac = isOtherFaculty(data.faculty);
+  if (!otherFac) {
+    if (!data.department || data.department.trim().length < 2) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["department"],
+        message: "Please select your Department / Specialization",
+      });
+    } else if (validFaculty) {
+      const allowedDepartments = getDepartmentsForFaculty(data.faculty);
+      if (!allowedDepartments.includes(data.department)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["department"],
+          message: "Please select a valid Department for the chosen Faculty",
+        });
+      }
+    }
+  }
+
+  if (requiresCustomMajor(data.faculty, data.department)) {
+    const custom = data.customMajor?.trim() || "";
+    if (custom.length < 2) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["customMajor"],
+        message: "Please specify your Major / Department",
+      });
+    } else if (custom.length > 150) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["customMajor"],
+        message: "Major / Department must be 150 characters or fewer",
+      });
+    }
+  }
+
+  if (data.isEsmeMember) {
+    if (!(ESME_COMMITTEES as readonly string[]).includes(data.committee || "")) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["committee"],
+        message: "Please select your ESME Committee",
+      });
+    }
+    if (!(ESME_ROLES as readonly string[]).includes(data.role || "")) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["role"],
+        message: "Please select your ESME Role / Position",
+      });
+    }
+  }
+}
+
+export const step2Schema = step2BaseSchema.superRefine(validateStep2Fields);
 
 export const step3Schema = z.object({
   idPhotoUrl: z
     .string()
     .min(1, "National ID front photo is required"),
-  karnetPhotoUrl: z
-    .string()
-    .min(1, "Student Karnet / Academic card photo is required"),
   avatarUrl: z
     .string()
     .optional(),
@@ -87,8 +184,10 @@ export const step4Schema = z.object({
 });
 
 export const completeRegistrationSchema = step1Schema
-  .merge(step2Schema)
+  .merge(step2BaseSchema)
   .merge(step3Schema)
-  .merge(step4Schema);
+  .merge(step4Schema)
+  .superRefine(validateStep2Fields);
 
-export type CompleteRegistrationInput = z.infer<typeof completeRegistrationSchema>;
+export type CompleteRegistrationInput = z.input<typeof completeRegistrationSchema>;
+export type CompleteRegistrationParsed = z.infer<typeof completeRegistrationSchema>;

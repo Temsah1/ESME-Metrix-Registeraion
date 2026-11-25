@@ -7,12 +7,16 @@ export interface Registrant {
   graduation_year?: string | null;
   university: string;
   faculty: string;
+  department?: string | null;
   academic_year: string;
   city: string;
   job_title: string;
   company?: string | null;
+  is_esme_member?: boolean;
+  committee?: string | null;
+  role?: string | null;
   id_photo_url: string;
-  karnet_photo_url: string;
+  karnet_photo_url?: string | null;
   avatar_url?: string | null;
   qr_code: string;
   registration_id: string;
@@ -38,11 +42,15 @@ export interface RegistrationFormData {
   city: string;
   university: string;
   faculty: string;
+  department: string;
+  customMajor?: string;
   academicYear: string;
   jobTitle: string;
   company?: string;
+  isEsmeMember: boolean;
+  committee?: string;
+  role?: string;
   idPhotoUrl: string;
-  karnetPhotoUrl: string;
   avatarUrl?: string;
   termsAccepted: boolean;
 }

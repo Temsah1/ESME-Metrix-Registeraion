@@ -18,12 +18,20 @@ import {
   Calendar,
   MapPin,
   Clock,
-  Sparkles,
   Camera,
   Loader2,
   User,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { LINKEDIN_POST_TEXT } from "@/config/registration";
+import {
+  TEMPLATE_BASE_WIDTH,
+  TEMPLATE_SLOTS,
+  computeNameFontSize,
+  computeUniversityFontSize,
+  getInitials,
+  truncateText,
+} from "@/lib/og/card-data";
 
 interface RegisteredData {
   success: boolean;
@@ -32,24 +40,16 @@ interface RegisteredData {
   email: string;
   university: string;
   faculty?: string;
+  department?: string;
   academic_year?: string;
   job_title?: string;
-  company?: string;
+  company?: string | null;
+  is_esme_member?: boolean;
+  committee?: string | null;
+  role?: string | null;
   qr_code: string;
   avatar_url?: string | null;
 }
-
-const LINKEDIN_SHARE_CAPTION = `🎓 Excited to announce — I'll be attending *ESME METRIX 2026*!
-
-📅 12 December 2026 | 📍 Cairo University, Egypt
-
-ESME METRIX is the flagship Materials Engineering event hosted by the ESME Cairo University Student Chapter — bringing together students, professionals, researchers, and industry leaders to explore the latest innovations in materials science and engineering.
-
-Looking forward to incredible workshops, competitions, keynotes, and networking with fellow engineers!
-
-🔗 Register now: https://esme-metrix-registeration.vercel.app/
-
-#ESMEMetrix #MaterialsEngineering #ESMECU #CairoUniversity #Engineering #Egypt`;
 
 const WHATSAPP_GROUP_URL_DEFAULT = "https://chat.whatsapp.com/KOT8wY8h2lK5p0mNN7NcNW";
 
@@ -83,6 +83,47 @@ function drawRoundedRect(
   }
 }
 
+async function loadCorsSafeImage(src: string): Promise<{
+  image: HTMLImageElement | null;
+  revoke?: () => void;
+}> {
+  if (!src) return { image: null };
+
+  // Local blob/data URLs or same-origin assets can load directly
+  const isRemoteHttp = /^https?:\/\//i.test(src);
+  if (isRemoteHttp) {
+    try {
+      const response = await fetch(src, { mode: "cors", cache: "no-store" });
+      if (response.ok) {
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        const img = await new Promise<HTMLImageElement | null>((resolve) => {
+          const el = new window.Image();
+          el.onload = () => resolve(el);
+          el.onerror = () => resolve(null);
+          el.src = objectUrl;
+        });
+        if (img) {
+          return { image: img, revoke: () => URL.revokeObjectURL(objectUrl) };
+        }
+        URL.revokeObjectURL(objectUrl);
+      }
+    } catch {
+      // Fall through to standard CORS Image attempt
+    }
+  }
+
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    if (isRemoteHttp || src.startsWith("/")) {
+      img.crossOrigin = "anonymous";
+    }
+    img.onload = () => resolve({ image: img });
+    img.onerror = () => resolve({ image: null });
+    img.src = src;
+  });
+}
+
 export default function SuccessPage() {
   const stored = useSyncExternalStore(
     subscribeToStorage,
@@ -101,7 +142,9 @@ export default function SuccessPage() {
   }, [stored]);
 
   const [data, setData] = useState<RegisteredData | null>(initialData);
-  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(initialData?.avatar_url ?? null);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(
+    initialData?.avatar_url ?? null
+  );
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [shared, setShared] = useState(false);
   const [ticketReady, setTicketReady] = useState(false);
@@ -183,22 +226,27 @@ export default function SuccessPage() {
     }
   }, [data]);
 
-  // Load WhatsApp Group URL from CMS (site_content table)
+  // Load CMS settings (WhatsApp URL)
   useEffect(() => {
-    async function loadWhatsappUrl() {
+    async function loadCmsSettings() {
       try {
         const supabase = createClient();
-        const { data: row } = await supabase
+        const { data: rows } = await supabase
           .from("site_content")
-          .select("value")
-          .eq("key", "whatsapp_group_url")
-          .maybeSingle();
-        if (row?.value) setWhatsappUrl(row.value);
+          .select("key, value")
+          .in("key", ["whatsapp_group_url"]);
+
+        if (rows && rows.length > 0) {
+          const map = new Map(rows.map((r: { key: string; value: string }) => [r.key, r.value]));
+          if (map.get("whatsapp_group_url")) {
+            setWhatsappUrl(map.get("whatsapp_group_url")!);
+          }
+        }
       } catch {
-        // Table may not exist yet; keep default
+        // Table may not exist yet; keep defaults
       }
     }
-    loadWhatsappUrl();
+    loadCmsSettings();
   }, []);
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -212,21 +260,28 @@ export default function SuccessPage() {
     if (!ctx) return;
 
     let cancelled = false;
+    const revokers: (() => void)[] = [];
 
     const width = 2048;
     const height = 1152;
     canvas.width = width;
     canvas.height = height;
 
-    const bgImg = new window.Image();
-    bgImg.crossOrigin = "anonymous";
-    bgImg.onload = () => {
+    async function renderTicket() {
+      if (!data || !ctx) return;
+      const { image: bgImg } = await loadCorsSafeImage("/images/ticket-bg.jpg");
       if (cancelled) return;
 
-      // 1. Draw base metallic sci-fi ticket stub background (image_7.png / ticket-bg.jpg)
-      ctx.drawImage(bgImg, 0, 0, width, height);
+      if (bgImg) {
+        ctx.drawImage(bgImg, 0, 0, width, height);
+      } else {
+        const bgGrad = ctx.createLinearGradient(0, 0, width, height);
+        bgGrad.addColorStop(0, "#070F1E");
+        bgGrad.addColorStop(1, "#0F243A");
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, width, height);
+      }
 
-      // Helper to draw the attendee avatar circle in the center-right
       const drawAttendeeBadge = (photoImage: HTMLImageElement | null) => {
         const cx = 1310;
         const cy = 370;
@@ -234,7 +289,6 @@ export default function SuccessPage() {
 
         ctx.save();
 
-        // Cyber-gold outer radial glow
         const glow = ctx.createRadialGradient(cx, cy, r * 0.7, cx, cy, r + 50);
         glow.addColorStop(0, "rgba(245, 158, 11, 0.45)");
         glow.addColorStop(1, "rgba(217, 119, 6, 0)");
@@ -243,14 +297,12 @@ export default function SuccessPage() {
         ctx.arc(cx, cy, r + 50, 0, Math.PI * 2);
         ctx.fill();
 
-        // Outer Metallic Gold Ring
         ctx.beginPath();
         ctx.arc(cx, cy, r + 8, 0, Math.PI * 2);
         ctx.strokeStyle = "#F59E0B";
         ctx.lineWidth = 5;
         ctx.stroke();
 
-        // 8 Futuristic HUD Reticle Tick Marks
         for (let i = 0; i < 8; i++) {
           const angle = (i * Math.PI) / 4;
           const x1 = cx + (r + 9) * Math.cos(angle);
@@ -265,29 +317,26 @@ export default function SuccessPage() {
           ctx.stroke();
         }
 
-        // Mid Ring
         ctx.beginPath();
         ctx.arc(cx, cy, r + 2, 0, Math.PI * 2);
         ctx.strokeStyle = "rgba(217, 119, 6, 0.7)";
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Inner Circle Photo / Avatar clipping
         ctx.save();
         ctx.beginPath();
         ctx.arc(cx, cy, r, 0, Math.PI * 2);
         ctx.clip();
 
         if (photoImage) {
-          // Object-fit: cover inside circle
           const imgAspect = photoImage.width / photoImage.height;
-          let dw = (r * 2);
-          let dh = (r * 2);
+          let dw = r * 2;
+          let dh = r * 2;
           let dx = cx - r;
           let dy = cy - r;
 
           if (imgAspect > 1) {
-            dw = (r * 2) * imgAspect;
+            dw = r * 2 * imgAspect;
             dx = cx - dw / 2;
           } else {
             dh = (r * 2) / imgAspect;
@@ -295,21 +344,13 @@ export default function SuccessPage() {
           }
           ctx.drawImage(photoImage, dx, dy, dw, dh);
         } else {
-          // Fallback Placeholder Avatar with Sci-Fi Metallic Glow
           const avatarGrad = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
           avatarGrad.addColorStop(0, "#15304B");
           avatarGrad.addColorStop(1, "#0A192B");
           ctx.fillStyle = avatarGrad;
           ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
 
-          const initials =
-            data.full_name
-              .split(" ")
-              .filter(Boolean)
-              .map((n) => n[0])
-              .slice(0, 2)
-              .join("")
-              .toUpperCase() || "EM";
+          const initials = getInitials(data.full_name);
 
           ctx.fillStyle = "#FFFFFF";
           ctx.font = "bold 56px sans-serif";
@@ -319,20 +360,16 @@ export default function SuccessPage() {
 
           ctx.fillStyle = "#F59E0B";
           ctx.font = "bold 14px monospace";
-          ctx.letterSpacing = "2px";
           ctx.fillText("ATTENDEE", cx, cy + 42);
         }
         ctx.restore();
 
-        // Inner Bevel Ring
         ctx.beginPath();
         ctx.arc(cx, cy, r - 1, 0, Math.PI * 2);
         ctx.strokeStyle = "rgba(254, 240, 138, 0.5)";
         ctx.lineWidth = 3;
         ctx.stroke();
 
-        // ── Underneath Labels in Neon Gold Capitals ──
-        // Background subtle backdrop pill
         const nameText = `${data.full_name.toUpperCase()} OFFICIAL ATTENDEE`;
         ctx.font = "900 22px monospace";
         const textMetrics = ctx.measureText(nameText);
@@ -345,26 +382,21 @@ export default function SuccessPage() {
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        // Label 1: {registrant.name} OFFICIAL ATTENDEE
         ctx.textAlign = "center";
         ctx.fillStyle = "#FEF08A";
         ctx.font = "900 20px monospace";
-        ctx.letterSpacing = "1px";
         ctx.shadowColor = "rgba(254, 240, 138, 0.6)";
         ctx.shadowBlur = 8;
         ctx.fillText(nameText, cx, 542);
 
-        // Label 2: GATE ADMISSION ACTIVE
         ctx.shadowBlur = 0;
         ctx.fillStyle = "#10B981";
         ctx.font = "bold 16px monospace";
-        ctx.letterSpacing = "1.5px";
         ctx.fillText("● GATE ADMISSION ACTIVE", cx, 568);
 
         ctx.restore();
       };
 
-      // Helper to draw Left & Main Body Dynamic Registrant Data
       const drawLeftRegistrantData = () => {
         ctx.save();
 
@@ -373,7 +405,6 @@ export default function SuccessPage() {
         const boxW = 920;
         const boxH = 145;
 
-        // Glassmorphic HUD box
         ctx.fillStyle = "rgba(7, 18, 33, 0.85)";
         drawRoundedRect(ctx, boxX, boxY, boxW, boxH, 14);
         ctx.fill();
@@ -382,60 +413,48 @@ export default function SuccessPage() {
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Futuristic Corner Tech L-Brackets
         const bracketLen = 14;
         ctx.strokeStyle = "#F59E0B";
         ctx.lineWidth = 3;
 
-        // Top-Left
         ctx.beginPath();
         ctx.moveTo(boxX + 6, boxY + 6 + bracketLen);
         ctx.lineTo(boxX + 6, boxY + 6);
         ctx.lineTo(boxX + 6 + bracketLen, boxY + 6);
         ctx.stroke();
 
-        // Top-Right
         ctx.beginPath();
         ctx.moveTo(boxX + boxW - 6 - bracketLen, boxY + 6);
         ctx.lineTo(boxX + boxW - 6, boxY + 6);
         ctx.lineTo(boxX + boxW - 6, boxY + 6 + bracketLen);
         ctx.stroke();
 
-        // Bottom-Left
         ctx.beginPath();
         ctx.moveTo(boxX + 6, boxY + boxH - 6 - bracketLen);
         ctx.lineTo(boxX + 6, boxY + boxH - 6);
         ctx.lineTo(boxX + 6 + bracketLen, boxY + boxH - 6);
         ctx.stroke();
 
-        // Bottom-Right
         ctx.beginPath();
         ctx.moveTo(boxX + boxW - 6 - bracketLen, boxY + boxH - 6);
         ctx.lineTo(boxX + boxW - 6, boxY + boxH - 6);
         ctx.lineTo(boxX + boxW - 6, boxY + boxH - 6 - bracketLen);
         ctx.stroke();
 
-        // HUD Sub-Header Tag
         ctx.fillStyle = "#F59E0B";
         ctx.font = "bold 16px monospace";
-        ctx.letterSpacing = "1.5px";
         ctx.textAlign = "left";
         ctx.fillText("✦ OFFICIAL ATTENDEE CREDENTIAL // PASS", boxX + 24, boxY + 30);
 
-        // Line 1: ATTENDEE: {registrant.name}
         ctx.fillStyle = "#94A3B8";
         ctx.font = "bold 20px monospace";
         ctx.fillText("ATTENDEE:", boxX + 24, boxY + 68);
 
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "900 28px system-ui, -apple-system, sans-serif";
-        const displayName =
-          data.full_name.length > 28
-            ? data.full_name.substring(0, 26).toUpperCase() + "..."
-            : data.full_name.toUpperCase();
+        const displayName = truncateText(data.full_name, 28).toUpperCase();
         ctx.fillText(displayName, boxX + 160, boxY + 68);
 
-        // Line 2: ID: {registrant.ticketId}
         ctx.fillStyle = "#94A3B8";
         ctx.font = "bold 18px monospace";
         ctx.fillText("ID:", boxX + 24, boxY + 108);
@@ -444,25 +463,22 @@ export default function SuccessPage() {
         ctx.font = "900 24px monospace";
         ctx.fillText(data.registration_id, boxX + 72, boxY + 108);
 
-        // Line 2 (Right): UNIVERSITY & FACULTY: {registrant.university} / {registrant.faculty}
         ctx.fillStyle = "#94A3B8";
         ctx.font = "bold 16px monospace";
-        ctx.fillText("UNIVERSITY & FACULTY:", boxX + 320, boxY + 108);
+        ctx.fillText("UNIVERSITY & MAJOR:", boxX + 320, boxY + 108);
 
         ctx.fillStyle = "#E2E8F0";
         ctx.font = "bold 19px system-ui, -apple-system, sans-serif";
+        const majorLabel = data.department || data.faculty || "";
         const uniFaculty = `${data.university || "Cairo University"}${
-          data.faculty ? " / " + data.faculty : ""
+          majorLabel ? " / " + majorLabel : ""
         }`;
-        const displayUni =
-          uniFaculty.length > 30 ? uniFaculty.substring(0, 28) + "..." : uniFaculty;
-        ctx.fillText(displayUni, boxX + 540, boxY + 108);
+        ctx.fillText(truncateText(uniFaculty, 30), boxX + 528, boxY + 108);
 
         ctx.restore();
       };
 
-      // Helper to draw Right Stub: Dynamic QR Code, brackets, and ID
-      const drawRightStub = () => {
+      const drawRightStub = async () => {
         ctx.save();
 
         const qrBoxX = 1664;
@@ -470,107 +486,88 @@ export default function SuccessPage() {
         const qrBoxW = 264;
         const qrBoxH = 264;
 
-        // Rounded white square background for QR
         ctx.fillStyle = "#FFFFFF";
         drawRoundedRect(ctx, qrBoxX, qrBoxY, qrBoxW, qrBoxH, 16);
         ctx.fill();
 
-        // Draw Dynamic 2D Scan QR Code
         if (data.qr_code) {
-          const qrImg = new window.Image();
-          qrImg.onload = () => {
-            if (cancelled) return;
+          const { image: qrImg } = await loadCorsSafeImage(data.qr_code);
+          if (cancelled) return;
+          if (qrImg) {
             ctx.drawImage(qrImg, qrBoxX + 12, qrBoxY + 12, qrBoxW - 24, qrBoxH - 24);
+          }
 
-            // Glowing Gold Corner Brackets around QR Code
-            const bX1 = qrBoxX - 8;
-            const bY1 = qrBoxY - 8;
-            const bX2 = qrBoxX + qrBoxW + 8;
-            const bY2 = qrBoxY + qrBoxH + 8;
-            const bLen = 28;
+          const bX1 = qrBoxX - 8;
+          const bY1 = qrBoxY - 8;
+          const bX2 = qrBoxX + qrBoxW + 8;
+          const bY2 = qrBoxY + qrBoxH + 8;
+          const bLen = 28;
 
-            ctx.strokeStyle = "#F59E0B";
-            ctx.lineWidth = 4;
-            // Top-Left
-            ctx.beginPath();
-            ctx.moveTo(bX1, bY1 + bLen);
-            ctx.lineTo(bX1, bY1);
-            ctx.lineTo(bX1 + bLen, bY1);
-            ctx.stroke();
-            // Top-Right
-            ctx.beginPath();
-            ctx.moveTo(bX2 - bLen, bY1);
-            ctx.lineTo(bX2, bY1);
-            ctx.lineTo(bX2, bY1 + bLen);
-            ctx.stroke();
-            // Bottom-Left
-            ctx.beginPath();
-            ctx.moveTo(bX1, bY2 - bLen);
-            ctx.lineTo(bX1, bY2);
-            ctx.lineTo(bX1 + bLen, bY2);
-            ctx.stroke();
-            // Bottom-Right
-            ctx.beginPath();
-            ctx.moveTo(bX2 - bLen, bY2);
-            ctx.lineTo(bX2, bY2);
-            ctx.lineTo(bX2, bY2 - bLen);
-            ctx.stroke();
+          ctx.strokeStyle = "#F59E0B";
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.moveTo(bX1, bY1 + bLen);
+          ctx.lineTo(bX1, bY1);
+          ctx.lineTo(bX1 + bLen, bY1);
+          ctx.stroke();
 
-            // Label: SCAN TO JOIN
-            ctx.textAlign = "center";
-            ctx.fillStyle = "#F59E0B";
-            ctx.font = "bold 22px monospace";
-            ctx.letterSpacing = "2px";
-            ctx.fillText("SCAN TO JOIN", 1796, 755);
+          ctx.beginPath();
+          ctx.moveTo(bX2 - bLen, bY1);
+          ctx.lineTo(bX2, bY1);
+          ctx.lineTo(bX2, bY1 + bLen);
+          ctx.stroke();
 
-            // Overlay Dynamic Registrant ID
-            ctx.fillStyle = "#FFFFFF";
-            ctx.font = "900 26px monospace";
-            ctx.fillText(`ID: ${data.registration_id}`, 1796, 810);
+          ctx.beginPath();
+          ctx.moveTo(bX1, bY2 - bLen);
+          ctx.lineTo(bX1, bY2);
+          ctx.lineTo(bX1 + bLen, bY2);
+          ctx.stroke();
 
-            setTicketReady(true);
-          };
-          qrImg.src = data.qr_code;
-        } else {
-          setTicketReady(true);
+          ctx.beginPath();
+          ctx.moveTo(bX2 - bLen, bY2);
+          ctx.lineTo(bX2, bY2);
+          ctx.lineTo(bX2, bY2 - bLen);
+          ctx.stroke();
+
+          ctx.textAlign = "center";
+          ctx.fillStyle = "#F59E0B";
+          ctx.font = "bold 22px monospace";
+          ctx.fillText("SCAN TO JOIN", 1796, 755);
+
+          ctx.fillStyle = "#FFFFFF";
+          ctx.font = "900 26px monospace";
+          ctx.fillText(`ID: ${data.registration_id}`, 1796, 810);
         }
 
         ctx.restore();
+        setTicketReady(true);
       };
 
-      // Draw Main Left Body Data
       drawLeftRegistrantData();
 
-      // Draw Attendee Avatar Badge
       const currentAvatar = avatarPreviewUrl || data.avatar_url;
       if (currentAvatar) {
-        const photoImg = new window.Image();
-        photoImg.crossOrigin = "anonymous";
-        photoImg.onload = () => {
-          if (cancelled) return;
-          drawAttendeeBadge(photoImg);
-          drawRightStub();
-        };
-        photoImg.onerror = () => {
-          if (cancelled) return;
-          drawAttendeeBadge(null);
-          drawRightStub();
-        };
-        photoImg.src = currentAvatar;
+        const { image: photoImg, revoke } = await loadCorsSafeImage(currentAvatar);
+        if (revoke) revokers.push(revoke);
+        if (cancelled) return;
+        drawAttendeeBadge(photoImg);
       } else {
         drawAttendeeBadge(null);
-        drawRightStub();
       }
-    };
-    bgImg.src = "/images/ticket-bg.jpg";
+
+      await drawRightStub();
+    }
+
+    renderTicket();
 
     return () => {
       cancelled = true;
+      revokers.forEach((fn) => fn());
     };
   }, [data, avatarPreviewUrl]);
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // 2. RENDER 1200x630 SOCIAL SHARE CARD CANVAS (Matches Dark-Gold & Navy Theme)
+  // 2. RENDER 1600x900 HIGH-RES LINKEDIN SOCIAL SHARE CARD (Master Template)
   // ─────────────────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!data || !linkedInCanvasRef.current) return;
@@ -580,166 +577,154 @@ export default function SuccessPage() {
     if (!ctx) return;
 
     let cancelled = false;
+    const revokers: (() => void)[] = [];
 
-    canvas.width = 1200;
-    canvas.height = 630;
+    const CARD_WIDTH = 1600;
+    const CARD_HEIGHT = 900;
+    const SCALE = CARD_WIDTH / TEMPLATE_BASE_WIDTH; // 1.5625
+    const sc = (v: number) => Math.round(v * SCALE);
 
-    const socialBg = new window.Image();
-    socialBg.crossOrigin = "anonymous";
-    socialBg.onload = () => {
-      if (cancelled) return;
+    canvas.width = CARD_WIDTH;
+    canvas.height = CARD_HEIGHT;
 
-      // 1. Draw base social card background
-      ctx.drawImage(socialBg, 0, 0, 1200, 630);
-
-      const finishSocialCard = (photoImg: HTMLImageElement | null) => {
-        // 2. Attendee Photo in Frame
-        const photoX = 868;
-        const photoY = 105;
-        const photoW = 286;
-        const photoH = 335;
-
-        ctx.save();
-        drawRoundedRect(ctx, photoX, photoY, photoW, photoH, 12);
-        ctx.clip();
-
-        if (photoImg) {
-          const imgAspect = photoImg.width / photoImg.height;
-          let dw = photoW;
-          let dh = photoH;
-          let dx = photoX;
-          let dy = photoY;
-
-          if (imgAspect > photoW / photoH) {
-            dw = photoH * imgAspect;
-            dx = photoX - (dw - photoW) / 2;
-          } else {
-            dh = photoW / imgAspect;
-            dy = photoY - (dh - photoH) / 2;
-          }
-          ctx.drawImage(photoImg, dx, dy, dw, dh);
-        } else {
-          const grad = ctx.createLinearGradient(photoX, photoY, photoX, photoY + photoH);
-          grad.addColorStop(0, "#15304B");
-          grad.addColorStop(1, "#0A192B");
-          ctx.fillStyle = grad;
-          ctx.fillRect(photoX, photoY, photoW, photoH);
-
-          const initials =
-            data.full_name
-              .split(" ")
-              .filter(Boolean)
-              .map((n) => n[0])
-              .slice(0, 2)
-              .join("")
-              .toUpperCase() || "EM";
-
-          ctx.fillStyle = "#FFFFFF";
-          ctx.font = "bold 52px sans-serif";
-          ctx.textAlign = "center";
-          ctx.fillText(initials, photoX + photoW / 2, photoY + photoH / 2 - 10);
-
-          ctx.fillStyle = "#F59E0B";
-          ctx.font = "bold 13px monospace";
-          ctx.fillText("OFFICIAL ATTENDEE", photoX + photoW / 2, photoY + photoH / 2 + 35);
-        }
-        ctx.restore();
-
-        // Verified Pill
-        ctx.save();
-        ctx.fillStyle = "#10B981";
-        drawRoundedRect(ctx, photoX + photoW - 120, photoY + 12, 108, 26, 13);
-        ctx.fill();
-        ctx.font = "bold 11px sans-serif";
-        ctx.fillStyle = "#FFFFFF";
-        ctx.textAlign = "center";
-        ctx.fillText("✓ VERIFIED", photoX + photoW - 66, photoY + 29);
-        ctx.restore();
-
-        // 3. Name & Affiliation Plaque below photo
-        const plaqueX = 865;
-        const plaqueY = 442;
-        const plaqueW = 290;
-        const plaqueH = 95;
-        const plaqueCenter = plaqueX + plaqueW / 2;
-
-        ctx.save();
-        ctx.fillStyle = "#030C17";
-        drawRoundedRect(ctx, plaqueX, plaqueY, plaqueW, plaqueH, 8);
-        ctx.fill();
-        ctx.strokeStyle = "rgba(217, 119, 6, 0.6)";
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-
-        // Name
-        ctx.textAlign = "center";
-        ctx.fillStyle = "#FFFFFF";
-        ctx.font = "bold 22px system-ui, -apple-system, sans-serif";
-        const truncatedName =
-          data.full_name.length > 20
-            ? data.full_name.substring(0, 18).toUpperCase() + "..."
-            : data.full_name.toUpperCase();
-        ctx.fillText(truncatedName, plaqueCenter, 466);
-
-        // Divider
-        ctx.strokeStyle = "#F59E0B";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(plaqueCenter - 80, 477);
-        ctx.lineTo(plaqueCenter + 80, 477);
-        ctx.stroke();
-
-        // University
-        ctx.fillStyle = "#FEF08A";
-        ctx.font = "italic 14px system-ui, -apple-system, sans-serif";
-        const uniText =
-          (data.university || "Cairo University").length > 26
-            ? (data.university || "Cairo University").substring(0, 24) + "..."
-            : data.university || "Cairo University";
-        ctx.fillText(uniText, plaqueCenter, 497);
-
-        // ID & Gate Active
-        ctx.fillStyle = "#10B981";
-        ctx.font = "bold 12px monospace";
-        ctx.fillText(`ID: ${data.registration_id}  •  GATE ACTIVE`, plaqueCenter, 522);
-        ctx.restore();
-
-        // 4. Bottom Venue Covering Pill
-        ctx.save();
-        ctx.fillStyle = "#050D18";
-        drawRoundedRect(ctx, 435, 560, 230, 30, 4);
-        ctx.fill();
-
-        ctx.fillStyle = "#FFFFFF";
-        ctx.font = "bold 16px system-ui, -apple-system, sans-serif";
-        ctx.textAlign = "left";
-        ctx.fillText(uniText, 442, 581);
-        ctx.restore();
-
-        setCardReady(true);
-      };
+    async function renderSocialCard() {
+      if (!data || !ctx) return;
+      setCardReady(false);
 
       const currentAvatar = avatarPreviewUrl || data.avatar_url;
-      if (currentAvatar) {
-        const photo = new window.Image();
-        photo.crossOrigin = "anonymous";
-        photo.onload = () => {
-          if (cancelled) return;
-          finishSocialCard(photo);
-        };
-        photo.onerror = () => {
-          if (cancelled) return;
-          finishSocialCard(null);
-        };
-        photo.src = currentAvatar;
+      const [templateRes, avatarRes] = await Promise.all([
+        loadCorsSafeImage("/images/attending-card-template.png"),
+        currentAvatar
+          ? loadCorsSafeImage(currentAvatar)
+          : Promise.resolve<{ image: HTMLImageElement | null; revoke?: () => void }>({
+              image: null,
+            }),
+      ]);
+      if (avatarRes.revoke) revokers.push(avatarRes.revoke);
+      if (cancelled) return;
+
+      // 1. Base Master Template (1600x900 crisp widescreen 16:9)
+      if (templateRes.image) {
+        ctx.drawImage(templateRes.image, 0, 0, CARD_WIDTH, CARD_HEIGHT);
       } else {
-        finishSocialCard(null);
+        const bgGrad = ctx.createLinearGradient(0, 0, CARD_WIDTH, CARD_HEIGHT);
+        bgGrad.addColorStop(0, "#07111E");
+        bgGrad.addColorStop(1, "#0D1F35");
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT);
       }
-    };
-    socialBg.src = "/images/social-card-bg.jpg";
+
+      // 2. Optional Attendee Portrait clipped to Octagonal Chamfer Frame
+      const pSlot = TEMPLATE_SLOTS.portrait;
+      if (avatarRes.image) {
+        const px = sc(pSlot.x);
+        const py = sc(pSlot.y);
+        const pw = sc(pSlot.width);
+        const ph = sc(pSlot.height);
+
+        ctx.save();
+        ctx.beginPath();
+        pSlot.polygonPoints.forEach(([ox, oy], idx) => {
+          const vx = px + sc(ox);
+          const vy = py + sc(oy);
+          if (idx === 0) ctx.moveTo(vx, vy);
+          else ctx.lineTo(vx, vy);
+        });
+        ctx.closePath();
+        ctx.clip();
+
+        const photoImg = avatarRes.image;
+        const imgAspect = photoImg.width / photoImg.height;
+        const boxAspect = pw / ph;
+        let dw = pw;
+        let dh = ph;
+        let dx = px;
+        let dy = py;
+
+        if (imgAspect > boxAspect) {
+          dw = ph * imgAspect;
+          dx = px - (dw - pw) / 2;
+        } else {
+          dh = pw / imgAspect;
+          // Slight upward bias keeps faces nicely framed inside tall portraits
+          dy = py - (dh - ph) * 0.35;
+        }
+        ctx.drawImage(photoImg, dx, dy, dw, dh);
+        ctx.restore();
+      }
+
+      // 3. Attendee Full Name (Mask "YOUR NAME HERE" slot)
+      const nSlot = TEMPLATE_SLOTS.nameMask;
+      const nx = sc(nSlot.x);
+      const ny = sc(nSlot.y);
+      const nw = sc(nSlot.width);
+      const nh = sc(nSlot.height);
+
+      ctx.fillStyle = nSlot.fill;
+      ctx.fillRect(nx, ny, nw, nh);
+
+      const upperName = truncateText(data.full_name, 28).toUpperCase();
+      let nameSize = computeNameFontSize(upperName, SCALE);
+      ctx.font = `900 ${nameSize}px system-ui, -apple-system, sans-serif`;
+      while (nameSize > 14 && ctx.measureText(upperName).width > nw - sc(12)) {
+        nameSize -= 1;
+        ctx.font = `900 ${nameSize}px system-ui, -apple-system, sans-serif`;
+      }
+      ctx.fillStyle = "#FFFFFF";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(upperName, sc(nSlot.centerX), ny + nh / 2 + 1);
+
+      // 4. Attendee University (Mask "Your University" slot under gold divider)
+      const uSlot = TEMPLATE_SLOTS.universityMask;
+      const ux = sc(uSlot.x);
+      const uy = sc(uSlot.y);
+      const uw = sc(uSlot.width);
+      const uh = sc(uSlot.height);
+
+      ctx.fillStyle = uSlot.fill;
+      ctx.fillRect(ux, uy, uw, uh);
+
+      const displayUniversity = truncateText(data.university || "Cairo University", 34);
+      let uniSize = computeUniversityFontSize(displayUniversity, SCALE);
+      ctx.font = `italic 500 ${uniSize}px system-ui, -apple-system, sans-serif`;
+      while (uniSize > 12 && ctx.measureText(displayUniversity).width > uw - sc(14)) {
+        uniSize -= 1;
+        ctx.font = `italic 500 ${uniSize}px system-ui, -apple-system, sans-serif`;
+      }
+      ctx.fillStyle = "#F8FAFC";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(displayUniversity, sc(uSlot.centerX), uy + uh / 2 + 1);
+
+      // 5. Event Venue Fix (Bottom-left location pin: replace "Your University" with "Cairo University")
+      const vSlot = TEMPLATE_SLOTS.bottomVenueMask;
+      const vx = sc(vSlot.x);
+      const vy = sc(vSlot.y);
+      const vw = sc(vSlot.width);
+      const vh = sc(vSlot.height);
+
+      const venueGrad = ctx.createLinearGradient(vx, vy, vx + vw, vy);
+      venueGrad.addColorStop(0, vSlot.fill);
+      venueGrad.addColorStop(0.88, vSlot.fill);
+      venueGrad.addColorStop(1, "rgba(0, 17, 37, 0)");
+      ctx.fillStyle = venueGrad;
+      ctx.fillRect(vx, vy, vw, vh);
+
+      ctx.fillStyle = "#FFFFFF";
+      ctx.font = `700 ${Math.round(17 * SCALE)}px system-ui, -apple-system, sans-serif`;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText("Cairo University", sc(vSlot.textX), vy + vh / 2 + 1);
+
+      setCardReady(true);
+    }
+
+    renderSocialCard();
 
     return () => {
       cancelled = true;
+      revokers.forEach((fn) => fn());
     };
   }, [data, avatarPreviewUrl]);
 
@@ -747,7 +732,6 @@ export default function SuccessPage() {
   // HANDLERS: PHOTO UPLOAD, PDF/PNG EXPORT & LINKEDIN SHARE
   // ─────────────────────────────────────────────────────────────────────────────
 
-  // Handle direct photo upload
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !data) return;
@@ -785,7 +769,6 @@ export default function SuccessPage() {
       const { data: publicUrlData } = supabase.storage.from("photos").getPublicUrl(filePath);
       const publicUrl = publicUrlData.publicUrl;
 
-      // Persist to database
       const patchRes = await fetch("/api/register", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -809,7 +792,7 @@ export default function SuccessPage() {
     }
   };
 
-  // ACTION 1: Download Ticket (PDF) - Uses jsPDF & html2canvas in exact 1024:576 landscape ratio
+  // ACTION 1: Download Ticket (PDF)
   const handleDownloadTicketPDF = async () => {
     if (!data) return;
 
@@ -825,12 +808,11 @@ export default function SuccessPage() {
 
       let imgData = "";
 
-      // High-fidelity capture using html2canvas / canvas
       if (ticketContainerRef.current) {
         const capturedCanvas = await html2canvas(ticketContainerRef.current, {
           scale: 2,
           useCORS: true,
-          allowTaint: true,
+          allowTaint: false,
           backgroundColor: "#070F1E",
         });
         imgData = capturedCanvas.toDataURL("image/jpeg", 0.98);
@@ -840,7 +822,6 @@ export default function SuccessPage() {
 
       if (!imgData) return;
 
-      // Exact 1024x576 visual aspect ratio
       const aspectRatio = 576 / 1024;
       const ticketWidth = 270;
       const ticketHeight = ticketWidth * aspectRatio;
@@ -851,7 +832,6 @@ export default function SuccessPage() {
       pdf.save(`ESME-METRIX-Ticket-${data.registration_id || "2026"}.pdf`);
     } catch (err) {
       console.error("PDF export error:", err);
-      // Seamless direct-canvas fallback
       if (ticketCanvasRef.current) {
         const canvas = ticketCanvasRef.current;
         const imgData = canvas.toDataURL("image/jpeg", 0.98);
@@ -896,44 +876,40 @@ export default function SuccessPage() {
     document.body.removeChild(a);
   };
 
-  // ACTION 4: Copy Caption & Open LinkedIn Share Dialog pointing to /share/[ticketId]
+  // ACTION 4: Copy Exact Caption & Open LinkedIn Share Dialog pointing to /share/[ticketId]
   const handleLinkedInShare = async () => {
     if (!data) return;
 
-    // 1. Copy exact pre-filled caption to clipboard
     try {
-      await navigator.clipboard.writeText(LINKEDIN_SHARE_CAPTION);
+      await navigator.clipboard.writeText(LINKEDIN_POST_TEXT);
       setCopiedCaption(true);
     } catch (err) {
       console.warn("Clipboard write failed:", err);
     }
 
-    // 2. Set toast notification
     setToastMessage(
-      "Caption copied to clipboard! Opening LinkedIn — your personalized attendance card will appear as the preview image automatically!"
+      "Post text copied! Paste it into LinkedIn—your personalized card will load with the link or you can attach the downloaded PNG."
     );
     setTimeout(() => {
       setCopiedCaption(false);
       setToastMessage(null);
     }, 7000);
 
-    // 3. Trigger card download so attendee has it ready
     handleDownloadCard();
 
-    // 4. Open LinkedIn offsite share dialog pointing to /share/[ticketId]
-    const baseUrl =
+    const baseUrl = (
       process.env.NEXT_PUBLIC_APP_URL ||
       (typeof window !== "undefined"
         ? window.location.origin
-        : "https://esme-metrix-registeration.vercel.app");
-    const shareUrl = `${baseUrl}/share/${data.registration_id}`;
+        : "https://esme-metrix-registeration.vercel.app")
+    ).replace(/\/$/, "");
+    const shareUrl = `${baseUrl}/share/${encodeURIComponent(data.registration_id)}`;
     window.open(
       `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
       "_blank",
       "noopener,noreferrer"
     );
 
-    // 5. Mark share status in database
     fetch("/api/linkedin-shared", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -974,14 +950,7 @@ export default function SuccessPage() {
     );
   }
 
-  const attendeeInitials =
-    data.full_name
-      .split(" ")
-      .filter(Boolean)
-      .map((n) => n[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase() || "EM";
+  const attendeeInitials = getInitials(data.full_name);
 
   return (
     <div className="max-w-5xl mx-auto w-full px-4 py-8 sm:py-12 flex flex-col items-center text-center">
@@ -991,7 +960,7 @@ export default function SuccessPage() {
           <CheckCircle2 className="w-5 h-5 text-[#10B981] shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="text-xs font-bold text-white uppercase tracking-wider">
-              {toastMessage.includes("copied") ? "CAPTION COPIED TO CLIPBOARD!" : "SUCCESS"}
+              {toastMessage.includes("copied") ? "POST TEXT COPIED!" : "SUCCESS"}
             </p>
             <p className="text-xs text-slate-300 mt-0.5 leading-relaxed">
               {toastMessage}
@@ -1012,7 +981,7 @@ export default function SuccessPage() {
       </div>
 
       <div className="inline-block px-3.5 py-1 rounded-full border border-[#D97706]/35 bg-[#0F243A] text-[#F59E0B] font-mono text-xs mb-3 font-semibold">
-        ADMISSION CONFIRMED & CREDENTIAL ISSUED
+        ADMISSION CONFIRMED &amp; CREDENTIAL ISSUED
       </div>
 
       <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mb-2">
@@ -1030,34 +999,28 @@ export default function SuccessPage() {
           className="rounded-2xl border border-emerald-500/40 bg-emerald-950/35 p-6 shadow-[0_0_30px_rgba(16,185,129,0.12)]"
         >
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
-            {/* Text Column (right-aligned via RTL) */}
             <div className="flex-1">
-              {/* Top Pill Badge */}
               <div className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs px-3 py-1 rounded-full inline-flex items-center gap-2 font-bold mb-3">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
                 خطوة هامة: انضم للجروب الرسمي
               </div>
 
-              {/* Title */}
               <h3 className="text-xl md:text-2xl font-bold text-white mt-1">
                 جروب الواتساب الرسمي للحدث
               </h3>
 
-              {/* Description */}
               <p className="text-sm text-slate-300 mt-1 max-w-xl leading-relaxed">
                 انضم الآن لمتابعة مواعيد ورش العمل، جدول المحاضرات، والتواصل مع منظمي الفعالية
                 وزملائك المهندسين.
               </p>
             </div>
 
-            {/* CTA Button */}
             <a
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-6 py-3.5 rounded-xl inline-flex items-center gap-2.5 shadow-lg shadow-emerald-500/25 transition shrink-0 text-sm"
             >
-              {/* Official WhatsApp SVG Icon */}
               <svg
                 viewBox="0 0 24 24"
                 className="w-5 h-5 fill-current shrink-0"
@@ -1072,7 +1035,7 @@ export default function SuccessPage() {
       </div>
 
       {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* BADGE PORTRAIT PHOTO UPLOAD SECTION (STYLED WITH CYBER GLOW AT TOP)  */}
+      {/* BADGE PORTRAIT PHOTO UPLOAD SECTION                                */}
       {/* ─────────────────────────────────────────────────────────────────── */}
       <div className="w-full max-w-4xl p-5 rounded-2xl bg-[#0F243A] border-2 border-[#D97706]/40 shadow-[0_0_25px_rgba(217,119,6,0.2)] mb-8">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-left">
@@ -1083,6 +1046,7 @@ export default function SuccessPage() {
                 <img
                   src={avatarPreviewUrl}
                   alt="Badge Portrait"
+                  crossOrigin={avatarPreviewUrl.startsWith("http") ? "anonymous" : undefined}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -1097,12 +1061,12 @@ export default function SuccessPage() {
             <div>
               <p className="text-sm font-bold text-white flex items-center gap-2">
                 <User className="w-4 h-4 text-[#F59E0B]" />
-                Badge Portrait Photo
+                Badge Portrait Photo <span className="text-xs font-normal text-slate-400">(Optional)</span>
               </p>
               <p className="text-xs text-slate-300 mt-0.5 leading-relaxed">
                 {avatarPreviewUrl
                   ? "Your photo is loaded onto your widescreen ticket stub and social attendance badge."
-                  : "Upload your headshot to display your admission avatar on the ticket stub and LinkedIn badge."}
+                  : "Optional: Upload a portrait photo to personalize your ticket stub and LinkedIn badge."}
               </p>
             </div>
           </div>
@@ -1122,7 +1086,7 @@ export default function SuccessPage() {
       </div>
 
       {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* 1. WIDESCREEN SCI-FI EVENT TICKET STUB (image_7.png THEME)          */}
+      {/* 1. WIDESCREEN EVENT TICKET STUB                                    */}
       {/* ─────────────────────────────────────────────────────────────────── */}
       <div className="w-full mb-10">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-left mb-4">
@@ -1139,18 +1103,13 @@ export default function SuccessPage() {
           </span>
         </div>
 
-        {/* Ticket Stub Canvas Container */}
         <div
           ref={ticketContainerRef}
           className="w-full rounded-2xl overflow-hidden border-2 border-[#D97706]/50 shadow-[0_0_40px_rgba(217,119,6,0.25)] bg-[#070F1E] mb-6"
         >
-          <canvas
-            ref={ticketCanvasRef}
-            className="w-full h-auto block"
-          />
+          <canvas ref={ticketCanvasRef} className="w-full h-auto block" />
         </div>
 
-        {/* Action Buttons: Download PDF, Download QR & Share on LinkedIn */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
           <button
             onClick={handleDownloadTicketPDF}
@@ -1189,7 +1148,7 @@ export default function SuccessPage() {
               <Share2 className="w-5 h-5 text-[#F59E0B]" /> LinkedIn Social Share Card Preview
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              1200x630 dynamic landscape attendance badge served by /api/og when sharing on LinkedIn.
+              High-resolution dynamic attendance badge (1600x900 PNG download, 1200x675 /api/og LinkedIn preview).
             </p>
           </div>
           <button
@@ -1202,15 +1161,10 @@ export default function SuccessPage() {
           </button>
         </div>
 
-        {/* Social Card Canvas Preview */}
-        <div className="w-full rounded-2xl overflow-hidden border-2 border-[#D97706]/35 shadow-xl bg-[#070F1E] mb-5">
-          <canvas
-            ref={linkedInCanvasRef}
-            className="w-full h-auto block"
-          />
+        <div className="w-full rounded-2xl overflow-hidden border-2 border-[#D97706]/35 shadow-xl bg-[#07111E] mb-5">
+          <canvas ref={linkedInCanvasRef} className="w-full h-auto block" />
         </div>
 
-        {/* Pre-filled Post Text Box */}
         <div className="p-4 sm:p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/20 text-left">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-mono font-bold text-slate-300 uppercase flex items-center gap-1.5">
@@ -1218,13 +1172,15 @@ export default function SuccessPage() {
             </span>
             <button
               onClick={() => {
-                navigator.clipboard.writeText(LINKEDIN_SHARE_CAPTION);
+                navigator.clipboard.writeText(LINKEDIN_POST_TEXT);
                 setCopiedCaption(true);
-                setToastMessage("Post text copied to clipboard!");
+                setToastMessage(
+                  "Post text copied! Paste it into LinkedIn—your personalized card will load with the link or you can attach the downloaded PNG."
+                );
                 setTimeout(() => {
                   setCopiedCaption(false);
                   setToastMessage(null);
-                }, 4000);
+                }, 5000);
               }}
               className="px-3 py-1.5 rounded-lg bg-[#15304B] border border-slate-700 text-xs font-semibold text-slate-200 hover:text-white hover:border-[#D97706] flex items-center gap-1.5 transition-colors cursor-pointer"
             >
@@ -1240,7 +1196,7 @@ export default function SuccessPage() {
             </button>
           </div>
           <pre className="text-xs text-slate-300 font-sans whitespace-pre-wrap leading-relaxed bg-[#15304B]/60 p-3.5 rounded-xl border border-slate-800">
-            {LINKEDIN_SHARE_CAPTION}
+            {LINKEDIN_POST_TEXT}
           </pre>
         </div>
       </div>
@@ -1313,8 +1269,7 @@ export default function SuccessPage() {
             </div>
             <div>
               <strong className="text-white block mb-0.5">Physical ID Required:</strong>
-              Please bring your original National ID or Student University Karnet for gate
-              identification.
+              Please bring your original National ID for gate identification.
             </div>
           </div>
 

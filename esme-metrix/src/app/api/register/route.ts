@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse, after } from "next/server";
-import { completeRegistrationSchema } from "@/lib/validations/registration";
+import { completeRegistrationSchema, resolveDepartment } from "@/lib/validations/registration";
 import { isAllowedPhotoUrl } from "@/lib/validations/photo-url";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateRegistrationId, REGISTRATION_ID_REGEX } from "@/lib/registration-id";
@@ -27,9 +27,9 @@ export async function POST(request: NextRequest) {
 
     const data = validationResult.data;
 
-    if (!isAllowedPhotoUrl(data.idPhotoUrl) || !isAllowedPhotoUrl(data.karnetPhotoUrl)) {
+    if (!isAllowedPhotoUrl(data.idPhotoUrl)) {
       return NextResponse.json(
-        { error: "Document photos must be uploaded through the registration form." },
+        { error: "Document photo must be uploaded through the registration form." },
         { status: 400 }
       );
     }
@@ -48,6 +48,14 @@ export async function POST(request: NextRequest) {
         { status: 503 }
       );
     }
+
+    const resolvedDepartment = resolveDepartment({
+      faculty: data.faculty,
+      department: data.department,
+      customMajor: data.customMajor,
+    });
+    const committee = data.isEsmeMember ? data.committee || null : null;
+    const role = data.isEsmeMember ? data.role || null : null;
 
     const supabase = createAdminClient();
 
@@ -98,12 +106,15 @@ export async function POST(request: NextRequest) {
           graduation_year: data.graduationYear || null,
           university: data.university,
           faculty: data.faculty,
+          department: resolvedDepartment,
           academic_year: data.academicYear,
           city: data.city,
           job_title: data.jobTitle,
           company: data.company || null,
+          is_esme_member: data.isEsmeMember,
+          committee,
+          role,
           id_photo_url: data.idPhotoUrl,
-          karnet_photo_url: data.karnetPhotoUrl,
           avatar_url: data.avatarUrl || null,
           qr_code: qrBase64,
           registration_id: registrationId,
@@ -145,9 +156,13 @@ export async function POST(request: NextRequest) {
       registrationId,
       university: data.university,
       faculty: data.faculty,
+      department: resolvedDepartment,
       academicYear: data.academicYear,
       graduationYear: data.graduationYear,
       nationalId: data.nationalId,
+      isEsmeMember: data.isEsmeMember,
+      committee,
+      role,
       qrDataUrl: qrBase64,
     });
 
@@ -165,6 +180,14 @@ export async function POST(request: NextRequest) {
       full_name: data.fullName,
       email: data.email,
       university: data.university,
+      faculty: data.faculty,
+      department: resolvedDepartment,
+      academic_year: data.academicYear,
+      job_title: data.jobTitle,
+      company: data.company || null,
+      is_esme_member: data.isEsmeMember,
+      committee,
+      role,
       avatar_url: data.avatarUrl || null,
       qr_code: qrBase64,
     });
@@ -241,7 +264,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase
       .from("registrants")
       .select(
-        "registration_id, full_name, email, university, faculty, academic_year, job_title, company, qr_code, avatar_url"
+        "registration_id, full_name, email, university, faculty, department, academic_year, job_title, company, is_esme_member, committee, role, qr_code, avatar_url"
       )
       .eq("registration_id", id)
       .maybeSingle();

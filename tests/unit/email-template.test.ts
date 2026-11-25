@@ -31,6 +31,21 @@ describe("QR-07/08 email template uses CID attachment, not data URI", () => {
     expect(email.text).toContain("MX8-ABC234");
   });
 
+  it("includes department and ESME chapter details when provided", () => {
+    const email = buildConfirmationEmail({
+      ...input,
+      faculty: "Computer Science & IT (الحاسبات والمعلومات)",
+      department: "Cybersecurity",
+      isEsmeMember: true,
+      committee: "IT",
+      role: "Head",
+    });
+    expect(email.html).toContain("Cybersecurity");
+    expect(email.html).toContain("IT (Head)");
+    expect(email.text).toContain("Cybersecurity");
+    expect(email.text).toContain("IT (Head)");
+  });
+
   it("provides a plain-text fallback", () => {
     const email = buildConfirmationEmail(input);
     expect(email.text.length).toBeGreaterThan(50);

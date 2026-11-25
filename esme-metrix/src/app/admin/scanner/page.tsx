@@ -14,7 +14,11 @@ interface ScanResponse {
     full_name: string;
     university: string;
     faculty: string;
+    department?: string | null;
     academic_year: string;
+    is_esme_member?: boolean;
+    committee?: string | null;
+    role?: string | null;
     registration_id: string;
     id_photo_url: string;
   };

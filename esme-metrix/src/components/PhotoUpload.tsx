@@ -27,6 +27,8 @@ export default function PhotoUpload({
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const previewFailed = Boolean(value) && failedUrl === value;
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -45,6 +47,7 @@ export default function PhotoUpload({
     }
 
     setUploadError(null);
+    setFailedUrl(null);
     setUploading(true);
     setProgress(20);
 
@@ -87,6 +90,7 @@ export default function PhotoUpload({
   const handleClear = () => {
     onChange("");
     setUploadError(null);
+    setFailedUrl(null);
   };
 
   return (
@@ -96,20 +100,35 @@ export default function PhotoUpload({
         {required ? (
           <span className="text-[#D97706]">*</span>
         ) : (
-          <span className="text-slate-400 font-normal">(Optional)</span>
+          <span className="text-slate-400 font-normal text-xs">(Optional)</span>
         )}
       </label>
       <span className="text-xs text-slate-400">{sublabel || description}</span>
 
       {value ? (
         <div className="relative w-full h-44 rounded-xl border border-[#D97706]/40 bg-[#0F243A] overflow-hidden flex items-center justify-center group">
-          <Image
-            src={value}
-            alt={label}
-            fill
-            className="object-cover"
-            unoptimized
-          />
+          {!previewFailed ? (
+            <Image
+              src={value}
+              alt={label}
+              fill
+              className="object-cover"
+              unoptimized
+              onError={() => setFailedUrl(value)}
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center p-4 text-center">
+              <AlertCircle className="w-6 h-6 text-amber-400 mb-1.5" />
+              <p className="text-xs text-slate-300">Preview unavailable, image uploaded.</p>
+              <button
+                type="button"
+                onClick={handleClear}
+                className="mt-2 px-3 py-1 rounded-lg bg-red-500/20 text-red-300 border border-red-500/30 text-xs font-semibold hover:bg-red-500/40 transition-colors"
+              >
+                Remove & Re-upload
+              </button>
+            </div>
+          )}
           <div className="absolute inset-0 bg-[#15304B]/75 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
             <button
               type="button"

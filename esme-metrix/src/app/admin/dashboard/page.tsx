@@ -30,6 +30,7 @@ import {
   Cell,
 } from "recharts";
 import { createClient } from "@/lib/supabase/client";
+import { DEFAULT_OG_HIGHLIGHTS_TEXT, LINKEDIN_POST_TEXT } from "@/config/registration";
 
 const PIE_COLORS = ["#D97706", "#F59E0B", "#B45309", "#E11D48", "#10B981"];
 
@@ -96,15 +97,14 @@ const DEFAULT_CMS_ITEMS: CMSItem[] = [
     label: "LinkedIn Share Caption",
     category: "Social Amplification",
     field_type: "textarea",
-    value: `I'm attending ESME METRIX!
-
-Join us on 12 December 2026 at Cairo University for an exciting event exploring the world of Materials Engineering, innovation, and advanced materials.
-
-Discover, learn, and connect with fellow engineering students.
-
-Register now: https://esme-metrix-registeration.vercel.app/
-
-#ESMEMetrix #MaterialsEngineering #ESMECU #CairoUniversity`,
+    value: LINKEDIN_POST_TEXT,
+  },
+  {
+    key: "og_highlights",
+    label: "LinkedIn Card 2x3 Highlights (6 lines: Value | Label)",
+    category: "Social Amplification",
+    field_type: "textarea",
+    value: DEFAULT_OG_HIGHLIGHTS_TEXT,
   },
   {
     key: "whatsapp_group_url",
