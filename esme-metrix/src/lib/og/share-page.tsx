@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isMissingColumnError } from "@/lib/supabase/registrant-compat";
 import { ArrowRight, Calendar, MapPin, Ticket } from "lucide-react";
 import { formatRoleOrMajor } from "@/lib/og/card-data";
 
@@ -35,13 +36,31 @@ export async function buildShareMetadata(
   try {
     if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
       const supabase = createAdminClient();
-      const { data } = await supabase
+      const { data: primaryData, error: primaryError } = await supabase
         .from("registrants")
         .select(
           "full_name, university, faculty, department, job_title, is_esme_member, committee, role"
         )
         .eq("registration_id", ticketId)
         .maybeSingle();
+
+      let data = primaryData;
+      if (primaryError && isMissingColumnError(primaryError)) {
+        const legacyRes = await supabase
+          .from("registrants")
+          .select("full_name, university, faculty, job_title")
+          .eq("registration_id", ticketId)
+          .maybeSingle();
+        if (!legacyRes.error && legacyRes.data) {
+          data = {
+            ...legacyRes.data,
+            department: legacyRes.data.faculty,
+            is_esme_member: false,
+            committee: null,
+            role: null,
+          };
+        }
+      }
 
       if (data) {
         foundInDb = true;

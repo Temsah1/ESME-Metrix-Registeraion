@@ -5,6 +5,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { generateRegistrationId, REGISTRATION_ID_REGEX } from "@/lib/registration-id";
 import { signQrPayload } from "@/lib/qr";
 import { buildConfirmationEmail, sendConfirmationEmail } from "@/lib/email/confirmation";
+import {
+  adaptInsertRowForSchemaError,
+  buildLegacyFacultyValue,
+  isMissingColumnError,
+} from "@/lib/supabase/registrant-compat";
 import QRCode from "qrcode";
 import crypto from "crypto";
 
@@ -81,6 +86,14 @@ export async function POST(request: NextRequest) {
     const registrantUuid = crypto.randomUUID();
     const email = data.email.toLowerCase();
 
+    const legacyFaculty = buildLegacyFacultyValue({
+      faculty: data.faculty,
+      department: resolvedDepartment,
+      isEsmeMember: data.isEsmeMember,
+      committee,
+      role,
+    });
+
     let insertError: { code?: string; message?: string } | null = null;
     let registrationId = "";
     let qrBase64 = "";
@@ -96,31 +109,49 @@ export async function POST(request: NextRequest) {
         color: { dark: "#000000", light: "#FFFFFF" },
       });
 
-      const { error } = await supabase.from("registrants").insert([
-        {
-          id: registrantUuid,
-          full_name: data.fullName,
-          phone: data.phone,
-          email,
-          national_id: data.nationalId || null,
-          graduation_year: data.graduationYear || null,
-          university: data.university,
-          faculty: data.faculty,
-          department: resolvedDepartment,
-          academic_year: data.academicYear,
-          city: data.city,
-          job_title: data.jobTitle,
-          company: data.company || null,
-          is_esme_member: data.isEsmeMember,
-          committee,
-          role,
-          id_photo_url: data.idPhotoUrl,
-          avatar_url: data.avatarUrl || null,
-          qr_code: qrBase64,
-          registration_id: registrationId,
-          linkedin_shared: false,
-        },
-      ]);
+      let rowToInsert: Record<string, unknown> = {
+        id: registrantUuid,
+        full_name: data.fullName,
+        phone: data.phone,
+        email,
+        national_id: data.nationalId || null,
+        graduation_year: data.graduationYear || null,
+        university: data.university,
+        faculty: data.faculty,
+        department: resolvedDepartment,
+        academic_year: data.academicYear,
+        city: data.city,
+        job_title: data.jobTitle,
+        company: data.company || null,
+        is_esme_member: data.isEsmeMember,
+        committee,
+        role,
+        id_photo_url: data.idPhotoUrl,
+        avatar_url: data.avatarUrl || null,
+        qr_code: qrBase64,
+        registration_id: registrationId,
+        linkedin_shared: false,
+      };
+
+      let error: { code?: string; message?: string } | null = null;
+      for (let schemaAttempt = 0; schemaAttempt < 5; schemaAttempt++) {
+        const res = await supabase.from("registrants").insert([rowToInsert]);
+        error = res.error;
+        if (!error) break;
+
+        const adapted = adaptInsertRowForSchemaError(rowToInsert, error, {
+          idPhotoUrl: data.idPhotoUrl,
+          legacyFaculty,
+        });
+        if (!adapted) break;
+
+        console.warn(
+          "Adapting registrants insert payload for unapplied DB migration:",
+          error.code,
+          error.message
+        );
+        rowToInsert = adapted;
+      }
 
       if (!error) {
         insertError = null;
@@ -261,13 +292,35 @@ export async function GET(request: NextRequest) {
     }
 
     const supabase = createAdminClient();
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from("registrants")
       .select(
         "registration_id, full_name, email, university, faculty, department, academic_year, job_title, company, is_esme_member, committee, role, qr_code, avatar_url"
       )
       .eq("registration_id", id)
       .maybeSingle();
+
+    if (error && isMissingColumnError(error)) {
+      const legacyRes = await supabase
+        .from("registrants")
+        .select(
+          "registration_id, full_name, email, university, faculty, academic_year, job_title, company, qr_code, avatar_url"
+        )
+        .eq("registration_id", id)
+        .maybeSingle();
+      if (!legacyRes.error && legacyRes.data) {
+        data = {
+          ...legacyRes.data,
+          department: legacyRes.data.faculty,
+          is_esme_member: false,
+          committee: null,
+          role: null,
+        };
+        error = null;
+      } else {
+        error = legacyRes.error;
+      }
+    }
 
     if (error || !data) {
       return NextResponse.json(

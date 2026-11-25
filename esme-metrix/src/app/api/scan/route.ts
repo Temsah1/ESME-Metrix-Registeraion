@@ -2,11 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { verifyQrPayload } from "@/lib/qr";
+import { isMissingColumnError } from "@/lib/supabase/registrant-compat";
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const REGISTRANT_FIELDS =
   "id, full_name, university, faculty, department, academic_year, is_esme_member, committee, role, registration_id, id_photo_url";
+const LEGACY_REGISTRANT_FIELDS =
+  "id, full_name, university, faculty, academic_year, registration_id, id_photo_url";
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,11 +49,31 @@ export async function POST(request: NextRequest) {
       registrantUuid = verification.payload.registrant_id;
     }
 
-    const { data: registrant, error: regError } = await supabase
+    let { data: registrant, error: regError } = await supabase
       .from("registrants")
       .select(REGISTRANT_FIELDS)
       .eq("id", registrantUuid)
       .maybeSingle();
+
+    if (regError && isMissingColumnError(regError)) {
+      const legacyRes = await supabase
+        .from("registrants")
+        .select(LEGACY_REGISTRANT_FIELDS)
+        .eq("id", registrantUuid)
+        .maybeSingle();
+      if (!legacyRes.error && legacyRes.data) {
+        registrant = {
+          ...legacyRes.data,
+          department: legacyRes.data.faculty,
+          is_esme_member: false,
+          committee: null,
+          role: null,
+        };
+        regError = null;
+      } else {
+        regError = legacyRes.error;
+      }
+    }
 
     if (regError || !registrant) {
       return NextResponse.json({ status: "INVALID", error: "Attendee record not found" });

@@ -148,6 +148,7 @@ export default function RegisterPage() {
   };
 
   const handleEsmeMembershipSelect = (isMember: boolean) => {
+    setServerError(null);
     setValue("isEsmeMember", isMember, { shouldValidate: true });
     clearErrors(["isEsmeMember", "committee", "role"]);
     if (!isMember) {
@@ -622,12 +623,14 @@ export default function RegisterPage() {
                 <AnimatePresence>
                   {showCustomMajorInput && (
                     <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2 }}
+                      key="custom-major-field"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.18 }}
                     >
                       <AnimatedField
+                        standalone
                         label="Specify Your Major / Department"
                         required
                         error={errors.customMajor?.message}
@@ -754,22 +757,26 @@ export default function RegisterPage() {
                   <AnimatePresence>
                     {formData.isEsmeMember === true && (
                       <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.2 }}
+                        key="esme-member-details"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.18 }}
                         className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-800/80"
                       >
                         <AnimatedField
+                          standalone
                           label="Committee"
                           required
                           error={errors.committee?.message}
                         >
                           <select
                             value={formData.committee || ""}
-                            onChange={(e) =>
-                              setValue("committee", e.target.value, { shouldValidate: true })
-                            }
+                            onChange={(e) => {
+                              setValue("committee", e.target.value, { shouldValidate: true });
+                              clearErrors("committee");
+                              setServerError(null);
+                            }}
                             className="w-full h-11 px-3 rounded-xl bg-[#0F243A] border border-[#D97706]/40 focus:border-[#D97706] text-white focus:outline-none text-xs sm:text-sm transition-colors"
                           >
                             <option value="">Select Committee...</option>
@@ -782,15 +789,18 @@ export default function RegisterPage() {
                         </AnimatedField>
 
                         <AnimatedField
+                          standalone
                           label="Role / Position"
                           required
                           error={errors.role?.message}
                         >
                           <select
                             value={formData.role || ""}
-                            onChange={(e) =>
-                              setValue("role", e.target.value, { shouldValidate: true })
-                            }
+                            onChange={(e) => {
+                              setValue("role", e.target.value, { shouldValidate: true });
+                              clearErrors("role");
+                              setServerError(null);
+                            }}
                             className="w-full h-11 px-3 rounded-xl bg-[#0F243A] border border-[#D97706]/40 focus:border-[#D97706] text-white focus:outline-none text-xs sm:text-sm transition-colors"
                           >
                             <option value="">Select Role / Position...</option>

@@ -12,6 +12,7 @@ interface AnimatedFieldProps {
   error?: string;
   isValid?: boolean;
   helperText?: string;
+  standalone?: boolean;
   children: React.ReactNode;
 }
 
@@ -22,13 +23,14 @@ export default function AnimatedField({
   error,
   isValid = false,
   helperText,
+  standalone = false,
   children,
 }: AnimatedFieldProps) {
   const [isFocused, setIsFocused] = useState(false);
 
   return (
     <motion.div
-      variants={fieldEntrance}
+      variants={standalone ? undefined : fieldEntrance}
       className="flex flex-col gap-1.5 relative"
       onFocusCapture={() => setIsFocused(true)}
       onBlurCapture={() => setIsFocused(false)}
