@@ -5,6 +5,7 @@ import {
   step3Schema,
   step4Schema,
   completeRegistrationSchema,
+  createRegistrationSchemas,
   EGYPTIAN_PHONE_REGEX,
   FACULTIES,
   ESME_COMMITTEES,
@@ -23,10 +24,10 @@ const validStep1 = {
 
 const validStep2 = {
   university: "Cairo University",
-  faculty: "Engineering (الهندسة)",
+  faculty: "Engineering",
   department: "Materials & Metallurgical Engineering",
   customMajor: "",
-  academicYear: "3rd" as const,
+  academicYear: "3rd",
   graduationYear: "2026",
   jobTitle: "Student",
   company: "",
@@ -69,15 +70,14 @@ describe("REG-03 email validation", () => {
   });
 });
 
-describe("REG-04 required fields", () => {
-  it("rejects short full name", () => {
+describe("REG-04 required fields & 100% English localization", () => {
+  it("rejects short full name and keeps error messages English", () => {
     expect(step1Schema.safeParse({ ...validStep1, fullName: "Ab" }).success).toBe(false);
-  });
-
-  it("rejects missing city", () => {
-    const { city: _city, ...rest } = validStep1;
-    void _city;
-    expect(step1Schema.safeParse(rest).success).toBe(false);
+    const badId = step1Schema.safeParse({ ...validStep1, nationalId: "123" });
+    expect(badId.success).toBe(false);
+    if (!badId.success) {
+      expect(badId.error.issues[0].message).not.toMatch(/[\u0600-\u06FF]/);
+    }
   });
 
   it("rejects empty university/faculty/department/jobTitle", () => {
@@ -88,10 +88,11 @@ describe("REG-04 required fields", () => {
   });
 });
 
-describe("REG-05 cascading faculty/department & custom major", () => {
-  it("supports all 12 configured faculties and dynamic departments", () => {
+describe("REG-05 cascading faculty/department & custom major (English labels)", () => {
+  it("supports all 12 pure-English faculties with zero Arabic text", () => {
     expect(FACULTIES).toHaveLength(12);
     for (const fac of FACULTIES) {
+      expect(fac).not.toMatch(/[\u0600-\u06FF]/);
       const depts = getDepartmentsForFaculty(fac);
       expect(depts.length).toBeGreaterThan(0);
     }
@@ -101,7 +102,7 @@ describe("REG-05 cascading faculty/department & custom major", () => {
     expect(
       step2Schema.safeParse({
         ...validStep2,
-        faculty: "Computer Science & IT (الحاسبات والمعلومات)",
+        faculty: "Computer Science & IT",
         department: "Artificial Intelligence (AI)",
       }).success
     ).toBe(true);
@@ -109,7 +110,7 @@ describe("REG-05 cascading faculty/department & custom major", () => {
     expect(
       step2Schema.safeParse({
         ...validStep2,
-        faculty: "Medicine & Healthcare (القطاع الطبي)",
+        faculty: "Medicine & Healthcare",
         department: "Pharmacy",
       }).success
     ).toBe(true);
@@ -119,7 +120,7 @@ describe("REG-05 cascading faculty/department & custom major", () => {
     expect(
       step2Schema.safeParse({
         ...validStep2,
-        faculty: "Science (العلوم)",
+        faculty: "Science",
         department: "Civil Engineering",
       }).success
     ).toBe(false);
@@ -129,7 +130,7 @@ describe("REG-05 cascading faculty/department & custom major", () => {
     expect(
       step2Schema.safeParse({
         ...validStep2,
-        faculty: "Engineering (الهندسة)",
+        faculty: "Engineering",
         department: "Other Engineering Department",
         customMajor: "",
       }).success
@@ -138,7 +139,7 @@ describe("REG-05 cascading faculty/department & custom major", () => {
     expect(
       step2Schema.safeParse({
         ...validStep2,
-        faculty: "Engineering (الهندسة)",
+        faculty: "Engineering",
         department: "Other Engineering Department",
         customMajor: "Nuclear Engineering",
       }).success
@@ -147,7 +148,7 @@ describe("REG-05 cascading faculty/department & custom major", () => {
     expect(
       step2Schema.safeParse({
         ...validStep2,
-        faculty: "Other (تخصص آخر)",
+        faculty: "Other",
         department: "Other / Specify Major",
         customMajor: "",
       }).success
@@ -156,7 +157,7 @@ describe("REG-05 cascading faculty/department & custom major", () => {
     expect(
       step2Schema.safeParse({
         ...validStep2,
-        faculty: "Other (تخصص آخر)",
+        faculty: "Other",
         department: "Other / Specify Major",
         customMajor: "Archaeology",
       }).success
@@ -166,7 +167,7 @@ describe("REG-05 cascading faculty/department & custom major", () => {
   it("resolves customMajor over generic Other label", () => {
     expect(
       resolveDepartment({
-        faculty: "Other (تخصص آخر)",
+        faculty: "Other",
         department: "Other / Specify Major",
         customMajor: "Renewable Energy Technology",
       })
@@ -225,16 +226,33 @@ describe("REG-05b conditional ESME Chapter membership", () => {
   });
 });
 
-describe("REG-06 academic year enum & terms", () => {
-  it.each(["1st", "2nd", "3rd", "4th", "Graduate", "Alumni"] as const)(
-    "accepts %s",
-    (year) => {
-      expect(step2Schema.safeParse({ ...validStep2, academicYear: year }).success).toBe(true);
-    }
-  );
+describe("REG-06 CMS-driven dynamic schema builder", () => {
+  it("accepts custom CMS committees, faculties, academic years, and optional fields", () => {
+    const customSchemas = createRegistrationSchemas({
+      faculties: [{ name: "Energy Studies", departments: ["Solar Grid Lab"] }],
+      academicYears: [{ value: "5th", label: "5th Year" }],
+      esmeCommittees: ["PR"],
+      esmeRoles: ["Director"],
+      fields: {
+        nationalId: { label: "National ID", placeholder: "", required: false },
+      },
+    });
 
-  it("rejects unknown year", () => {
-    expect(step2Schema.safeParse({ ...validStep2, academicYear: "5th" }).success).toBe(false);
+    expect(
+      customSchemas.step1Schema.safeParse({ ...validStep1, nationalId: "" }).success
+    ).toBe(true);
+
+    expect(
+      customSchemas.step2Schema.safeParse({
+        ...validStep2,
+        faculty: "Energy Studies",
+        department: "Solar Grid Lab",
+        academicYear: "5th",
+        isEsmeMember: true,
+        committee: "PR",
+        role: "Director",
+      }).success
+    ).toBe(true);
   });
 
   it("requires termsAccepted true", () => {
@@ -267,6 +285,8 @@ describe("complete schema", () => {
   });
 
   it("rejects when terms not accepted", () => {
-    expect(completeRegistrationSchema.safeParse({ ...valid, termsAccepted: false }).success).toBe(false);
+    expect(completeRegistrationSchema.safeParse({ ...valid, termsAccepted: false }).success).toBe(
+      false
+    );
   });
 });

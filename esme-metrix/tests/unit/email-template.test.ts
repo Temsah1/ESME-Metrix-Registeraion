@@ -8,11 +8,14 @@ const input = {
   qrDataUrl: "data:image/png;base64,QUJDREVGRw==",
 };
 
-describe("QR-07/08 email template uses CID attachment, not data URI", () => {
+describe("QR-07/08 email template uses CID attachment, not data URI, and 100% English", () => {
   it("references cid:metrix-qr and never embeds a data URI img", () => {
     const email = buildConfirmationEmail(input);
     expect(email.html).toContain('src="cid:metrix-qr"');
     expect(email.html).not.toContain("data:image");
+    expect(email.html).not.toMatch(/[\u0600-\u06FF]/);
+    expect(email.text).not.toMatch(/[\u0600-\u06FF]/);
+    expect(email.subject).not.toMatch(/[\u0600-\u06FF]/);
   });
 
   it("attaches the QR base64 with matching contentId", () => {
@@ -23,18 +26,22 @@ describe("QR-07/08 email template uses CID attachment, not data URI", () => {
     expect(email.attachments[0].contentType).toBe("image/png");
   });
 
-  it("includes attendee name, university and registration ID", () => {
-    const email = buildConfirmationEmail(input);
+  it("includes attendee name, university, registration ID, and custom WhatsApp URL", () => {
+    const email = buildConfirmationEmail({
+      ...input,
+      whatsappUrl: "https://chat.whatsapp.com/CustomGroup123",
+    });
     expect(email.html).toContain("Omar Hassan");
     expect(email.html).toContain("Cairo University");
     expect(email.html).toContain("MX8-ABC234");
-    expect(email.text).toContain("MX8-ABC234");
+    expect(email.html).toContain("https://chat.whatsapp.com/CustomGroup123");
+    expect(email.text).toContain("https://chat.whatsapp.com/CustomGroup123");
   });
 
   it("includes department and ESME chapter details when provided", () => {
     const email = buildConfirmationEmail({
       ...input,
-      faculty: "Computer Science & IT (الحاسبات والمعلومات)",
+      faculty: "Computer Science & IT",
       department: "Cybersecurity",
       isEsmeMember: true,
       committee: "IT",

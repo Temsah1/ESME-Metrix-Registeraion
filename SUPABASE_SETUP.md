@@ -1,10 +1,10 @@
 # Supabase Database & Security Guide — ESME METRIX 2026
 
-دليل إعداد قاعدة بيانات **Supabase** وجداول التسجيل والأمان وإدارة المحتوى (CMS).
+Setup guide for **Supabase** tables, Storage buckets, RLS security policies, and CMS configuration.
 
 ---
 
-## 1. المتغيرات المطلوبة في `.env.local`
+## 1. Required `.env.local` Environment Variables
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
@@ -15,82 +15,22 @@ QR_SIGNING_SECRET=your-secure-random-secret-key-32-chars
 
 ---
 
-## 2. تشغيل المهاجرات (SQL Migrations)
+## 2. Running SQL Migrations
 
-ادخل إلى **Supabase Dashboard > SQL Editor** وقم بتشغيل ملفات المهاجرة بالترتيب:
-
-### 1) جدول المشتركين (Registrants Table):
-```sql
-CREATE TABLE IF NOT EXISTS public.registrants (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  full_name TEXT NOT NULL,
-  phone TEXT NOT NULL UNIQUE,
-  email TEXT NOT NULL UNIQUE,
-  national_id VARCHAR(20),
-  graduation_year VARCHAR(10),
-  university TEXT NOT NULL,
-  faculty TEXT NOT NULL,
-  department TEXT,
-  academic_year TEXT NOT NULL,
-  city TEXT NOT NULL,
-  job_title TEXT NOT NULL,
-  company TEXT,
-  is_esme_member BOOLEAN NOT NULL DEFAULT false,
-  committee TEXT,
-  role TEXT,
-  id_photo_url TEXT NOT NULL,
-  karnet_photo_url TEXT,
-  avatar_url TEXT,
-  qr_code TEXT NOT NULL,
-  registration_id TEXT NOT NULL UNIQUE,
-  linkedin_shared BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-```
-
-### 2) جدول الحضور (Attendance Table):
-```sql
-CREATE TABLE IF NOT EXISTS public.attendance (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  registrant_id UUID REFERENCES public.registrants(id) ON DELETE CASCADE,
-  scanned_by TEXT NOT NULL,
-  scanned_at TIMESTAMPTZ DEFAULT now(),
-  notes TEXT
-);
-```
-
-### 3) جدول إدارة المحتوى (Site Content / CMS):
-```sql
-CREATE TABLE IF NOT EXISTS public.site_content (
-  key VARCHAR(100) PRIMARY KEY,
-  value TEXT NOT NULL,
-  label VARCHAR(255) NOT NULL,
-  category VARCHAR(100) NOT NULL DEFAULT 'general',
-  field_type VARCHAR(50) NOT NULL DEFAULT 'text',
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-
--- السماح للجميع بقراءة المحتوى
-ALTER TABLE public.site_content ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public read site_content" ON public.site_content FOR SELECT USING (true);
-CREATE POLICY "Admin write site_content" ON public.site_content FOR ALL USING (auth.role() = 'authenticated');
-```
+Open **Supabase Dashboard > SQL Editor** and run the migration files inside `supabase/migrations/` in order (`0001` through `0007`), or run [supabase_schema.sql](supabase_schema.sql) for a fresh setup.
 
 ---
 
-## 3. إعداد التخزين (Storage Buckets)
+## 3. Storage Bucket (`photos`)
 
-1. توجه إلى **Storage** في Supabase.
-2. أنشئ Bucket باسم `photos`.
-3. اضبط الصلاحيات (Policies) بحيث يُسمح برفع الصور (`jpg`, `jpeg`, `png`) من خلال الفورم.
+1. Open **Storage** in Supabase.
+2. Create a bucket named `photos` (or confirm it exists from `supabase_schema.sql`).
+3. Ensure upload policies accept `jpg`, `jpeg`, and `png` files through the registration form and Admin CMS uploader.
 
 ---
 
-## 4. حساب مدير النظام (Admin User)
+## 4. Admin Console User
 
-1. توجه إلى **Authentication > Users** في Supabase.
-2. اضغط **Add User > Create User** وأدخل:
-   - Email: `admin@esme-cu.com` (أو إيميلك الشخصي).
-   - Password: كلمة مرور قوية.
-3. يمكنك الآن تسجيل الدخول مباشرة عبر:
-   `http://localhost:3000/admin`
+1. Go to **Authentication > Users** in Supabase.
+2. Click **Add User > Create User** and enter an email (e.g., `admin@esme-cu.com`) and a strong password.
+3. Sign in via `/admin`.

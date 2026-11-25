@@ -55,7 +55,7 @@ export default function AnimatedField({
               className="text-[#10B981] flex items-center gap-1 text-[10px] font-mono font-bold"
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>مكتمل</span>
+              <span>Valid</span>
             </motion.div>
           )}
         </AnimatePresence>

@@ -11,6 +11,7 @@ export interface ConfirmationEmailInput {
   committee?: string | null;
   role?: string | null;
   qrDataUrl: string;
+  whatsappUrl?: string;
 }
 
 export interface ConfirmationEmail {
@@ -40,12 +41,15 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
   const eventDate = process.env.EVENT_DATE || "12 December 2026";
   const eventVenue = process.env.EVENT_VENUE || "Cairo University, Faculty of Engineering";
   const eventTime = process.env.EVENT_TIME || "Saturday 12 / 12 / 2026 — 09:00 AM";
+  const whatsappUrl =
+    input.whatsappUrl?.trim() || "https://chat.whatsapp.com/KOT8wY8h2lK5p0mNN7NcNW";
 
   const name = escapeHtml(input.fullName);
   const university = escapeHtml(input.university || "Cairo University");
   const faculty = escapeHtml(input.faculty || "Engineering");
   const department = input.department ? escapeHtml(input.department) : "";
-  const facultyDisplay = department && department !== faculty ? `${faculty} — ${department}` : faculty;
+  const facultyDisplay =
+    department && department !== faculty ? `${faculty} — ${department}` : faculty;
   const academicYear = escapeHtml(input.academicYear || "Undergraduate");
   const graduationYear = escapeHtml(input.graduationYear || "2026");
   const nationalId = escapeHtml(input.nationalId || "N/A");
@@ -62,7 +66,7 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
 
   const html = `
     <!DOCTYPE html>
-    <html>
+    <html lang="en">
     <head>
       <meta charset="utf-8">
       <title>ESME METRIX 2026 Confirmation</title>
@@ -83,7 +87,7 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
                     ESME <span style="color: #D97706;">METRIX</span> 2026
                   </h1>
                   <p style="color: #94A3B8; font-size: 13px; margin: 6px 0 0 0;">
-                    Flagship Materials & Engineering Gathering
+                    Flagship Materials &amp; Innovation Conference
                   </p>
                 </td>
               </tr>
@@ -92,7 +96,7 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
               <tr>
                 <td align="center" style="padding: 24px 20px 10px 20px;">
                   <div style="background-color: rgba(16, 185, 129, 0.15); border: 1px solid #10B981; color: #10B981; font-weight: bold; font-size: 13px; padding: 7px 18px; border-radius: 30px; display: inline-block;">
-                    &#10003; REGISTRATION & ADMISSION CONFIRMED
+                    &#10003; REGISTRATION &amp; ADMISSION CONFIRMED
                   </div>
                 </td>
               </tr>
@@ -100,9 +104,9 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
               <!-- Greeting & Announcement -->
               <tr>
                 <td style="padding: 10px 30px 20px 30px; color: #E2E8F0; text-align: center;">
-                  <h2 style="color: #FFFFFF; font-size: 22px; margin: 0 0 10px 0;">أهلاً بك يا ${name}!</h2>
+                  <h2 style="color: #FFFFFF; font-size: 22px; margin: 0 0 10px 0;">Welcome aboard, ${name}!</h2>
                   <p style="color: #CBD5E1; font-size: 14px; line-height: 1.6; margin: 0;">
-                    تم تأكيد تسجيلك بنجاح في مؤتمر <strong>ESME METRIX 2026</strong>. تم إصدار هويتك الرقمية وكود الدخول (QR Code) بنجاح.
+                    Your registration for <strong>ESME METRIX 2026</strong> is officially confirmed. Your digital credential and encrypted QR admission pass are ready below.
                   </p>
                 </td>
               </tr>
@@ -115,7 +119,6 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
                       OFFICIAL ADMISSION QR BADGE
                     </div>
                     
-                    <!-- Embedded QR Image -->
                     <div style="background-color: #FFFFFF; padding: 12px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
                       <img src="cid:metrix-qr" alt="ESME METRIX Admission QR" width="220" height="220" style="width: 220px; height: 220px; display: block; border: 0;" />
                     </div>
@@ -124,7 +127,7 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
                       ID: ${registrationId}
                     </div>
                     <div style="font-size: 11px; color: #10B981; font-weight: bold; margin-top: 4px;">
-                      ● Cryptographically Signed & Verified
+                      &#9679; Cryptographically Signed &amp; Verified
                     </div>
                   </div>
                 </td>
@@ -135,47 +138,47 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
                 <td style="padding: 0 30px 25px 30px;">
                   <div style="background-color: #11253B; border-radius: 12px; padding: 20px; border: 1px solid rgba(255,255,255,0.06);">
                     <div style="font-size: 12px; font-weight: bold; color: #D97706; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">
-                      بيانات التسجيل المعتمدة (Attendee Details)
+                      Verified Attendee Details
                     </div>
                     <table width="100%" border="0" cellspacing="0" cellpadding="6" style="color: #CBD5E1; font-size: 13px;">
                       <tr>
-                        <td width="35%" style="color: #94A3B8;">الاسم الكامل:</td>
+                        <td width="38%" style="color: #94A3B8;">Full Name:</td>
                         <td style="color: #FFFFFF; font-weight: bold;">${name}</td>
                       </tr>
                       <tr>
-                        <td style="color: #94A3B8;">الجامعة:</td>
+                        <td style="color: #94A3B8;">University:</td>
                         <td style="color: #FFFFFF;">${university}</td>
                       </tr>
                       <tr>
-                        <td style="color: #94A3B8;">الكلية والتخصص:</td>
+                        <td style="color: #94A3B8;">Faculty &amp; Major:</td>
                         <td style="color: #FFFFFF;">${facultyDisplay}</td>
                       </tr>
                       ${
                         esmeLine
                           ? `<tr>
-                        <td style="color: #94A3B8;">عضوية ESME:</td>
+                        <td style="color: #94A3B8;">ESME Chapter:</td>
                         <td style="color: #F59E0B; font-weight: bold;">${esmeLine}</td>
                       </tr>`
                           : ""
                       }
                       <tr>
-                        <td style="color: #94A3B8;">السنة وسنة التخرج:</td>
-                        <td style="color: #FFFFFF;">${academicYear} (دفعة ${graduationYear})</td>
+                        <td style="color: #94A3B8;">Academic &amp; Grad Year:</td>
+                        <td style="color: #FFFFFF;">${academicYear} (Class of ${graduationYear})</td>
                       </tr>
                       <tr>
-                        <td style="color: #94A3B8;">الرقم القومي:</td>
+                        <td style="color: #94A3B8;">National ID:</td>
                         <td style="color: #FFFFFF;">${nationalId}</td>
                       </tr>
                       <tr>
-                        <td style="color: #94A3B8;">تاريخ الفعالية:</td>
+                        <td style="color: #94A3B8;">Event Date:</td>
                         <td style="color: #F59E0B; font-weight: bold;">${escapeHtml(eventDate)}</td>
                       </tr>
                       <tr>
-                        <td style="color: #94A3B8;">المكان:</td>
+                        <td style="color: #94A3B8;">Venue:</td>
                         <td style="color: #FFFFFF;">${escapeHtml(eventVenue)}</td>
                       </tr>
                       <tr>
-                        <td style="color: #94A3B8;">الميعاد:</td>
+                        <td style="color: #94A3B8;">Check-In Opens:</td>
                         <td style="color: #FFFFFF;">${escapeHtml(eventTime)}</td>
                       </tr>
                     </table>
@@ -188,10 +191,10 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
                 <td align="center" style="padding: 0 30px 25px 30px;">
                   <div style="background-color: rgba(37, 211, 102, 0.1); border: 1px solid #25D366; border-radius: 12px; padding: 18px; text-align: center;">
                     <p style="color: #FFFFFF; font-size: 13px; font-weight: bold; margin: 0 0 10px 0;">
-                      انضم إلى جروب الواتساب الرسمي لمتابعة الورش والمحاضرات:
+                      Join the official attendee WhatsApp group for hall updates and workshop announcements:
                     </p>
-                    <a href="https://chat.whatsapp.com/BahfelppPpX8aXanFJvDhl?s=cl&p=i&iam=2" style="background-color: #25D366; color: #FFFFFF; text-decoration: none; font-weight: 900; font-size: 13px; padding: 10px 22px; border-radius: 20px; display: inline-block;">
-                      دخول جروب الواتساب الرسمي
+                    <a href="${escapeHtml(whatsappUrl)}" style="background-color: #25D366; color: #052e16; text-decoration: none; font-weight: 800; font-size: 13px; padding: 10px 22px; border-radius: 20px; display: inline-block;">
+                      Join Attendee WhatsApp Group
                     </a>
                   </div>
                 </td>
@@ -201,7 +204,7 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
               <tr>
                 <td style="padding: 0 30px 25px 30px;">
                   <div style="background-color: rgba(217, 119, 6, 0.1); border-left: 4px solid #D97706; padding: 12px 16px; border-radius: 0 8px 8px 0; color: #F59E0B; font-size: 12px; line-height: 1.5;">
-                    ★ <strong>تنويه هام:</strong> يرجى إبراز كود الـ QR هذا (من الموبايل أو مطبوعاً) عند بوابة الدخول لتسجيل حضورك الفعلي واستلام <strong>شهادة الحضور الرسمية المعتمدة</strong>.
+                    &#9733; <strong>Important Reminder:</strong> Please present this QR code on your smartphone (along with your original National ID) at the entrance gate for check-in and to claim your <strong>Official Accredited Attendance Certificate</strong>.
                   </div>
                 </td>
               </tr>
@@ -227,27 +230,33 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
   `;
 
   const text = [
-    `تهانينا، ${input.fullName}!`,
-    "تم تأكيد تسجيلك رسمياً في مؤتمر ESME METRIX 2026.",
+    `Congratulations, ${input.fullName}!`,
+    "Your registration for ESME METRIX 2026 is officially confirmed.",
     "",
-    `رقم التسجيل: ${input.registrationId}`,
-    `الاسم: ${input.fullName}`,
-    `الجامعة: ${input.university}`,
-    `الكلية والتخصص: ${input.department && input.department !== input.faculty ? `${input.faculty || ""} — ${input.department}` : input.faculty || "الهندسة"}`,
+    `Registration ID: ${input.registrationId}`,
+    `Full Name: ${input.fullName}`,
+    `University: ${input.university}`,
+    `Faculty & Major: ${
+      input.department && input.department !== input.faculty
+        ? `${input.faculty || ""} — ${input.department}`
+        : input.faculty || "Engineering"
+    }`,
     ...(input.isEsmeMember && (input.committee || input.role)
-      ? [`عضوية ESME: ${input.committee || ""}${input.role ? ` (${input.role})` : ""}`]
+      ? [`ESME Chapter: ${input.committee || ""}${input.role ? ` (${input.role})` : ""}`]
       : []),
-    `السنة وسنة التخرج: ${input.academicYear || "غير محدد"} (دفعة ${input.graduationYear || "غير محدد"})`,
-    `الرقم القومي: ${input.nationalId || "غير متاح"}`,
-    `تاريخ الفعالية: ${eventDate}`,
-    `المكان: ${eventVenue}`,
-    `الميعاد: ${eventTime}`,
+    `Academic Year: ${input.academicYear || "Undergraduate"} (Class of ${
+      input.graduationYear || "2026"
+    })`,
+    `National ID: ${input.nationalId || "N/A"}`,
+    `Event Date: ${eventDate}`,
+    `Venue: ${eventVenue}`,
+    `Time: ${eventTime}`,
     "",
-    "كود الـ QR الخاص بدخولك مرفق مع هذا الإيميل (metrix-qr.png).",
-    "يرجى الاحتفاظ به جاهزاً على موبايلك عند الوصول لبوابة الدخول لاستلام شهادة الحضور الرسمية.",
+    "Your encrypted QR entrance badge is attached to this email (ESME-METRIX-QR).",
+    "Please present it on your phone alongside your original National ID at gate check-in to receive your official attendance certificate.",
     "",
-    "رابط جروب الواتساب الرسمي:",
-    "https://chat.whatsapp.com/BahfelppPpX8aXanFJvDhl?s=cl&p=i&iam=2",
+    "Official Attendee WhatsApp Group:",
+    whatsappUrl,
     "",
     "BE POSITIVE VALUABLE.",
     "ESME Cairo University Student Chapter",
@@ -255,7 +264,7 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
 
   return {
     from,
-    subject: `تأكيد تسجيلك وكود الدخول الرسمي — ESME METRIX 2026 [${registrationId}]`,
+    subject: `Registration Confirmed & Official QR Pass — ESME METRIX 2026 [${registrationId}]`,
     html,
     text,
     attachments: [
@@ -273,7 +282,6 @@ export async function sendConfirmationEmail(to: string, emailContent: Confirmati
   const smtpUser = process.env.SMTP_USER;
   const smtpPass = process.env.SMTP_PASS;
 
-  // 1. Primary: Try nodemailer Gmail SMTP if configured
   if (smtpUser && smtpPass) {
     try {
       const nodemailer = await import("nodemailer");
@@ -308,7 +316,6 @@ export async function sendConfirmationEmail(to: string, emailContent: Confirmati
     }
   }
 
-  // 2. Secondary fallback: Resend API
   const resendApiKey = process.env.RESEND_API_KEY;
   if (resendApiKey) {
     try {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse, after } from "next/server";
-import { completeRegistrationSchema, resolveDepartment } from "@/lib/validations/registration";
+import { createRegistrationSchemas, resolveDepartment } from "@/lib/validations/registration";
+import { getFullCmsData } from "@/lib/cms/server";
 import { isAllowedPhotoUrl } from "@/lib/validations/photo-url";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateRegistrationId, REGISTRATION_ID_REGEX } from "@/lib/registration-id";
@@ -8,8 +9,8 @@ import { buildConfirmationEmail, sendConfirmationEmail } from "@/lib/email/confi
 import {
   adaptInsertRowForSchemaError,
   buildLegacyFacultyValue,
-  isMissingColumnError,
 } from "@/lib/supabase/registrant-compat";
+import { fetchPublicPass } from "@/lib/registrants/public-pass";
 import QRCode from "qrcode";
 import crypto from "crypto";
 
@@ -18,6 +19,14 @@ const MAX_ID_ATTEMPTS = 5;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    const cms = await getFullCmsData();
+    const { completeRegistrationSchema } = createRegistrationSchemas({
+      fields: cms.form.fields,
+      faculties: cms.form.faculties,
+      academicYears: cms.form.academicYears,
+      esmeCommittees: cms.form.esmeCommittees,
+      esmeRoles: cms.form.esmeRoles,
+    });
 
     const validationResult = completeRegistrationSchema.safeParse(body);
     if (!validationResult.success) {
@@ -32,7 +41,7 @@ export async function POST(request: NextRequest) {
 
     const data = validationResult.data;
 
-    if (!isAllowedPhotoUrl(data.idPhotoUrl)) {
+    if (data.idPhotoUrl && !isAllowedPhotoUrl(data.idPhotoUrl)) {
       return NextResponse.json(
         { error: "Document photo must be uploaded through the registration form." },
         { status: 400 }
@@ -89,7 +98,7 @@ export async function POST(request: NextRequest) {
     const legacyFaculty = buildLegacyFacultyValue({
       faculty: data.faculty,
       department: resolvedDepartment,
-      isEsmeMember: data.isEsmeMember,
+      isEsmeMember: Boolean(data.isEsmeMember),
       committee,
       role,
     });
@@ -123,10 +132,10 @@ export async function POST(request: NextRequest) {
         city: data.city,
         job_title: data.jobTitle,
         company: data.company || null,
-        is_esme_member: data.isEsmeMember,
+        is_esme_member: Boolean(data.isEsmeMember),
         committee,
         role,
-        id_photo_url: data.idPhotoUrl,
+        id_photo_url: data.idPhotoUrl || "",
         avatar_url: data.avatarUrl || null,
         qr_code: qrBase64,
         registration_id: registrationId,
@@ -195,6 +204,7 @@ export async function POST(request: NextRequest) {
       committee,
       role,
       qrDataUrl: qrBase64,
+      whatsappUrl: cms.confirmation.postRegistrationWhatsappUrl,
     });
 
     after(async () => {
@@ -282,57 +292,29 @@ export async function PATCH(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
+    const rawLookup =
+      searchParams.get("lookup") ||
+      searchParams.get("q") ||
+      searchParams.get("phone") ||
+      searchParams.get("id");
 
-    if (!id || !REGISTRATION_ID_REGEX.test(id)) {
+    const result = await fetchPublicPass(rawLookup);
+
+    if (result.status === "invalid") {
       return NextResponse.json(
-        { error: "Valid registration_id is required." },
+        { error: "Please provide a valid Ticket ID (MX8-XXXXXX) or Egyptian Mobile Phone (01XXXXXXXXX)." },
         { status: 400 }
       );
     }
 
-    const supabase = createAdminClient();
-    let { data, error } = await supabase
-      .from("registrants")
-      .select(
-        "registration_id, full_name, email, university, faculty, department, academic_year, job_title, company, is_esme_member, committee, role, qr_code, avatar_url"
-      )
-      .eq("registration_id", id)
-      .maybeSingle();
-
-    if (error && isMissingColumnError(error)) {
-      const legacyRes = await supabase
-        .from("registrants")
-        .select(
-          "registration_id, full_name, email, university, faculty, academic_year, job_title, company, qr_code, avatar_url"
-        )
-        .eq("registration_id", id)
-        .maybeSingle();
-      if (!legacyRes.error && legacyRes.data) {
-        data = {
-          ...legacyRes.data,
-          department: legacyRes.data.faculty,
-          is_esme_member: false,
-          committee: null,
-          role: null,
-        };
-        error = null;
-      } else {
-        error = legacyRes.error;
-      }
-    }
-
-    if (error || !data) {
+    if (result.status === "not_found") {
       return NextResponse.json(
-        { error: "Registration not found." },
+        { error: "No registration found matching that Phone Number or Ticket ID." },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      ...data,
-    });
+    return NextResponse.json(result.pass);
   } catch (err) {
     console.error("Error in GET /api/register:", err);
     return NextResponse.json(

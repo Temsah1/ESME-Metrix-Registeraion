@@ -4,6 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import MotionProvider from "@/components/MotionProvider";
+import AosInit from "@/components/motion/AosInit";
+import SiteFooter from "@/components/SiteFooter";
+import { getFullCmsData } from "@/lib/cms/server";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -29,7 +32,8 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
   title: "ESME METRIX — Registration & Digital Identity Platform",
-  description: "Official Event Registration & Attendance Management System for ESME Cairo University Student Chapter.",
+  description:
+    "Official Event Registration & Attendance Management System for ESME Cairo University Student Chapter.",
   keywords: ["ESME", "Cairo University", "Metrix", "Engineering", "Registration", "Attendance"],
   openGraph: {
     title: "ESME METRIX 2026",
@@ -38,26 +42,37 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cms = await getFullCmsData();
+
   return (
-    <html lang="en" suppressHydrationWarning className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
-      <body suppressHydrationWarning className="bg-[#15304B] text-slate-100 min-h-screen flex flex-col antialiased tech-grid font-sans">
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable}`}
+    >
+      <body
+        suppressHydrationWarning
+        className="bg-[#15304B] text-slate-100 min-h-screen flex flex-col antialiased tech-grid font-sans"
+      >
         <MotionProvider>
+          <AosInit />
           {/* Navigation Bar */}
           <header className="sticky top-0 z-50 backdrop-blur-md bg-[#15304B]/85 border-b border-[#D97706]/20">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-              <Link href="/" className="flex items-center gap-3 group">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+              <Link href="/" className="flex items-center gap-3 group shrink-0">
                 <div className="relative w-9 h-9 rounded-lg bg-[#0F243A] border border-[#D97706]/35 flex items-center justify-center overflow-hidden p-1 group-hover:border-[#D97706] transition-colors">
                   <Image
-                    src="/esme_logo.png"
+                    src={cms.heroLogoUrl || "/esme_logo.png"}
                     alt="ESME Logo"
                     width={32}
                     height={32}
                     className="object-contain"
+                    unoptimized
                   />
                 </div>
                 <div className="flex flex-col">
@@ -70,10 +85,34 @@ export default function RootLayout({
                 </div>
               </Link>
 
-              <nav className="flex items-center gap-3">
+              <nav className="flex items-center gap-2 sm:gap-4">
+                <Link
+                  href="/#story"
+                  className="hidden md:inline-block text-xs font-medium text-slate-300 hover:text-[#F59E0B] transition-colors"
+                >
+                  Story
+                </Link>
+                <Link
+                  href="/#gallery"
+                  className="hidden md:inline-block text-xs font-medium text-slate-300 hover:text-[#F59E0B] transition-colors"
+                >
+                  Gallery
+                </Link>
+                <Link
+                  href="/#agenda"
+                  className="hidden md:inline-block text-xs font-medium text-slate-300 hover:text-[#F59E0B] transition-colors"
+                >
+                  Agenda
+                </Link>
+                <Link
+                  href="/dashboard"
+                  className="text-xs sm:text-sm px-3 py-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-200 hover:text-white hover:border-emerald-400 transition-all font-semibold"
+                >
+                  My Pass
+                </Link>
                 <Link
                   href="/admin"
-                  className="text-xs sm:text-sm px-3.5 py-2 rounded-lg border border-[#D97706]/35 text-slate-200 hover:text-white hover:border-[#D97706] hover:bg-[#0F243A] transition-all font-semibold"
+                  className="hidden sm:inline-block text-xs sm:text-sm px-3.5 py-2 rounded-lg border border-[#D97706]/35 text-slate-200 hover:text-white hover:border-[#D97706] hover:bg-[#0F243A] transition-all font-semibold"
                 >
                   Admin Login
                 </Link>
@@ -90,17 +129,8 @@ export default function RootLayout({
           {/* Main Content Area */}
           <main className="flex-1 flex flex-col">{children}</main>
 
-          {/* Global Footer */}
-          <footer className="border-t border-[#D97706]/15 bg-[#15304B]/95 py-6 mt-auto">
-            <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 font-mono">
-              <div>
-                &copy; 2026 ESME Cairo University Student Chapter. All rights reserved.
-              </div>
-              <div className="text-[#D97706] font-semibold tracking-wider">
-                BE POSITIVE VALUABLE
-              </div>
-            </div>
-          </footer>
+          {/* Comprehensive Chapter & Event Footer */}
+          <SiteFooter footer={cms.footer} logoUrl={cms.heroLogoUrl} />
         </MotionProvider>
       </body>
     </html>

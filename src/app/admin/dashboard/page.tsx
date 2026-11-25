@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Image from "next/image";
 import {
   Users,
   CheckCircle2,
@@ -11,12 +10,6 @@ import {
   ArrowUpRight,
   Loader2,
   Sliders,
-  Save,
-  RotateCcw,
-  Upload,
-  AlertCircle,
-  Sparkles,
-  ExternalLink,
 } from "lucide-react";
 import {
   BarChart,
@@ -30,7 +23,10 @@ import {
   Cell,
 } from "recharts";
 import { createClient } from "@/lib/supabase/client";
-import { DEFAULT_OG_HIGHLIGHTS_TEXT, LINKEDIN_POST_TEXT } from "@/config/registration";
+import CmsEditor from "@/components/admin/CmsEditor";
+import { DEFAULT_FULL_CMS } from "@/lib/cms/defaults";
+import { buildFullCmsData, serializeFullCmsToSiteContentRows } from "@/lib/cms/parse";
+import type { FullCmsData } from "@/lib/cms/types";
 
 const PIE_COLORS = ["#D97706", "#F59E0B", "#B45309", "#E11D48", "#10B981"];
 
@@ -47,136 +43,6 @@ interface RecentRegistration {
   university: string;
   time: string;
 }
-
-interface CMSItem {
-  key: string;
-  label: string;
-  category: string;
-  field_type: "text" | "textarea" | "image";
-  value: string;
-}
-
-const DEFAULT_CMS_ITEMS: CMSItem[] = [
-  {
-    key: "hero_headline",
-    label: "Hero Headline",
-    category: "Hero Section",
-    field_type: "text",
-    value: "ESME METRIX 2026",
-  },
-  {
-    key: "hero_subtitle",
-    label: "Hero Subtitle",
-    category: "Hero Section",
-    field_type: "text",
-    value: "Materials Engineering Event — ESME Cairo University Student Chapter",
-  },
-  {
-    key: "event_date",
-    label: "Event Date",
-    category: "Event Details",
-    field_type: "text",
-    value: "12 December 2026",
-  },
-  {
-    key: "event_venue",
-    label: "Event Venue",
-    category: "Event Details",
-    field_type: "text",
-    value: "Cairo University",
-  },
-  {
-    key: "event_time",
-    label: "Event Time Display",
-    category: "Event Details",
-    field_type: "text",
-    value: "Saturday 12 / 12 / 2026",
-  },
-  {
-    key: "linkedin_caption",
-    label: "LinkedIn Share Caption",
-    category: "Social Amplification",
-    field_type: "textarea",
-    value: LINKEDIN_POST_TEXT,
-  },
-  {
-    key: "og_highlights",
-    label: "LinkedIn Card 2x3 Highlights (6 lines: Value | Label)",
-    category: "Social Amplification",
-    field_type: "textarea",
-    value: DEFAULT_OG_HIGHLIGHTS_TEXT,
-  },
-  {
-    key: "whatsapp_group_url",
-    label: "WhatsApp Group Invite Link",
-    category: "Social Amplification",
-    field_type: "text",
-    value: "https://chat.whatsapp.com/KOT8wY8h2lK5p0mNN7NcNW",
-  },
-  {
-    key: "hero_logo_url",
-    label: "Hero Logo URL",
-    category: "Brand Assets",
-    field_type: "image",
-    value: "/esme_logo.png",
-  },
-  {
-    key: "ticket_bg_url",
-    label: "Ticket Background Image URL",
-    category: "Brand Assets",
-    field_type: "image",
-    value: "/images/ticket-bg.jpg",
-  },
-  // ── HOME PAGE CMS ──
-  {
-    key: "about_text",
-    label: "About the Event (Homepage)",
-    category: "Home Page",
-    field_type: "textarea",
-    value:
-      "ESME METRIX is the flagship Materials Engineering event hosted by the ESME Cairo University Student Chapter. It brings together students, professionals, researchers, and industry leaders to explore cutting-edge innovations in materials science, engineering applications, and emerging technologies.",
-  },
-  {
-    key: "event_agenda",
-    label: "Event Agenda (Format: Time | Title | Icon per line)",
-    category: "Home Page",
-    field_type: "textarea",
-    value: `09:00 AM | Gates Open & Registration Desk | 🚪
-10:00 AM | Opening Ceremony & Keynote Address | 🎤
-12:00 PM | Materials & Petroleum Workshops | ⚡
-02:00 PM | Mechatronics & Industry Exhibition | 🏢
-04:00 PM | Engineering Competitions & Awards | 🏆
-06:00 PM | Certificate Distribution & Gala | 🎓`,
-  },
-  {
-    key: "gallery_image_1",
-    label: "Gallery Photo 1 (URL)",
-    category: "Home Page",
-    field_type: "image",
-    value: "",
-  },
-  {
-    key: "gallery_image_2",
-    label: "Gallery Photo 2 (URL)",
-    category: "Home Page",
-    field_type: "image",
-    value: "",
-  },
-  {
-    key: "gallery_image_3",
-    label: "Gallery Photo 3 (URL)",
-    category: "Home Page",
-    field_type: "image",
-    value: "",
-  },
-  {
-    key: "gallery_image_4",
-    label: "Gallery Photo 4 (URL)",
-    category: "Home Page",
-    field_type: "image",
-    value: "",
-  },
-];
 
 function aggregate(rows: { university: string | null; city: string | null }[]) {
   const uniMap = new Map<string, number>();
@@ -222,15 +88,14 @@ export default function AdminDashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
-  // CMS State
-  const [cmsItems, setCmsItems] = useState<CMSItem[]>(DEFAULT_CMS_ITEMS);
+  // Structured CMS State
+  const [cmsData, setCmsData] = useState<FullCmsData>(DEFAULT_FULL_CMS);
   const [cmsLoading, setCmsLoading] = useState(false);
   const [cmsSaving, setCmsSaving] = useState(false);
   const [cmsSuccess, setCmsSuccess] = useState<string | null>(null);
   const [cmsError, setCmsError] = useState<string | null>(null);
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
 
-  // Load Metrics
   useEffect(() => {
     async function loadStats() {
       try {
@@ -292,7 +157,6 @@ export default function AdminDashboardPage() {
     loadStats();
   }, [reloadKey]);
 
-  // Realtime attendance listener
   useEffect(() => {
     const supabase = createClient();
     const channel = supabase
@@ -318,30 +182,25 @@ export default function AdminDashboardPage() {
     };
   }, []);
 
-  // Load CMS Content
   useEffect(() => {
     async function loadCMS() {
       setCmsLoading(true);
       try {
         const supabase = createClient();
-        const { data, error } = await supabase
+        const { data, error: fetchErr } = await supabase
           .from("site_content")
-          .select("*");
+          .select("key, value");
 
-        if (error) {
-          // Table may not exist yet in local or preview, fallback to defaults
-          console.warn("Could not query site_content table, using defaults:", error.message);
+        if (fetchErr) {
+          console.warn("Could not query site_content table, using defaults:", fetchErr.message);
           return;
         }
 
         if (data && data.length > 0) {
-          setCmsItems((prev) => {
-            const map = new Map(data.map((row: CMSItem) => [row.key, row]));
-            return prev.map((item) => {
-              const remote = map.get(item.key);
-              return remote ? { ...item, value: remote.value } : item;
-            });
-          });
+          const rawMap = Object.fromEntries(
+            data.map((row: { key: string; value: string }) => [row.key, row.value])
+          );
+          setCmsData(buildFullCmsData(rawMap));
         }
       } catch (err) {
         console.error("CMS load error:", err);
@@ -353,15 +212,11 @@ export default function AdminDashboardPage() {
     loadCMS();
   }, []);
 
-  // Handle CMS Field Changes
-  const handleCmsChange = (key: string, value: string) => {
-    setCmsItems((prev) =>
-      prev.map((item) => (item.key === key ? { ...item, value } : item))
-    );
-  };
-
-  // Handle CMS Image Upload
-  const handleImageUpload = async (key: string, file: File) => {
+  const handleImageUpload = async (
+    key: string,
+    file: File,
+    applyUrl: (url: string) => void
+  ) => {
     setUploadingKey(key);
     setCmsError(null);
     try {
@@ -383,8 +238,8 @@ export default function AdminDashboardPage() {
         .from("photos")
         .getPublicUrl(filePath);
 
-      handleCmsChange(key, publicUrlData.publicUrl);
-      setCmsSuccess(`Image for "${key}" uploaded successfully.`);
+      applyUrl(publicUrlData.publicUrl);
+      setCmsSuccess(`Image for "${key}" uploaded cleanly. Click Save & Publish Changes to persist.`);
       setTimeout(() => setCmsSuccess(null), 4000);
     } catch (err: unknown) {
       console.error("Image upload failed:", err);
@@ -394,7 +249,6 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Save CMS Content
   const handleSaveCMS = async () => {
     setCmsSaving(true);
     setCmsSuccess(null);
@@ -402,48 +256,38 @@ export default function AdminDashboardPage() {
 
     try {
       const supabase = createClient();
-      const updates = cmsItems.map((item) => ({
-        key: item.key,
-        value: item.value,
-        label: item.label,
-        category: item.category,
-        field_type: item.field_type,
-        updated_at: new Date().toISOString(),
-      }));
+      const updates = serializeFullCmsToSiteContentRows(cmsData);
 
-      const { error } = await supabase
+      const { error: upsertErr } = await supabase
         .from("site_content")
         .upsert(updates, { onConflict: "key" });
 
-      if (error) {
-        throw error;
-      }
+      if (upsertErr) throw upsertErr;
 
-      // Trigger ISR Cache Revalidation
       await fetch("/api/admin/revalidate", { method: "POST" });
 
-      setCmsSuccess("Site content saved successfully! Live site cache has been revalidated.");
+      setCmsSuccess(
+        "All CMS changes saved! Live landing page, registration form, ticket screen, and footer cache have been revalidated."
+      );
       setTimeout(() => setCmsSuccess(null), 5000);
     } catch (err: unknown) {
       console.error("CMS save error:", err);
-      setCmsError((err as Error)?.message || "Failed to save CMS content. Check database permissions.");
+      setCmsError(
+        (err as Error)?.message || "Failed to save CMS content. Check database permissions."
+      );
     } finally {
       setCmsSaving(false);
     }
   };
 
-  // Reset CMS to defaults
   const handleResetCMS = () => {
-    if (confirm("Reset all content fields to default values?")) {
-      setCmsItems(DEFAULT_CMS_ITEMS);
-      setCmsSuccess("Reset to defaults. Click 'Save Changes' to apply.");
+    if (confirm("Reset all CMS fields back to defaults?")) {
+      setCmsData(DEFAULT_FULL_CMS);
+      setCmsSuccess("Reset to default English CMS values. Click 'Save & Publish Changes' to apply.");
     }
   };
 
   const cityPieData = cityData.map((c) => ({ name: c.name, value: c.count }));
-
-  // Group CMS items by category
-  const cmsCategories = Array.from(new Set(cmsItems.map((i) => i.category)));
 
   return (
     <div className="space-y-6">
@@ -452,15 +296,14 @@ export default function AdminDashboardPage() {
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Admin Console</h1>
           <p className="text-xs text-slate-400 font-mono mt-1">
-            ESME METRIX 2026 — Operations, Analytics & Site Content Management.
+            ESME METRIX 2026 — Operations, Analytics &amp; Total Site Content Management.
           </p>
         </div>
 
-        {/* Tab Switcher */}
         <div className="flex items-center gap-2 p-1 rounded-xl bg-[#0F243A] border border-[#D97706]/20">
           <button
             onClick={() => setActiveTab("metrics")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeTab === "metrics"
                 ? "bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white shadow-[0_0_15px_rgba(217,119,6,0.3)]"
                 : "text-slate-400 hover:text-white hover:bg-[#15304B]"
@@ -470,7 +313,7 @@ export default function AdminDashboardPage() {
           </button>
           <button
             onClick={() => setActiveTab("cms")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeTab === "cms"
                 ? "bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white shadow-[0_0_15px_rgba(217,119,6,0.3)]"
                 : "text-slate-400 hover:text-white hover:bg-[#15304B]"
@@ -488,7 +331,11 @@ export default function AdminDashboardPage() {
             <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-center justify-between gap-3">
               <span>{error}</span>
               <button
-                onClick={() => { setLoading(true); setError(null); setReloadKey((k) => k + 1); }}
+                onClick={() => {
+                  setLoading(true);
+                  setError(null);
+                  setReloadKey((k) => k + 1);
+                }}
                 className="px-3 py-1 rounded-lg bg-red-500/20 border border-red-500/30 text-red-200 font-semibold hover:bg-red-500/30"
               >
                 Retry
@@ -496,11 +343,12 @@ export default function AdminDashboardPage() {
             </div>
           )}
 
-          {/* KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/20 flex flex-col justify-between">
               <div className="flex items-center justify-between text-slate-400 mb-2">
-                <span className="text-xs font-semibold uppercase tracking-wider font-mono">Total Registrants</span>
+                <span className="text-xs font-semibold uppercase tracking-wider font-mono">
+                  Total Registrants
+                </span>
                 <Users className="w-4 h-4 text-[#D97706]" />
               </div>
               <div className="text-3xl font-extrabold text-white font-mono tracking-tight">
@@ -513,7 +361,9 @@ export default function AdminDashboardPage() {
 
             <div className="p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/20 flex flex-col justify-between">
               <div className="flex items-center justify-between text-slate-400 mb-2">
-                <span className="text-xs font-semibold uppercase tracking-wider font-mono">Present / Checked-In</span>
+                <span className="text-xs font-semibold uppercase tracking-wider font-mono">
+                  Present / Checked-In
+                </span>
                 <CheckCircle2 className="w-4 h-4 text-[#10B981]" />
               </div>
               <div className="text-3xl font-extrabold text-[#10B981] font-mono tracking-tight">
@@ -526,7 +376,9 @@ export default function AdminDashboardPage() {
 
             <div className="p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/20 flex flex-col justify-between">
               <div className="flex items-center justify-between text-slate-400 mb-2">
-                <span className="text-xs font-semibold uppercase tracking-wider font-mono">Attendance Rate</span>
+                <span className="text-xs font-semibold uppercase tracking-wider font-mono">
+                  Attendance Rate
+                </span>
                 <Percent className="w-4 h-4 text-[#F59E0B]" />
               </div>
               <div className="text-3xl font-extrabold text-[#F59E0B] font-mono tracking-tight">
@@ -542,7 +394,9 @@ export default function AdminDashboardPage() {
 
             <div className="p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/20 flex flex-col justify-between">
               <div className="flex items-center justify-between text-slate-400 mb-2">
-                <span className="text-xs font-semibold uppercase tracking-wider font-mono">LinkedIn Shares</span>
+                <span className="text-xs font-semibold uppercase tracking-wider font-mono">
+                  LinkedIn Shares
+                </span>
                 <Share2 className="w-4 h-4 text-[#0077B5]" />
               </div>
               <div className="text-3xl font-extrabold text-[#0077B5] font-mono tracking-tight">
@@ -554,7 +408,6 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* Visual Charts Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/20">
               <div className="flex items-center justify-between mb-4">
@@ -614,7 +467,7 @@ export default function AdminDashboardPage() {
                         paddingAngle={5}
                         dataKey="value"
                       >
-                        {cityPieData.map((entry, index) => (
+                        {cityPieData.map((_, index) => (
                           <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                         ))}
                       </Pie>
@@ -639,14 +492,15 @@ export default function AdminDashboardPage() {
                       className="w-2.5 h-2.5 rounded-full"
                       style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }}
                     />
-                    <span>{c.name}: {c.count}</span>
+                    <span>
+                      {c.name}: {c.count}
+                    </span>
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Recent Registrations Feed */}
           <div className="p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/20">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
@@ -683,177 +537,20 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* TAB 2: SITE CONTENT (CMS) */}
+      {/* TAB 2: TOTAL SITE & FORM CMS */}
       {activeTab === "cms" && (
-        <div className="space-y-6">
-          {/* Status Messages */}
-          {cmsSuccess && (
-            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
-              <span>{cmsSuccess}</span>
-            </div>
-          )}
-
-          {cmsError && (
-            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs sm:text-sm flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
-              <span>{cmsError}</span>
-            </div>
-          )}
-
-          {/* CMS Controls Header */}
-          <div className="p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-[#D97706]" />
-                <h2 className="text-base font-bold text-white">Live Site Content Editor</h2>
-              </div>
-              <p className="text-xs text-slate-400 mt-1">
-                Edits saved here update the database and trigger automatic cache revalidation for the live site.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={handleResetCMS}
-                className="px-3.5 py-2 rounded-xl border border-slate-700 text-slate-300 hover:text-white hover:border-slate-500 text-xs font-semibold flex items-center gap-1.5 transition-colors"
-              >
-                <RotateCcw className="w-3.5 h-3.5" /> Reset Defaults
-              </button>
-
-              <button
-                type="button"
-                onClick={handleSaveCMS}
-                disabled={cmsSaving || cmsLoading}
-                className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold text-xs flex items-center gap-2 hover:brightness-110 transition-all shadow-[0_0_15px_rgba(217,119,6,0.3)] disabled:opacity-50"
-              >
-                {cmsSaving ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-3.5 h-3.5" /> Save Changes
-                  </>
-                )}
-              </button>
-
-              <a
-                href="/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 rounded-xl border border-slate-700 text-slate-400 hover:text-[#D97706] hover:border-[#D97706] transition-colors"
-                title="Preview live site"
-              >
-                <ExternalLink className="w-4 h-4" />
-              </a>
-            </div>
-          </div>
-
-          {/* CMS Categories Grid */}
-          <div className="space-y-6">
-            {cmsCategories.map((category) => {
-              const categoryItems = cmsItems.filter((i) => i.category === category);
-
-              return (
-                <div
-                  key={category}
-                  className="p-6 rounded-2xl bg-[#0F243A] border border-[#D97706]/20 space-y-4"
-                >
-                  <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono flex items-center gap-2 pb-2 border-b border-slate-800">
-                    <span className="w-2 h-2 rounded-full bg-[#D97706]" />
-                    {category}
-                  </h3>
-
-                  <div className="space-y-4">
-                    {categoryItems.map((item) => (
-                      <div key={item.key} className="flex flex-col gap-1.5">
-                        <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
-                          <span>{item.label}</span>
-                          <span className="font-mono text-[10px] text-slate-500 font-normal">
-                            key: {item.key}
-                          </span>
-                        </label>
-
-                        {/* Text input */}
-                        {item.field_type === "text" && (
-                          <input
-                            type="text"
-                            value={item.value}
-                            onChange={(e) => handleCmsChange(item.key, e.target.value)}
-                            className="w-full h-10 px-3.5 rounded-xl bg-[#15304B] border border-slate-700 focus:border-[#D97706] text-white text-xs focus:outline-none transition-colors"
-                          />
-                        )}
-
-                        {/* Textarea input */}
-                        {item.field_type === "textarea" && (
-                          <textarea
-                            rows={6}
-                            value={item.value}
-                            onChange={(e) => handleCmsChange(item.key, e.target.value)}
-                            className="w-full p-3.5 rounded-xl bg-[#15304B] border border-slate-700 focus:border-[#D97706] text-white text-xs focus:outline-none transition-colors font-mono leading-relaxed"
-                          />
-                        )}
-
-                        {/* Image upload + preview */}
-                        {item.field_type === "image" && (
-                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                            <div className="relative w-24 h-16 rounded-xl bg-[#15304B] border border-slate-700 overflow-hidden shrink-0 flex items-center justify-center p-1">
-                              {item.value ? (
-                                <Image
-                                  src={item.value}
-                                  alt={item.label}
-                                  fill
-                                  className="object-contain"
-                                  unoptimized
-                                />
-                              ) : (
-                                <span className="text-[10px] text-slate-500">No image</span>
-                              )}
-                            </div>
-
-                            <div className="flex-1 w-full flex items-center gap-2">
-                              <input
-                                type="text"
-                                value={item.value}
-                                onChange={(e) => handleCmsChange(item.key, e.target.value)}
-                                placeholder="https://... or /image.png"
-                                className="flex-1 h-10 px-3.5 rounded-xl bg-[#15304B] border border-slate-700 focus:border-[#D97706] text-white text-xs focus:outline-none font-mono"
-                              />
-
-                              <label className="px-3.5 h-10 rounded-xl bg-[#1D3046] hover:bg-[#D97706]/20 border border-slate-700 hover:border-[#D97706] text-slate-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors">
-                                {uploadingKey === item.key ? (
-                                  <>
-                                    <Loader2 className="w-3.5 h-3.5 animate-spin text-[#D97706]" /> Uploading...
-                                  </>
-                                ) : (
-                                  <>
-                                    <Upload className="w-3.5 h-3.5 text-[#D97706]" /> Replace
-                                  </>
-                                )}
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  disabled={uploadingKey === item.key}
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) handleImageUpload(item.key, file);
-                                  }}
-                                  className="hidden"
-                                />
-                              </label>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <CmsEditor
+          cms={cmsData}
+          loading={cmsLoading}
+          saving={cmsSaving}
+          successMessage={cmsSuccess}
+          errorMessage={cmsError}
+          uploadingKey={uploadingKey}
+          onChange={setCmsData}
+          onUploadImage={handleImageUpload}
+          onSave={handleSaveCMS}
+          onReset={handleResetCMS}
+        />
       )}
     </div>
   );
