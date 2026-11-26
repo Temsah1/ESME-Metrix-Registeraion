@@ -5,7 +5,7 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 
 /**
- * Scroll-reveal initializer via AOS with enhanced settings.
+ * Lightweight 2D scroll-reveal initializer via AOS (transform + opacity only).
  */
 export default function AosInit() {
   useEffect(() => {
@@ -14,18 +14,12 @@ export default function AosInit() {
     ).matches;
 
     AOS.init({
-      duration: 700,
+      duration: 550,
       easing: "ease-out-cubic",
       once: true,
-      offset: 50,
-      delay: 0,
+      offset: 40,
       disable: prefersReducedMotion,
-      mirror: false,
-      anchorPlacement: "top-bottom",
     });
-
-    // Refresh AOS on page load to catch all elements
-    setTimeout(() => AOS.refresh(), 100);
   }, []);
 
   return null;
