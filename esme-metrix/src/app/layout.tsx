@@ -3,6 +3,7 @@ import "./globals.css";
 import { Space_Grotesk, Inter, JetBrains_Mono, Cairo } from "next/font/google";
 import MotionProvider from "@/components/MotionProvider";
 import AosInit from "@/components/motion/AosInit";
+import IntroLoader from "@/components/IntroLoader";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import AppChromeShell from "@/components/AppChromeShell";
@@ -85,6 +86,8 @@ export default async function RootLayout({
       >
         <MotionProvider>
           <LanguageProvider>
+            <IntroLoader />
+            <div className="grain-overlay" aria-hidden="true" />
             <AosInit />
             <AppChromeShell
               header={<SiteHeader heroLogoUrl={cms.heroLogoUrl || "/esme-icon.jpg"} />}
