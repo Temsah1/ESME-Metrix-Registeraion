@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import {
   Users,
   CheckCircle2,
@@ -29,7 +30,7 @@ import { DEFAULT_FULL_CMS } from "@/lib/cms/defaults";
 import type { FullCmsData } from "@/lib/cms/types";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getDictionary } from "@/lib/i18n/dictionary";
-import { localizeCity } from "@/lib/i18n/registrationLabels";
+import { localizeCity, localizeCommittee } from "@/lib/i18n/registrationLabels";
 import type { AppLanguage } from "@/lib/i18n/types";
 
 const PIE_COLORS = ["#D97706", "#F59E0B", "#B45309", "#E11D48", "#10B981"];
@@ -39,6 +40,8 @@ interface Stats {
   totalAttended: number;
   attendanceRate: number;
   linkedinShares: number;
+  esmeMembers: number;
+  externalAttendees: number;
 }
 
 interface RecentRegistration {
@@ -94,9 +97,12 @@ export default function AdminDashboardPage() {
     totalAttended: 0,
     attendanceRate: 0,
     linkedinShares: 0,
+    esmeMembers: 0,
+    externalAttendees: 0,
   });
   const [universityData, setUniversityData] = useState<{ name: string; count: number }[]>([]);
   const [cityData, setCityData] = useState<{ name: string; count: number }[]>([]);
+  const [committeeData, setCommitteeData] = useState<{ name: string; count: number }[]>([]);
   const [recentRegistrations, setRecentRegistrations] = useState<RecentRegistration[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -131,6 +137,18 @@ export default function AdminDashboardPage() {
           .eq("linkedin_shared", true);
         if (shareErr) throw shareErr;
 
+        const { count: esmeCount, error: esmeErr } = await supabase
+          .from("registrants")
+          .select("*", { count: "exact", head: true })
+          .eq("is_esme_member", true);
+        if (esmeErr) throw esmeErr;
+
+        const { count: externalCount, error: externalErr } = await supabase
+          .from("registrants")
+          .select("*", { count: "exact", head: true })
+          .eq("is_esme_member", false);
+        if (externalErr) throw externalErr;
+
         const total = regCount ?? 0;
         const attended = attCount ?? 0;
         setStats({
@@ -138,19 +156,32 @@ export default function AdminDashboardPage() {
           totalAttended: attended,
           attendanceRate: total > 0 ? Math.round((attended / total) * 100) : 0,
           linkedinShares: shareCount ?? 0,
+          esmeMembers: esmeCount ?? 0,
+          externalAttendees: externalCount ?? 0,
         });
 
         const { data: rows, error: rowsErr } = await supabase
           .from("registrants")
-          .select("registration_id, full_name, university, city, created_at")
+          .select("registration_id, full_name, university, city, committee, is_esme_member, created_at")
           .order("created_at", { ascending: false })
           .limit(1000);
         if (rowsErr) throw rowsErr;
 
         const all = rows ?? [];
         const { universityData: uni, cityData: city } = aggregate(all);
+        const committeeMap = new Map<string, number>();
+        for (const row of all) {
+          if (!row.is_esme_member) continue;
+          const committee = (row.committee || "No Committee Selected").trim();
+          committeeMap.set(committee, (committeeMap.get(committee) || 0) + 1);
+        }
         setUniversityData(uni);
         setCityData(city);
+        setCommitteeData(
+          [...committeeMap.entries()]
+            .sort((a, b) => b[1] - a[1])
+            .map(([name, count]) => ({ name, count }))
+        );
         setRecentRegistrations(
           all.slice(0, 10).map((r) => ({
             id: r.registration_id,
@@ -395,7 +426,7 @@ export default function AdminDashboardPage() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
             <div className="p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/20 flex flex-col justify-between">
               <div className="flex items-center justify-between text-slate-400 mb-2">
                 <span className="text-xs font-semibold uppercase tracking-wider">
@@ -458,7 +489,92 @@ export default function AdminDashboardPage() {
                 {lang === "ar" ? "عمليات مشاركة بطاقة الحضور" : "Self-reported share actions"}
               </div>
             </div>
+
+            <div className="p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/40 flex flex-col justify-between">
+              <div className="text-slate-400 mb-2">
+                <span className="text-xs font-semibold uppercase tracking-wider">
+                  {lang === "ar" ? "أعضاء ESME" : "ESME Members"}
+                </span>
+              </div>
+              <div dir="ltr" className="text-3xl font-extrabold text-[#F59E0B] font-mono tracking-tight">
+                {loading ? <Loader2 className="w-6 h-6 animate-spin text-slate-600" /> : stats.esmeMembers}
+              </div>
+              <div className="text-[11px] text-slate-400 mt-2">
+                {lang === "ar" ? "مسجلون كأعضاء شابتر" : "Registered as chapter members"}
+              </div>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-[#0F243A] border border-slate-700/70 flex flex-col justify-between">
+              <div className="text-slate-400 mb-2">
+                <span className="text-xs font-semibold uppercase tracking-wider">
+                  {lang === "ar" ? "مشاركون خارجيون" : "External Attendees"}
+                </span>
+              </div>
+              <div dir="ltr" className="text-3xl font-extrabold text-slate-200 font-mono tracking-tight">
+                {loading ? <Loader2 className="w-6 h-6 animate-spin text-slate-600" /> : stats.externalAttendees}
+              </div>
+              <div className="text-[11px] text-slate-400 mt-2">
+                {lang === "ar" ? "ليسوا أعضاء في ESME" : "Not registered as ESME members"}
+              </div>
+            </div>
           </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.38, ease: "easeOut" }}
+            className="p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/20"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div>
+                <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+                  {lang === "ar" ? "توزيع أعضاء ESME على اللجان" : "ESME Members by Committee"}
+                </h2>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  {lang === "ar"
+                    ? "يعرض فقط المسجلين الذين اختاروا أنهم أعضاء في الشابتر."
+                    : "Only registrants who selected ESME chapter membership."}
+                </p>
+              </div>
+              <motion.button
+                whileTap={{ scale: 0.96 }}
+                onClick={() => router.push("/admin/registrants")}
+                className="px-3 py-2 rounded-xl border border-[#D97706]/40 bg-[#D97706]/10 text-[#F59E0B] text-xs font-bold hover:bg-[#D97706]/20 transition-colors cursor-pointer"
+              >
+                {lang === "ar" ? "عرض جميع المسجلين" : "View All Registrants"}
+              </motion.button>
+            </div>
+
+            {committeeData.length === 0 ? (
+              <div className="py-5 text-center text-xs text-slate-500">
+                {loading
+                  ? t.common.loading
+                  : lang === "ar"
+                    ? "لا يوجد أعضاء ESME مسجلين بعد."
+                    : "No ESME chapter members registered yet."}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                {committeeData.map((item, index) => (
+                  <motion.div
+                    key={item.name}
+                    initial={{ opacity: 0, scale: 0.96 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: index * 0.04, duration: 0.28 }}
+                    whileHover={{ y: -2 }}
+                    className="flex items-center justify-between gap-3 px-3 py-3 rounded-xl bg-[#15304B] border border-slate-700/80"
+                  >
+                    <span className="text-xs text-slate-300 truncate">
+                      {localizeCommittee(item.name, lang)}
+                    </span>
+                    <span dir="ltr" className="text-sm font-mono font-extrabold text-[#F59E0B]">
+                      {item.count}
+                    </span>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </motion.div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 p-5 rounded-2xl bg-[#0F243A] border border-[#D97706]/20">

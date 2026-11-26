@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
+import { motion } from "framer-motion";
 import Image from "next/image";
 import { Search, Download, Eye, X, AlertCircle, Loader2, User } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -82,6 +83,9 @@ export default function RegistrantsPage() {
     return matchesSearch && matchesUniv && matchesEsme;
   });
 
+  const esmeMemberCount = registrants.filter((r) => Boolean(r.is_esme_member)).length;
+  const externalAttendeeCount = registrants.length - esmeMemberCount;
+
   const handleExportExcel = () => {
     const exportData = filteredRegistrants.map((r) => ({
       "Registration ID": r.registration_id,
@@ -134,6 +138,51 @@ export default function RegistrantsPage() {
         >
           <Download className="w-4 h-4" /> {t.admin.exportCsv}
         </button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {[
+          {
+            key: "ALL",
+            label: lang === "ar" ? "جميع المسجلين" : "All Registrants",
+            value: registrants.length,
+            active: selectedEsmeFilter === "ALL",
+          },
+          {
+            key: "YES",
+            label: lang === "ar" ? "أعضاء ESME" : "ESME Members",
+            value: esmeMemberCount,
+            active: selectedEsmeFilter === "YES",
+          },
+          {
+            key: "NO",
+            label: lang === "ar" ? "مشاركون خارجيون" : "External Attendees",
+            value: externalAttendeeCount,
+            active: selectedEsmeFilter === "NO",
+          },
+        ].map((card, index) => (
+          <motion.button
+            key={card.key}
+            type="button"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.06, duration: 0.32 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => setSelectedEsmeFilter(card.key)}
+            className={`p-4 rounded-xl border text-start transition-all cursor-pointer ${
+              card.active
+                ? "bg-[#D97706]/15 border-[#F59E0B]/60 shadow-[0_8px_24px_rgba(217,119,6,0.12)]"
+                : "bg-[#0F243A] border-slate-800 hover:border-[#D97706]/40"
+            }`}
+          >
+            <div className="text-[11px] text-slate-400">{card.label}</div>
+            <div dir="ltr" className={`mt-1 text-2xl font-mono font-black ${
+              card.active ? "text-[#F59E0B]" : "text-white"
+            }`}>
+              {loading ? "—" : card.value}
+            </div>
+          </motion.button>
+        ))}
       </div>
 
       {/* Filter Toolbar */}
