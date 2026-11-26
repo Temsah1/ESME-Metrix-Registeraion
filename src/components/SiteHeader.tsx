@@ -18,13 +18,13 @@ export default function SiteHeader({ heroLogoUrl }: SiteHeaderProps) {
     <header className="sticky top-0 z-50 backdrop-blur-md bg-[#15304B]/90 border-b border-[#D97706]/20">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
         <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group shrink-0">
-          <div className="relative w-9 h-9 rounded-lg bg-[#0F243A] border border-[#D97706]/35 flex items-center justify-center overflow-hidden p-1 group-hover:border-[#D97706] transition-colors">
+          <div className="relative w-9 h-9 rounded-full bg-[#082546] border border-[#D97706]/45 flex items-center justify-center overflow-hidden group-hover:border-[#D97706] transition-colors">
             <Image
-              src={heroLogoUrl || "/esme_logo.png"}
+              src={heroLogoUrl || "/esme-icon.jpg"}
               alt="ESME Logo"
-              width={32}
-              height={32}
-              className="object-contain"
+              width={36}
+              height={36}
+              className="w-full h-full rounded-full object-cover"
               unoptimized
             />
           </div>

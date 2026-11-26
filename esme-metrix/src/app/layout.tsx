@@ -48,16 +48,16 @@ export const metadata: Metadata = {
   keywords: ["ESME", "Cairo University", "Metrix", "Engineering", "Registration", "Attendance"],
   icons: {
     icon: [
-      { url: "/esme-icon.jpg?v=3", type: "image/jpeg" },
-      { url: "/favicon.ico?v=3", sizes: "any" },
+      { url: "/esme-icon.jpg?v=5", type: "image/jpeg" },
+      { url: "/favicon.ico?v=5", sizes: "any" },
     ],
-    shortcut: "/esme-icon.jpg?v=3",
-    apple: "/esme-icon.jpg?v=3",
+    shortcut: "/esme-icon.jpg?v=5",
+    apple: "/esme-icon.jpg?v=5",
   },
   openGraph: {
     title: "ESME METRIX 2026",
     description: "Official Event Registration & Attendance Management System",
-    images: ["/esme_logo.png"],
+    images: ["/esme-icon.jpg?v=5"],
   },
 };
 
@@ -87,7 +87,7 @@ export default async function RootLayout({
           <LanguageProvider>
             <AosInit />
             <AppChromeShell
-              header={<SiteHeader heroLogoUrl={cms.heroLogoUrl || "/esme_logo.png"} />}
+              header={<SiteHeader heroLogoUrl={cms.heroLogoUrl || "/esme-icon.jpg"} />}
               footer={
                 <SiteFooter
                   footer={cms.footer}

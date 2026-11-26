@@ -506,7 +506,7 @@ export const DEFAULT_FULL_CMS: FullCmsData = {
   eventVenue: "Cairo University — Faculty of Engineering",
   eventTime: "Saturday 12 / 12 / 2026 • 09:30 AM",
   eventMapsUrl: DEFAULT_EVENT_MAPS_URL,
-  heroLogoUrl: "/esme_logo.png",
+  heroLogoUrl: "/esme-icon.jpg",
   ticketBgUrl: "/images/ticket-bg.jpg",
   landing: DEFAULT_LANDING_CMS,
   highlights: DEFAULT_HIGHLIGHTS_CMS,

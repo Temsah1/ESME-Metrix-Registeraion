@@ -1,6 +1,9 @@
 "use client";
 
+import React, { useEffect, useRef } from "react";
 import Link from "next/link";
+import gsap from "gsap";
+import { animate, type JSAnimation } from "animejs";
 import HeroParticles from "@/components/HeroParticles";
 import TiltCard from "@/components/TiltCard";
 import GalleryShowcase from "@/components/GalleryShowcase";
@@ -26,6 +29,14 @@ interface HomeLandingClientProps {
   cms: FullCmsData;
 }
 
+function parseStatNumeric(value: string): { prefix: string; num: number; suffix: string } | null {
+  const match = value.trim().match(/^([^0-9]*)(\d+(?:\.\d+)?)(.*)$/);
+  if (!match) return null;
+  const num = Number(match[2]);
+  if (!Number.isFinite(num)) return null;
+  return { prefix: match[1] || "", num, suffix: match[3] || "" };
+}
+
 export default function HomeLandingClient({ cms }: HomeLandingClientProps) {
   const { lang } = useLanguage();
   const t = getDictionary(lang);
@@ -34,8 +45,145 @@ export default function HomeLandingClient({ cms }: HomeLandingClientProps) {
   const statsItems =
     cms.eventStats && cms.eventStats.length > 0 ? cms.eventStats : DEFAULT_EVENT_STATS;
 
+  const rootRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLElement>(null);
+  const statsRef = useRef<HTMLElement>(null);
+  const statsAnimatedRef = useRef(false);
+
+  // 1. GSAP Hero staggered entrance with strict cleanup
+  useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      !heroRef.current
+    ) {
+      return;
+    }
+
+    const ctx = gsap.context(() => {
+      gsap.from(".hero-stagger", {
+        y: 20,
+        opacity: 0,
+        duration: 0.65,
+        stagger: 0.08,
+        ease: "power3.out",
+        clearProps: "transform,opacity",
+      });
+    }, heroRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  // 2. Anime.js IntersectionObserver count-up for the 6-item Event Stats strip
+  useEffect(() => {
+    const container = statsRef.current;
+    if (
+      typeof window === "undefined" ||
+      !container ||
+      statsAnimatedRef.current ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
+
+    const activeAnimations: JSAnimation[] = [];
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting) || statsAnimatedRef.current) return;
+        statsAnimatedRef.current = true;
+        observer.disconnect();
+
+        const nodes = container.querySelectorAll<HTMLElement>("[data-stat-value]");
+        nodes.forEach((el, idx) => {
+          const rawVal = el.dataset.statValue || el.textContent || "";
+          const parsed = parseStatNumeric(rawVal);
+          if (!parsed) return;
+
+          const isDecimal = rawVal.includes(".");
+          const counter = { current: 0 };
+          const anim = animate(counter, {
+            current: parsed.num,
+            duration: 1200,
+            delay: idx * 70,
+            ease: "outExpo",
+            onUpdate: () => {
+              const formatted = isDecimal
+                ? counter.current.toFixed(1)
+                : String(Math.round(counter.current));
+              el.textContent = `${parsed.prefix}${formatted}${parsed.suffix}`;
+            },
+            onComplete: () => {
+              el.textContent = rawVal;
+            },
+          });
+          activeAnimations.push(anim);
+        });
+      },
+      { threshold: 0.2 }
+    );
+
+    observer.observe(container);
+    return () => {
+      observer.disconnect();
+      activeAnimations.forEach((a) => a.revert());
+    };
+  }, [statsItems.length]);
+
+  // 3. ScrollReveal dynamic import for Event Summary & Dual-Hall Agenda cards
+  useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      !rootRef.current
+    ) {
+      return;
+    }
+
+    type ScrollRevealFactory = typeof import("scrollreveal");
+    let cancelled = false;
+    let srInstance: ReturnType<ScrollRevealFactory> | null = null;
+
+    import("scrollreveal")
+      .then((mod) => {
+        if (cancelled || !rootRef.current) return;
+        const factory = (
+          (mod as unknown as { default?: ScrollRevealFactory }).default ?? mod
+        ) as ScrollRevealFactory;
+        srInstance = factory({
+          distance: "20px",
+          duration: 580,
+          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+          viewFactor: 0.12,
+          cleanup: true,
+          mobile: true,
+          reset: false,
+        });
+
+        const summaryCards = rootRef.current.querySelectorAll(".sr-summary-card");
+        if (summaryCards.length > 0) {
+          srInstance.reveal(summaryCards, { interval: 75 });
+        }
+        const agendaCards = rootRef.current.querySelectorAll(".sr-agenda-card");
+        if (agendaCards.length > 0) {
+          srInstance.reveal(agendaCards, { interval: 65 });
+        }
+      })
+      .catch(() => {
+        // Ignore if environment does not support dynamic ScrollReveal load
+      });
+
+    return () => {
+      cancelled = true;
+      try {
+        srInstance?.destroy();
+      } catch {
+        // Ignore teardown issues
+      }
+    };
+  }, []);
+
   return (
-    <div className="relative overflow-hidden flex-1 flex flex-col bg-[#15304B]">
+    <div ref={rootRef} className="relative overflow-hidden flex-1 flex flex-col bg-[#15304B]">
       {/* Lightweight 2D Ambient Backdrop */}
       <HeroParticles />
 
@@ -43,12 +191,12 @@ export default function HomeLandingClient({ cms }: HomeLandingClientProps) {
       <div className="fixed inset-0 tech-grid pointer-events-none z-0 opacity-30" />
 
       {/* ── HERO SECTION ── */}
-      <section className="relative z-10 max-w-6xl mx-auto px-4 pt-14 pb-16 sm:pt-20 sm:pb-24 flex flex-col items-center text-center">
+      <section
+        ref={heroRef}
+        className="relative z-10 max-w-6xl mx-auto px-4 pt-14 pb-16 sm:pt-20 sm:pb-24 flex flex-col items-center text-center"
+      >
         {/* Live Status Pill */}
-        <div
-          data-aos="fade-down"
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#10B981]/30 bg-[#10B981]/10 text-[#10B981] text-xs font-semibold mb-6"
-        >
+        <div className="hero-stagger inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#10B981]/30 bg-[#10B981]/10 text-[#10B981] text-xs font-semibold mb-6">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10B981]" />
@@ -57,10 +205,7 @@ export default function HomeLandingClient({ cms }: HomeLandingClientProps) {
         </div>
 
         {/* Hero Headline */}
-        <h1
-          data-aos="fade-up"
-          className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-white tracking-tight leading-[1.12] mb-6 max-w-4xl"
-        >
+        <h1 className="hero-stagger text-4xl sm:text-6xl lg:text-7xl font-extrabold text-white tracking-tight leading-[1.12] mb-6 max-w-4xl">
           {landing.titleLine1}
           <span
             dir="ltr"
@@ -70,20 +215,12 @@ export default function HomeLandingClient({ cms }: HomeLandingClientProps) {
           </span>
         </h1>
 
-        <p
-          data-aos="fade-up"
-          data-aos-delay="80"
-          className="max-w-2xl text-slate-200 text-sm sm:text-lg mb-8 leading-relaxed font-normal"
-        >
+        <p className="hero-stagger max-w-2xl text-slate-200 text-sm sm:text-lg mb-8 leading-relaxed font-normal">
           {landing.subtitle}
         </p>
 
         {/* Official Certificate Spotlight Card */}
-        <div
-          data-aos="fade-up"
-          data-aos-delay="120"
-          className="w-full max-w-2xl p-4 sm:p-5 rounded-2xl bg-[#0F243A]/90 border border-[#D97706]/40 animate-border-glow backdrop-blur-md flex items-center justify-between gap-4 mb-10 shadow-lg text-start"
-        >
+        <div className="hero-stagger w-full max-w-2xl p-4 sm:p-5 rounded-2xl bg-[#0F243A]/90 border border-[#D97706]/40 animate-border-glow backdrop-blur-md flex items-center justify-between gap-4 mb-10 shadow-lg text-start">
           <div className="flex items-center gap-3.5 w-full">
             <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#D97706] to-[#F59E0B] flex items-center justify-center shrink-0 shadow-md">
               <Award className="w-6 h-6 text-white" />
@@ -105,11 +242,7 @@ export default function HomeLandingClient({ cms }: HomeLandingClientProps) {
         </div>
 
         {/* Primary CTA Buttons */}
-        <div
-          data-aos="fade-up"
-          data-aos-delay="160"
-          className="flex flex-col sm:flex-row items-center justify-center gap-3.5 w-full sm:w-auto mb-12"
-        >
+        <div className="hero-stagger flex flex-col sm:flex-row items-center justify-center gap-3.5 w-full sm:w-auto mb-12">
           <Link
             href="/register"
             className="liquid-btn w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold text-sm tracking-wide shadow-[0_0_25px_rgba(217,119,6,0.4)] hover:brightness-110 transition-all flex items-center justify-center gap-2"
@@ -134,11 +267,7 @@ export default function HomeLandingClient({ cms }: HomeLandingClientProps) {
         </div>
 
         {/* Quick Venue & Date Box */}
-        <div
-          data-aos="fade-up"
-          data-aos-delay="200"
-          className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl w-full"
-        >
+        <div className="hero-stagger grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl w-full">
           <div className="flex items-center gap-3 p-4 rounded-xl bg-[#0F243A]/90 border border-slate-700/60 text-start">
             <Calendar className="w-5 h-5 text-[#D97706] shrink-0" />
             <div>
@@ -175,14 +304,18 @@ export default function HomeLandingClient({ cms }: HomeLandingClientProps) {
 
       {/* ── METRICS STRIP ── */}
       <section
-        data-aos="fade-up"
+        ref={statsRef}
         className="relative z-10 w-full bg-[#0A1F33] border-y border-slate-800 py-8"
       >
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 text-center">
             {statsItems.map((stat, i) => (
               <div key={i} className="flex flex-col items-center">
-                <span dir="ltr" className="text-2xl sm:text-3xl font-black text-white">
+                <span
+                  dir="ltr"
+                  data-stat-value={stat.value}
+                  className="text-2xl sm:text-3xl font-black text-white tabular-nums"
+                >
                   {stat.value}
                 </span>
                 <span className="text-xs text-slate-300 font-medium mt-1">
@@ -198,7 +331,7 @@ export default function HomeLandingClient({ cms }: HomeLandingClientProps) {
 
       {/* ── EVENT SUMMARY #1: UPPER OVERVIEW & VISION ── */}
       <section id="story" className="relative z-10 max-w-6xl mx-auto px-4 pt-20 pb-8 w-full">
-        <div data-aos="fade-up" className="text-center max-w-3xl mx-auto mb-12">
+        <div className="sr-summary-card text-center max-w-3xl mx-auto mb-12">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-[#D97706]/30 bg-[#0F243A] text-[#F59E0B] text-xs mb-3 font-semibold">
             <Compass className="w-3.5 h-3.5" />
             {landing.storyEyebrow}
@@ -215,7 +348,7 @@ export default function HomeLandingClient({ cms }: HomeLandingClientProps) {
           {landing.storyPillars.map((pillar, idx) => (
             <TiltCard
               key={pillar.id || idx}
-              className="p-6 rounded-2xl bg-[#0F243A]/90 border border-slate-800 hover:border-[#D97706]/50 flex flex-col gap-3 shadow-xl text-start"
+              className="sr-summary-card p-6 rounded-2xl bg-[#0F243A]/90 border border-slate-800 hover:border-[#D97706]/50 flex flex-col gap-3 shadow-xl text-start"
             >
               <span className="text-[11px] font-bold text-[#F59E0B] tracking-wider">
                 {pillar.tag}
@@ -243,8 +376,7 @@ export default function HomeLandingClient({ cms }: HomeLandingClientProps) {
       {/* ── EVENT SUMMARY #2: INSIDE THE GATHERING ── */}
       <section
         id="about"
-        data-aos="fade-up"
-        className="relative z-10 max-w-6xl mx-auto px-4 pb-14 w-full"
+        className="sr-summary-card relative z-10 max-w-6xl mx-auto px-4 pb-14 w-full"
       >
         <div className="rounded-3xl bg-[#0F243A]/90 border border-[#D97706]/25 p-7 sm:p-11 shadow-2xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center text-start">
           <div className="lg:col-span-6 space-y-4">

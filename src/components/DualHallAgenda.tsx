@@ -374,7 +374,7 @@ export default function DualHallAgenda({
         <div className="space-y-4 sm:space-y-5">
           {blocks.map((block) =>
             block.type === "shared" ? (
-              <div key={block.session.id} className="grid grid-cols-2">
+              <div key={block.session.id} className="grid grid-cols-2 sr-agenda-card">
                 <SharedPlenaryCard session={block.session} lang={lang} />
               </div>
             ) : (
@@ -383,7 +383,7 @@ export default function DualHallAgenda({
                 className="grid grid-cols-2 gap-2.5 sm:gap-5 items-start"
               >
                 {/* Hall 1 Column (Green Theme) */}
-                <div className="space-y-2.5 sm:space-y-3.5 min-w-0">
+                <div className="space-y-2.5 sm:space-y-3.5 min-w-0 sr-agenda-card">
                   <HallColumnHeader
                     hallName={agenda.hall1Name}
                     capacity={agenda.hall1Capacity}
@@ -405,7 +405,7 @@ export default function DualHallAgenda({
                 </div>
 
                 {/* Hall 2 Column (Orange Theme) */}
-                <div className="space-y-2.5 sm:space-y-3.5 min-w-0">
+                <div className="space-y-2.5 sm:space-y-3.5 min-w-0 sr-agenda-card">
                   <HallColumnHeader
                     hallName={agenda.hall2Name}
                     capacity={agenda.hall2Capacity}

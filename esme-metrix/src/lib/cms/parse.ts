@@ -568,12 +568,18 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
     },
   };
 
+  const rawHeroLogo = raw.hero_logo_url?.trim();
+  const heroLogoUrl =
+    !rawHeroLogo || rawHeroLogo === "/esme_logo.png"
+      ? DEFAULT_FULL_CMS.heroLogoUrl
+      : rawHeroLogo;
+
   return {
     eventDate: pickString(raw.event_date, DEFAULT_FULL_CMS.eventDate),
     eventVenue: pickString(raw.event_venue, DEFAULT_FULL_CMS.eventVenue),
     eventTime: pickString(raw.event_time, DEFAULT_FULL_CMS.eventTime),
     eventMapsUrl: raw[CMS_KEYS.eventMapsUrl]?.trim() || DEFAULT_FULL_CMS.eventMapsUrl,
-    heroLogoUrl: raw.hero_logo_url?.trim() || DEFAULT_FULL_CMS.heroLogoUrl,
+    heroLogoUrl,
     ticketBgUrl: raw.ticket_bg_url?.trim() || DEFAULT_FULL_CMS.ticketBgUrl,
     landing,
     highlights,

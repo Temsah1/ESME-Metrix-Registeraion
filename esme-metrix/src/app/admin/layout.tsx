@@ -79,8 +79,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       >
         <div className="hidden md:flex items-center justify-between gap-2 px-2 py-3 border-b border-slate-800 mb-5">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-[#D97706]/15 border border-[#D97706]/35 flex items-center justify-center p-1 shrink-0">
-              <Image src="/esme_logo.png" alt="Logo" width={28} height={28} className="object-contain" />
+            <div className="w-8 h-8 rounded-full bg-[#082546] border border-[#D97706]/45 flex items-center justify-center overflow-hidden shrink-0">
+              <Image
+                src="/esme-icon.jpg"
+                alt="Logo"
+                width={32}
+                height={32}
+                className="w-full h-full rounded-full object-cover"
+              />
             </div>
             <div className="min-w-0">
               <div className="text-xs font-bold text-white truncate">{t.admin.consoleTitle}</div>

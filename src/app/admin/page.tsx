@@ -55,8 +55,14 @@ export default function AdminLoginPage() {
         </div>
 
         <div className="flex flex-col items-center text-center mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-[#D97706]/10 border border-[#D97706]/30 flex items-center justify-center p-2 mb-3">
-            <Image src="/esme_logo.png" alt="ESME Logo" width={42} height={42} className="object-contain" />
+          <div className="w-14 h-14 rounded-full bg-[#082546] border border-[#D97706]/45 flex items-center justify-center overflow-hidden mb-3">
+            <Image
+              src="/esme-icon.jpg"
+              alt="ESME Logo"
+              width={56}
+              height={56}
+              className="w-full h-full rounded-full object-cover"
+            />
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
             {t.admin.loginTitle}

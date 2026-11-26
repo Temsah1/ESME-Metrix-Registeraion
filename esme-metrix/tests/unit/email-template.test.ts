@@ -12,6 +12,7 @@ describe("QR-07/08 email template uses CID attachment, not data URI, and 100% En
   it("references cid:metrix-qr and never embeds a data URI img", () => {
     const email = buildConfirmationEmail(input);
     expect(email.html).toContain('src="cid:metrix-qr"');
+    expect(email.html).toContain("https://esme-metrix-registeration.vercel.app/esme-icon.jpg");
     expect(email.html).not.toContain("data:image");
     expect(email.html).not.toMatch(/[\u0600-\u06FF]/);
     expect(email.text).not.toMatch(/[\u0600-\u06FF]/);

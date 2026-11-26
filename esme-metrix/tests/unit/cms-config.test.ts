@@ -129,6 +129,10 @@ describe("Comprehensive CMS defaults, parsing & serialization", () => {
     expect(linkedInSoc?.url).toBe(
       "https://www.linkedin.com/company/esme-cairo-university-student-chapter/"
     );
+    expect(cms3.heroLogoUrl).toBe("/esme-icon.jpg");
+
+    const legacyLogoUpgraded = buildFullCmsData({ hero_logo_url: "/esme_logo.png" });
+    expect(legacyLogoUpgraded.heroLogoUrl).toBe("/esme-icon.jpg");
   });
 
   it("supports dynamic bilingual eventStats with 6-item fallback and Supabase round-trip", () => {

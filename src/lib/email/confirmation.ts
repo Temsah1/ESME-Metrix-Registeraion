@@ -82,6 +82,7 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): Confirmat
               <!-- Brand Header -->
               <tr>
                 <td align="center" style="background: linear-gradient(135deg, #15304B, #0F243A); padding: 30px 20px 20px 20px; border-bottom: 1px solid rgba(217, 119, 6, 0.3);">
+                  <img src="https://esme-metrix-registeration.vercel.app/esme-icon.jpg" alt="ESME METRIX" width="56" height="56" style="width: 56px; height: 56px; border-radius: 9999px; object-fit: cover; display: block; margin: 0 auto 12px auto; border: 2px solid #D97706;" />
                   <div style="font-size: 11px; font-weight: bold; color: #F59E0B; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px;">
                     ESME CAIRO UNIVERSITY STUDENT CHAPTER
                   </div>

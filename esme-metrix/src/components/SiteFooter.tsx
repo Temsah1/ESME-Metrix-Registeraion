@@ -48,7 +48,7 @@ interface SiteFooterProps {
 export default function SiteFooter({
   footer,
   arFooter,
-  logoUrl = "/esme_logo.png",
+  logoUrl = "/esme-icon.jpg",
 }: SiteFooterProps) {
   const { lang } = useLanguage();
   const t = getDictionary(lang);
@@ -79,13 +79,13 @@ export default function SiteFooter({
           {/* Column 1: Chapter & Event Identity */}
           <div className="md:col-span-5 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="relative w-10 h-10 rounded-xl bg-[#0F243A] border border-[#D97706]/35 flex items-center justify-center p-1.5 overflow-hidden shrink-0">
+              <div className="relative w-10 h-10 rounded-full bg-[#082546] border border-[#D97706]/45 flex items-center justify-center overflow-hidden shrink-0">
                 <Image
-                  src={logoUrl || "/esme_logo.png"}
+                  src={logoUrl || "/esme-icon.jpg"}
                   alt="ESME Logo"
-                  width={34}
-                  height={34}
-                  className="object-contain"
+                  width={40}
+                  height={40}
+                  className="w-full h-full rounded-full object-cover"
                   unoptimized
                 />
               </div>

@@ -121,6 +121,10 @@ export default function GalleryShowcase({
           modules={[Pagination, Autoplay, Navigation]}
           spaceBetween={14}
           slidesPerView={1.15}
+          breakpoints={{
+            480: { slidesPerView: 1.5, spaceBetween: 16 },
+            640: { slidesPerView: 2.2, spaceBetween: 16 },
+          }}
           centeredSlides={false}
           pagination={{ clickable: true }}
           autoplay={{ delay: 4000, disableOnInteraction: true }}

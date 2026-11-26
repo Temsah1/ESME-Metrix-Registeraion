@@ -43,14 +43,14 @@ export default function IntroLoader() {
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.1 }}
-            className="relative z-10 w-20 h-20 rounded-2xl bg-[#0F243A] border-2 border-[#D97706]/60 p-3 shadow-[0_0_40px_rgba(217,119,6,0.4)] flex items-center justify-center mb-5"
+            className="relative z-10 w-20 h-20 rounded-full bg-[#082546] border-2 border-[#D97706]/60 shadow-[0_0_40px_rgba(217,119,6,0.4)] flex items-center justify-center overflow-hidden mb-5"
           >
             <Image
-              src="/esme_logo.png"
+              src="/esme-icon.jpg"
               alt="ESME Logo"
-              width={56}
-              height={56}
-              className="object-contain"
+              width={80}
+              height={80}
+              className="w-full h-full rounded-full object-cover"
               priority
             />
           </motion.div>
