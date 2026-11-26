@@ -1,6 +1,7 @@
 import { renderMemberDashboardPage } from "@/components/member/MemberDashboardServer";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function MemberPage({
   searchParams,

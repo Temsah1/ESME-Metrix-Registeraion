@@ -108,6 +108,21 @@ function sanitizeAgendaSessions(
     .sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
+function pickString(saved: unknown, fallback: string): string {
+  return typeof saved === "string" ? saved : fallback;
+}
+
+function stripNullish<T extends object>(obj: Partial<T> | null | undefined): Partial<T> {
+  if (!obj || typeof obj !== "object") return {};
+  const out: Partial<T> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== null && v !== undefined) {
+      (out as Record<string, unknown>)[k] = v;
+    }
+  }
+  return out;
+}
+
 function parseAgendaConfig(parsed: LegacyAgendaShape | null): DualHallAgendaConfig {
   if (!parsed) return DEFAULT_AGENDA_CMS;
 
@@ -134,15 +149,15 @@ function parseAgendaConfig(parsed: LegacyAgendaShape | null): DualHallAgendaConf
   }
 
   return {
-    eyebrow: parsed.eyebrow?.trim() || DEFAULT_AGENDA_CMS.eyebrow,
-    title: parsed.title?.trim() || DEFAULT_AGENDA_CMS.title,
-    subtitle: parsed.subtitle?.trim() || DEFAULT_AGENDA_CMS.subtitle,
-    hall1Name: parsed.hall1Name?.trim() || DEFAULT_AGENDA_CMS.hall1Name,
-    hall1Capacity: parsed.hall1Capacity?.trim() || DEFAULT_AGENDA_CMS.hall1Capacity,
-    hall1Subtitle: parsed.hall1Subtitle?.trim() || DEFAULT_AGENDA_CMS.hall1Subtitle,
-    hall2Name: parsed.hall2Name?.trim() || DEFAULT_AGENDA_CMS.hall2Name,
-    hall2Capacity: parsed.hall2Capacity?.trim() || DEFAULT_AGENDA_CMS.hall2Capacity,
-    hall2Subtitle: parsed.hall2Subtitle?.trim() || DEFAULT_AGENDA_CMS.hall2Subtitle,
+    eyebrow: pickString(parsed.eyebrow, DEFAULT_AGENDA_CMS.eyebrow),
+    title: pickString(parsed.title, DEFAULT_AGENDA_CMS.title),
+    subtitle: pickString(parsed.subtitle, DEFAULT_AGENDA_CMS.subtitle),
+    hall1Name: pickString(parsed.hall1Name, DEFAULT_AGENDA_CMS.hall1Name),
+    hall1Capacity: pickString(parsed.hall1Capacity, DEFAULT_AGENDA_CMS.hall1Capacity),
+    hall1Subtitle: pickString(parsed.hall1Subtitle, DEFAULT_AGENDA_CMS.hall1Subtitle),
+    hall2Name: pickString(parsed.hall2Name, DEFAULT_AGENDA_CMS.hall2Name),
+    hall2Capacity: pickString(parsed.hall2Capacity, DEFAULT_AGENDA_CMS.hall2Capacity),
+    hall2Subtitle: pickString(parsed.hall2Subtitle, DEFAULT_AGENDA_CMS.hall2Subtitle),
     sessions,
   };
 }
@@ -197,7 +212,7 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
 
   const landing: LandingCmsConfig = {
     ...DEFAULT_LANDING_CMS,
-    ...(parsedLanding || {}),
+    ...stripNullish(parsedLanding),
     storyPillars:
       Array.isArray(parsedLanding?.storyPillars) && parsedLanding.storyPillars.length > 0
         ? parsedLanding.storyPillars
@@ -208,13 +223,13 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
         : DEFAULT_LANDING_CMS.experienceBullets,
   };
 
-  if (!parsedLanding?.aboutText && raw.about_text?.trim()) {
+  if (parsedLanding?.aboutText == null && raw.about_text?.trim()) {
     landing.aboutText = raw.about_text.trim();
   }
-  if (!parsedLanding?.titleHighlight && raw.hero_headline?.trim()) {
+  if (parsedLanding?.titleHighlight == null && raw.hero_headline?.trim()) {
     landing.titleHighlight = raw.hero_headline.trim();
   }
-  if (!parsedLanding?.subtitle && raw.hero_subtitle?.trim()) {
+  if (parsedLanding?.subtitle == null && raw.hero_subtitle?.trim()) {
     landing.subtitle = raw.hero_subtitle.trim();
   }
 
@@ -262,64 +277,148 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
     label: s.label.en,
   }));
 
-  const gallery: GalleryItem[] = Array.from({ length: 8 }, (_, idx) => {
-    const def = DEFAULT_GALLERY_CMS[idx];
-    const fromJson = parsedGallery?.[idx];
-    const legacyUrl = raw[`gallery_image_${idx + 1}`]?.trim();
-    const isOldPlaceholder =
-      !legacyUrl ||
-      legacyUrl.includes("images.unsplash.com/") ||
-      legacyUrl === "/images/materials-4.svg";
-    return {
-      id: fromJson?.id || def.id,
-      url: fromJson?.url?.trim() || (!isOldPlaceholder ? legacyUrl : "") || def.url,
-      caption: fromJson?.caption?.trim() || def.caption,
-      alt: fromJson?.alt?.trim() || fromJson?.caption?.trim() || def.alt,
-    };
-  });
+  const gallery: GalleryItem[] =
+    parsedGallery && parsedGallery.length > 0
+      ? parsedGallery.map((fromJson, idx) => {
+          const def = DEFAULT_GALLERY_CMS[idx];
+          const legacyUrl = raw[`gallery_image_${idx + 1}`]?.trim();
+          const isOldPlaceholder =
+            !legacyUrl ||
+            legacyUrl.includes("images.unsplash.com/") ||
+            legacyUrl === "/images/materials-4.svg";
+          const url =
+            typeof fromJson?.url === "string" && fromJson.url.trim().length > 0
+              ? fromJson.url.trim()
+              : (!isOldPlaceholder ? legacyUrl : "") || def?.url || "";
+          const caption = pickString(fromJson?.caption, def?.caption || "");
+          const alt = pickString(fromJson?.alt, caption || def?.alt || "");
+          return {
+            id:
+              typeof fromJson?.id === "string" && fromJson.id.trim().length > 0
+                ? fromJson.id.trim()
+                : def?.id || `gal-${idx + 1}`,
+            url,
+            caption,
+            alt,
+          };
+        })
+      : Array.from({ length: 8 }, (_, idx) => {
+          const def = DEFAULT_GALLERY_CMS[idx];
+          const legacyUrl = raw[`gallery_image_${idx + 1}`]?.trim();
+          const isOldPlaceholder =
+            !legacyUrl ||
+            legacyUrl.includes("images.unsplash.com/") ||
+            legacyUrl === "/images/materials-4.svg";
+          return {
+            id: def.id,
+            url: (!isOldPlaceholder ? legacyUrl : "") || def.url,
+            caption: def.caption,
+            alt: def.alt,
+          };
+        });
 
   const agenda = parseAgendaConfig(parsedAgenda);
 
   const form: RegistrationFormConfig = {
     ...DEFAULT_FORM_CMS,
-    bannerBadge: parsedForm?.bannerBadge || DEFAULT_FORM_CMS.bannerBadge,
-    bannerTitle: parsedForm?.bannerTitle || DEFAULT_FORM_CMS.bannerTitle,
-    bannerDescription: parsedForm?.bannerDescription || DEFAULT_FORM_CMS.bannerDescription,
-    termsLabel: parsedForm?.termsLabel || DEFAULT_FORM_CMS.termsLabel,
-    submitButtonLabel: parsedForm?.submitButtonLabel || DEFAULT_FORM_CMS.submitButtonLabel,
+    bannerBadge: pickString(parsedForm?.bannerBadge, DEFAULT_FORM_CMS.bannerBadge),
+    bannerTitle: pickString(parsedForm?.bannerTitle, DEFAULT_FORM_CMS.bannerTitle),
+    bannerDescription: pickString(
+      parsedForm?.bannerDescription,
+      DEFAULT_FORM_CMS.bannerDescription
+    ),
+    termsLabel: pickString(parsedForm?.termsLabel, DEFAULT_FORM_CMS.termsLabel),
+    submitButtonLabel: pickString(
+      parsedForm?.submitButtonLabel,
+      DEFAULT_FORM_CMS.submitButtonLabel
+    ),
     steps: {
-      step1: { ...DEFAULT_FORM_CMS.steps.step1, ...(parsedForm?.steps?.step1 || {}) },
-      step2: { ...DEFAULT_FORM_CMS.steps.step2, ...(parsedForm?.steps?.step2 || {}) },
-      step3: { ...DEFAULT_FORM_CMS.steps.step3, ...(parsedForm?.steps?.step3 || {}) },
-      step4: { ...DEFAULT_FORM_CMS.steps.step4, ...(parsedForm?.steps?.step4 || {}) },
+      step1: {
+        ...DEFAULT_FORM_CMS.steps.step1,
+        ...stripNullish(parsedForm?.steps?.step1),
+      },
+      step2: {
+        ...DEFAULT_FORM_CMS.steps.step2,
+        ...stripNullish(parsedForm?.steps?.step2),
+      },
+      step3: {
+        ...DEFAULT_FORM_CMS.steps.step3,
+        ...stripNullish(parsedForm?.steps?.step3),
+      },
+      step4: {
+        ...DEFAULT_FORM_CMS.steps.step4,
+        ...stripNullish(parsedForm?.steps?.step4),
+      },
     },
     fields: {
-      fullName: { ...DEFAULT_FORM_CMS.fields.fullName, ...(parsedForm?.fields?.fullName || {}) },
-      nationalId: { ...DEFAULT_FORM_CMS.fields.nationalId, ...(parsedForm?.fields?.nationalId || {}) },
-      phone: { ...DEFAULT_FORM_CMS.fields.phone, ...(parsedForm?.fields?.phone || {}) },
-      email: { ...DEFAULT_FORM_CMS.fields.email, ...(parsedForm?.fields?.email || {}) },
-      city: { ...DEFAULT_FORM_CMS.fields.city, ...(parsedForm?.fields?.city || {}) },
-      university: { ...DEFAULT_FORM_CMS.fields.university, ...(parsedForm?.fields?.university || {}) },
-      faculty: { ...DEFAULT_FORM_CMS.fields.faculty, ...(parsedForm?.fields?.faculty || {}) },
-      department: { ...DEFAULT_FORM_CMS.fields.department, ...(parsedForm?.fields?.department || {}) },
-      customMajor: { ...DEFAULT_FORM_CMS.fields.customMajor, ...(parsedForm?.fields?.customMajor || {}) },
+      fullName: {
+        ...DEFAULT_FORM_CMS.fields.fullName,
+        ...stripNullish(parsedForm?.fields?.fullName),
+      },
+      nationalId: {
+        ...DEFAULT_FORM_CMS.fields.nationalId,
+        ...stripNullish(parsedForm?.fields?.nationalId),
+      },
+      phone: {
+        ...DEFAULT_FORM_CMS.fields.phone,
+        ...stripNullish(parsedForm?.fields?.phone),
+      },
+      email: {
+        ...DEFAULT_FORM_CMS.fields.email,
+        ...stripNullish(parsedForm?.fields?.email),
+      },
+      city: {
+        ...DEFAULT_FORM_CMS.fields.city,
+        ...stripNullish(parsedForm?.fields?.city),
+      },
+      university: {
+        ...DEFAULT_FORM_CMS.fields.university,
+        ...stripNullish(parsedForm?.fields?.university),
+      },
+      faculty: {
+        ...DEFAULT_FORM_CMS.fields.faculty,
+        ...stripNullish(parsedForm?.fields?.faculty),
+      },
+      department: {
+        ...DEFAULT_FORM_CMS.fields.department,
+        ...stripNullish(parsedForm?.fields?.department),
+      },
+      customMajor: {
+        ...DEFAULT_FORM_CMS.fields.customMajor,
+        ...stripNullish(parsedForm?.fields?.customMajor),
+      },
       academicYear: {
         ...DEFAULT_FORM_CMS.fields.academicYear,
-        ...(parsedForm?.fields?.academicYear || {}),
+        ...stripNullish(parsedForm?.fields?.academicYear),
       },
       graduationYear: {
         ...DEFAULT_FORM_CMS.fields.graduationYear,
-        ...(parsedForm?.fields?.graduationYear || {}),
+        ...stripNullish(parsedForm?.fields?.graduationYear),
       },
-      jobTitle: { ...DEFAULT_FORM_CMS.fields.jobTitle, ...(parsedForm?.fields?.jobTitle || {}) },
-      company: { ...DEFAULT_FORM_CMS.fields.company, ...(parsedForm?.fields?.company || {}) },
+      jobTitle: {
+        ...DEFAULT_FORM_CMS.fields.jobTitle,
+        ...stripNullish(parsedForm?.fields?.jobTitle),
+      },
+      company: {
+        ...DEFAULT_FORM_CMS.fields.company,
+        ...stripNullish(parsedForm?.fields?.company),
+      },
       isEsmeMember: {
         ...DEFAULT_FORM_CMS.fields.isEsmeMember,
-        ...(parsedForm?.fields?.isEsmeMember || {}),
+        ...stripNullish(parsedForm?.fields?.isEsmeMember),
       },
-      committee: { ...DEFAULT_FORM_CMS.fields.committee, ...(parsedForm?.fields?.committee || {}) },
-      idPhotoUrl: { ...DEFAULT_FORM_CMS.fields.idPhotoUrl, ...(parsedForm?.fields?.idPhotoUrl || {}) },
-      avatarUrl: { ...DEFAULT_FORM_CMS.fields.avatarUrl, ...(parsedForm?.fields?.avatarUrl || {}) },
+      committee: {
+        ...DEFAULT_FORM_CMS.fields.committee,
+        ...stripNullish(parsedForm?.fields?.committee),
+      },
+      idPhotoUrl: {
+        ...DEFAULT_FORM_CMS.fields.idPhotoUrl,
+        ...stripNullish(parsedForm?.fields?.idPhotoUrl),
+      },
+      avatarUrl: {
+        ...DEFAULT_FORM_CMS.fields.avatarUrl,
+        ...stripNullish(parsedForm?.fields?.avatarUrl),
+      },
     },
     faculties:
       Array.isArray(parsedForm?.faculties) && parsedForm.faculties.length > 0
@@ -349,7 +448,7 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
 
   const confirmation: ConfirmationCmsConfig = {
     ...DEFAULT_CONFIRMATION_CMS,
-    ...(parsedConfirmation || {}),
+    ...stripNullish(parsedConfirmation),
     postRegistrationWhatsappUrl:
       parsedConfirmation?.postRegistrationWhatsappUrl?.trim() ||
       raw[CMS_KEYS.postRegistrationWhatsappUrl]?.trim() ||
@@ -359,9 +458,11 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
       parsedConfirmation?.linkedinCaption?.trim() || raw.linkedin_caption?.trim()
     ),
     ogHighlightsText:
-      parsedConfirmation?.ogHighlightsText?.trim() ||
-      raw.og_highlights?.trim() ||
-      DEFAULT_CONFIRMATION_CMS.ogHighlightsText,
+      typeof parsedConfirmation?.ogHighlightsText === "string"
+        ? parsedConfirmation.ogHighlightsText
+        : typeof raw.og_highlights === "string"
+        ? raw.og_highlights
+        : DEFAULT_CONFIRMATION_CMS.ogHighlightsText,
     checklist:
       Array.isArray(parsedConfirmation?.checklist) && parsedConfirmation.checklist.length > 0
         ? parsedConfirmation.checklist
@@ -373,7 +474,7 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
       ? parsedFooter.socialLinks.map((s, idx) => ({
           id: s?.id || `soc-${idx}`,
           platform: s?.platform || "website",
-          label: s?.label || "Link",
+          label: typeof s?.label === "string" ? s.label : "Link",
           url:
             s?.url?.trim() === LEGACY_LINKEDIN_COMPANY_URL
               ? OFFICIAL_ESME_LINKEDIN_URL
@@ -384,7 +485,7 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
 
   const footer: FooterCmsConfig = {
     ...DEFAULT_FOOTER_CMS,
-    ...(parsedFooter || {}),
+    ...stripNullish(parsedFooter),
     socialLinks,
   };
 
@@ -393,12 +494,12 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
   void _legacyArRole;
 
   const ar: ArabicCmsData = {
-    eventDate: parsedArabic?.eventDate?.trim() || DEFAULT_ARABIC_CMS.eventDate,
-    eventVenue: parsedArabic?.eventVenue?.trim() || DEFAULT_ARABIC_CMS.eventVenue,
-    eventTime: parsedArabic?.eventTime?.trim() || DEFAULT_ARABIC_CMS.eventTime,
+    eventDate: pickString(parsedArabic?.eventDate, DEFAULT_ARABIC_CMS.eventDate),
+    eventVenue: pickString(parsedArabic?.eventVenue, DEFAULT_ARABIC_CMS.eventVenue),
+    eventTime: pickString(parsedArabic?.eventTime, DEFAULT_ARABIC_CMS.eventTime),
     landing: {
       ...DEFAULT_ARABIC_CMS.landing,
-      ...(parsedArabic?.landing || {}),
+      ...stripNullish(parsedArabic?.landing),
       storyPillars:
         Array.isArray(parsedArabic?.landing?.storyPillars) &&
         parsedArabic.landing.storyPillars.length > 0
@@ -420,7 +521,7 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
         : DEFAULT_ARABIC_CMS.gallery,
     agenda: {
       ...DEFAULT_ARABIC_CMS.agenda,
-      ...(parsedArabic?.agenda || {}),
+      ...stripNullish(parsedArabic?.agenda),
       sessions: {
         ...DEFAULT_ARABIC_CMS.agenda.sessions,
         ...(parsedArabic?.agenda?.sessions || {}),
@@ -428,33 +529,33 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
     },
     form: {
       ...DEFAULT_ARABIC_CMS.form,
-      ...(parsedArabic?.form || {}),
+      ...stripNullish(parsedArabic?.form),
       steps: {
         step1: {
           ...DEFAULT_ARABIC_CMS.form.steps.step1,
-          ...(parsedArabic?.form?.steps?.step1 || {}),
+          ...stripNullish(parsedArabic?.form?.steps?.step1),
         },
         step2: {
           ...DEFAULT_ARABIC_CMS.form.steps.step2,
-          ...(parsedArabic?.form?.steps?.step2 || {}),
+          ...stripNullish(parsedArabic?.form?.steps?.step2),
         },
         step3: {
           ...DEFAULT_ARABIC_CMS.form.steps.step3,
-          ...(parsedArabic?.form?.steps?.step3 || {}),
+          ...stripNullish(parsedArabic?.form?.steps?.step3),
         },
         step4: {
           ...DEFAULT_ARABIC_CMS.form.steps.step4,
-          ...(parsedArabic?.form?.steps?.step4 || {}),
+          ...stripNullish(parsedArabic?.form?.steps?.step4),
         },
       },
       fields: {
         ...DEFAULT_ARABIC_CMS.form.fields,
-        ...cleanArFields,
+        ...stripNullish(cleanArFields),
       },
     },
     confirmation: {
       ...DEFAULT_ARABIC_CMS.confirmation,
-      ...(parsedArabic?.confirmation || {}),
+      ...stripNullish(parsedArabic?.confirmation),
       checklist:
         Array.isArray(parsedArabic?.confirmation?.checklist) &&
         parsedArabic.confirmation.checklist.length > 0
@@ -463,14 +564,14 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
     },
     footer: {
       ...DEFAULT_ARABIC_CMS.footer,
-      ...(parsedArabic?.footer || {}),
+      ...stripNullish(parsedArabic?.footer),
     },
   };
 
   return {
-    eventDate: raw.event_date?.trim() || DEFAULT_FULL_CMS.eventDate,
-    eventVenue: raw.event_venue?.trim() || DEFAULT_FULL_CMS.eventVenue,
-    eventTime: raw.event_time?.trim() || DEFAULT_FULL_CMS.eventTime,
+    eventDate: pickString(raw.event_date, DEFAULT_FULL_CMS.eventDate),
+    eventVenue: pickString(raw.event_venue, DEFAULT_FULL_CMS.eventVenue),
+    eventTime: pickString(raw.event_time, DEFAULT_FULL_CMS.eventTime),
     eventMapsUrl: raw[CMS_KEYS.eventMapsUrl]?.trim() || DEFAULT_FULL_CMS.eventMapsUrl,
     heroLogoUrl: raw.hero_logo_url?.trim() || DEFAULT_FULL_CMS.heroLogoUrl,
     ticketBgUrl: raw.ticket_bg_url?.trim() || DEFAULT_FULL_CMS.ticketBgUrl,

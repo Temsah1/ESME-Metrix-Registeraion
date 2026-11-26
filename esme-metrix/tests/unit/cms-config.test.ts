@@ -167,4 +167,59 @@ describe("Comprehensive CMS defaults, parsing & serialization", () => {
       { value: "3", label: "قاعات تقنية" },
     ]);
   });
+
+  it("never overwrites saved custom values or empty optional strings with defaults", () => {
+    const custom = {
+      ...DEFAULT_FULL_CMS,
+      landing: {
+        ...DEFAULT_FULL_CMS.landing,
+        storyEyebrow: "",
+        storyTitle: "Custom Summit Story Title",
+      },
+      gallery: [
+        {
+          id: "gal-custom-1",
+          url: "/images/gallery/event-1.jpg",
+          caption: "Custom Single Gallery Shot",
+          alt: "Custom Alt",
+        },
+      ],
+      agenda: {
+        ...DEFAULT_FULL_CMS.agenda,
+        hall1Subtitle: "",
+        sessions: [
+          {
+            id: "custom-s1",
+            hallType: "hall1" as const,
+            sortOrder: 1,
+            time: "11:00 AM",
+            title: "Custom Alloy Talk",
+            speaker: "Prof. Z",
+            role: "",
+            tag: "Metallurgy",
+            description: "Custom description",
+          },
+        ],
+      },
+      ar: {
+        ...DEFAULT_FULL_CMS.ar!,
+        landing: {
+          ...DEFAULT_FULL_CMS.ar!.landing,
+          storyTitle: "عنوان قصة مخصص",
+        },
+      },
+    };
+    const rows = serializeFullCmsToSiteContentRows(custom);
+    const rawMap = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+    const parsed = buildFullCmsData(rawMap);
+
+    expect(parsed.landing.storyEyebrow).toBe("");
+    expect(parsed.landing.storyTitle).toBe("Custom Summit Story Title");
+    expect(parsed.gallery).toHaveLength(1);
+    expect(parsed.gallery[0].caption).toBe("Custom Single Gallery Shot");
+    expect(parsed.agenda.hall1Subtitle).toBe("");
+    expect(parsed.agenda.sessions).toHaveLength(1);
+    expect(parsed.agenda.sessions[0].title).toBe("Custom Alloy Talk");
+    expect(parsed.ar?.landing.storyTitle).toBe("عنوان قصة مخصص");
+  });
 });

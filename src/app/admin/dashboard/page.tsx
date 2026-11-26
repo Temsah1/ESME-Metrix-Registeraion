@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Users,
   CheckCircle2,
@@ -25,7 +26,6 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import CmsEditor from "@/components/admin/CmsEditor";
 import { DEFAULT_FULL_CMS } from "@/lib/cms/defaults";
-import { buildFullCmsData, serializeFullCmsToSiteContentRows } from "@/lib/cms/parse";
 import type { FullCmsData } from "@/lib/cms/types";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getDictionary } from "@/lib/i18n/dictionary";
@@ -83,6 +83,7 @@ function relativeTime(iso: string, lang: AppLanguage): string {
 }
 
 export default function AdminDashboardPage() {
+  const router = useRouter();
   const { lang } = useLanguage();
   const t = getDictionary(lang);
   const [activeTab, setActiveTab] = useState<"metrics" | "cms">("metrics");
@@ -198,32 +199,36 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     async function loadCMS() {
       setCmsLoading(true);
+      setCmsError(null);
       try {
-        const supabase = createClient();
-        const { data, error: fetchErr } = await supabase
-          .from("site_content")
-          .select("key, value");
+        const res = await fetch("/api/cms", { cache: "no-store" });
+        const payload = (await res.json().catch(() => null)) as {
+          cms?: FullCmsData;
+          error?: string;
+        } | null;
 
-        if (fetchErr) {
-          console.warn("Could not query site_content table, using defaults:", fetchErr.message);
-          return;
-        }
-
-        if (data && data.length > 0) {
-          const rawMap = Object.fromEntries(
-            data.map((row: { key: string; value: string }) => [row.key, row.value])
+        if (!res.ok || !payload?.cms) {
+          throw new Error(
+            payload?.error || `Failed to load CMS from Supabase (HTTP ${res.status}).`
           );
-          setCmsData(buildFullCmsData(rawMap));
         }
-      } catch (err) {
+
+        setCmsData(payload.cms);
+      } catch (err: unknown) {
         console.error("CMS load error:", err);
+        setCmsError(
+          (err as Error)?.message ||
+            (lang === "ar"
+              ? "تعذّر تحميل بيانات المحتوى من قاعدة البيانات."
+              : "Failed to load CMS content from Supabase.")
+        );
       } finally {
         setCmsLoading(false);
       }
     }
 
     loadCMS();
-  }, []);
+  }, [lang]);
 
   const handleImageUpload = async (
     key: string,
@@ -272,17 +277,31 @@ export default function AdminDashboardPage() {
     setCmsError(null);
 
     try {
-      const supabase = createClient();
-      const updates = serializeFullCmsToSiteContentRows(cmsData);
+      const res = await fetch("/api/cms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        body: JSON.stringify({ cms: cmsData }),
+      });
 
-      const { error: upsertErr } = await supabase
-        .from("site_content")
-        .upsert(updates, { onConflict: "key" });
+      const payload = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        updatedCount?: number;
+        cms?: FullCmsData;
+        error?: string;
+      } | null;
 
-      if (upsertErr) throw upsertErr;
+      if (!res.ok || !payload?.ok) {
+        throw new Error(
+          payload?.error || `Supabase CMS save failed (HTTP ${res.status}).`
+        );
+      }
 
-      await fetch("/api/admin/revalidate", { method: "POST" });
+      if (payload.cms) {
+        setCmsData(payload.cms);
+      }
 
+      router.refresh();
       setCmsSuccess(t.admin.cmsSavedBanner);
       setTimeout(() => setCmsSuccess(null), 5000);
     } catch (err: unknown) {
