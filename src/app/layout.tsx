@@ -46,6 +46,14 @@ export const metadata: Metadata = {
   description:
     "Official Event Registration & Attendance Management System for ESME Cairo University Student Chapter.",
   keywords: ["ESME", "Cairo University", "Metrix", "Engineering", "Registration", "Attendance"],
+  icons: {
+    icon: [
+      { url: "/esme-icon.jpg?v=3", type: "image/jpeg" },
+      { url: "/favicon.ico?v=3", sizes: "any" },
+    ],
+    shortcut: "/esme-icon.jpg?v=3",
+    apple: "/esme-icon.jpg?v=3",
+  },
   openGraph: {
     title: "ESME METRIX 2026",
     description: "Official Event Registration & Attendance Management System",
