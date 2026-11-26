@@ -130,4 +130,41 @@ describe("Comprehensive CMS defaults, parsing & serialization", () => {
       "https://www.linkedin.com/company/esme-cairo-university-student-chapter/"
     );
   });
+
+  it("supports dynamic bilingual eventStats with 6-item fallback and Supabase round-trip", () => {
+    const fallback = buildFullCmsData({ [CMS_KEYS.eventStats]: "[]" });
+    expect(fallback.eventStats).toHaveLength(6);
+    expect(fallback.eventStats[0]).toEqual({
+      value: "400+",
+      label: { en: "Total Seat Capacity", ar: "إجمالي السعة الاستيعابية" },
+    });
+    expect(fallback.eventStats[5]).toEqual({
+      value: "100%",
+      label: { en: "Accredited Certificate", ar: "شهادة معتمدة" },
+    });
+
+    const customStats = [
+      { value: "600+", label: { en: "Summit Seats", ar: "مقعد للملتقى" } },
+      { value: "25+", label: { en: "Keynote Guests", ar: "متحدث رئيسي" } },
+      { value: "3", label: { en: "Technical Halls", ar: "قاعات تقنية" } },
+    ];
+    const rows = serializeFullCmsToSiteContentRows({
+      ...DEFAULT_FULL_CMS,
+      eventStats: customStats,
+    });
+    const rawMap = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+    const parsed = buildFullCmsData(rawMap);
+
+    expect(parsed.eventStats).toEqual(customStats);
+    expect(parsed.highlights).toEqual([
+      { value: "600+", label: "Summit Seats" },
+      { value: "25+", label: "Keynote Guests" },
+      { value: "3", label: "Technical Halls" },
+    ]);
+    expect(parsed.ar?.highlights).toEqual([
+      { value: "600+", label: "مقعد للملتقى" },
+      { value: "25+", label: "متحدث رئيسي" },
+      { value: "3", label: "قاعات تقنية" },
+    ]);
+  });
 });

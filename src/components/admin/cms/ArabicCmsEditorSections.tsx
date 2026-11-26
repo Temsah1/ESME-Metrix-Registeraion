@@ -8,7 +8,12 @@ import type {
   FullCmsData,
   RegistrationFormConfig,
 } from "@/lib/cms/types";
-import { CmsTextArea, CmsTextInput } from "@/components/admin/cms/CmsFormFields";
+import {
+  CmsTextArea,
+  CmsTextInput,
+  EventStatsEditorSection,
+  withUpdatedEventStats,
+} from "@/components/admin/cms/CmsFormFields";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 type CmsSectionTab =
@@ -303,23 +308,10 @@ export default function ArabicCmsEditorSections({
             }
           />
 
-          <CmsTextArea
-            label="شريط الأرقام الإحصائية (الصيغة: القيمة | الوصف في كل سطر)"
-            rows={6}
-            value={ar.highlights.map((h) => `${h.value} | ${h.label}`).join("\n")}
-            onChange={(v) =>
-              patchAr((prev) => ({
-                ...prev,
-                highlights: v
-                  .split("\n")
-                  .map((line) => line.trim())
-                  .filter(Boolean)
-                  .map((line) => {
-                    const [val, lbl] = line.split("|").map((s) => s.trim());
-                    return { value: val || "—", label: lbl || "مؤشر" };
-                  }),
-              }))
-            }
+          <EventStatsEditorSection
+            eventStats={cms.eventStats}
+            lang="ar"
+            onChange={(nextStats) => onChange(withUpdatedEventStats(cms, nextStats))}
           />
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-800">

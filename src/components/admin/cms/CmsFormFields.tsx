@@ -10,12 +10,16 @@ import {
   Trash2,
   Upload,
 } from "lucide-react";
-import type {
-  AgendaHallType,
-  AgendaSession,
-  DualHallAgendaConfig,
-  FormFieldConfig,
-  RegistrationFormConfig,
+import { DEFAULT_ARABIC_CMS } from "@/lib/cms/arabic";
+import {
+  DEFAULT_EVENT_STATS,
+  type AgendaHallType,
+  type AgendaSession,
+  type DualHallAgendaConfig,
+  type EventStatItem,
+  type FormFieldConfig,
+  type FullCmsData,
+  type RegistrationFormConfig,
 } from "@/lib/cms/types";
 
 export function CmsTextInput({
@@ -859,6 +863,188 @@ export function FormBuilderSection({
           }
         />
       </div>
+    </div>
+  );
+}
+
+/** Updates `eventStats` on CMS state while keeping `highlights` and `ar.highlights` in sync. */
+export function withUpdatedEventStats(cms: FullCmsData, nextStats: EventStatItem[]): FullCmsData {
+  return {
+    ...cms,
+    eventStats: nextStats,
+    highlights: nextStats.map((s) => ({
+      value: s.value,
+      label: s.label.en || s.label.ar || "Metric",
+    })),
+    ar: {
+      ...(cms.ar ?? DEFAULT_ARABIC_CMS),
+      highlights: nextStats.map((s) => ({
+        value: s.value,
+        label: s.label.ar || s.label.en || "مؤشر",
+      })),
+    },
+  };
+}
+
+export function EventStatsEditorSection({
+  eventStats,
+  onChange,
+  lang = "en",
+}: {
+  eventStats: EventStatItem[];
+  onChange: (nextStats: EventStatItem[]) => void;
+  lang?: "en" | "ar";
+}) {
+  const isAr = lang === "ar";
+  const items = eventStats || [];
+
+  const updateItem = (idx: number, patch: Partial<EventStatItem> & { en?: string; ar?: string }) => {
+    onChange(
+      items.map((item, i) =>
+        i === idx
+          ? {
+              value: patch.value !== undefined ? patch.value : item.value,
+              label: {
+                en: patch.en !== undefined ? patch.en : item.label.en,
+                ar: patch.ar !== undefined ? patch.ar : item.label.ar,
+              },
+            }
+          : item
+      )
+    );
+  };
+
+  const addItem = () => {
+    onChange([
+      ...items,
+      {
+        value: "10+",
+        label: {
+          en: "New Stat Highlight",
+          ar: "إحصائية جديدة",
+        },
+      },
+    ]);
+  };
+
+  const deleteItem = (idx: number) => {
+    onChange(items.filter((_, i) => i !== idx));
+  };
+
+  const restoreDefaults = () => {
+    onChange(
+      DEFAULT_EVENT_STATS.map((item) => ({
+        value: item.value,
+        label: { ...item.label },
+      }))
+    );
+  };
+
+  return (
+    <div className="space-y-3 rounded-xl border border-[#D97706]/30 bg-[#15304B]/70 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-700/80 pb-3">
+        <div>
+          <h4 className="text-xs font-bold text-[#F59E0B] uppercase tracking-wider font-mono">
+            {isAr
+              ? "شريط إحصائيات وأرقام الملتقى (Event Stats / Highlights Bar)"
+              : "Event Stats / Highlights Bar (EN + AR)"}
+          </h4>
+          <p className="text-[11px] text-slate-400 mt-0.5">
+            {isAr
+              ? "أضف أو عدّل أو احذف مؤشرات الشريط الرئيسي مع كتابة القيمة والوصف بالإنجليزية والعربية."
+              : "Add, edit, or remove landing strip stats directly synced with Supabase (fallback restores the 6 defaults if left empty)."}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={restoreDefaults}
+            className="px-2.5 py-1.5 rounded-lg border border-slate-600 text-slate-300 hover:text-white hover:border-slate-400 text-[11px] font-semibold transition-colors cursor-pointer"
+          >
+            {isAr ? "استعادة الـ 6 الافتراضية" : "Restore 6 Defaults"}
+          </button>
+          <button
+            type="button"
+            onClick={addItem}
+            className="px-3 py-1.5 rounded-lg bg-[#D97706] hover:bg-[#F59E0B] text-white text-[11px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            {isAr ? "إضافة عنصر" : "Add Stat Item"}
+          </button>
+        </div>
+      </div>
+
+      {items.length === 0 ? (
+        <div className="p-4 rounded-xl bg-[#0F243A] border border-dashed border-slate-700 text-center text-xs text-slate-400">
+          {isAr
+            ? "القائمة فارغة حالياً — سيتم عرض العناصر الـ 6 الافتراضية تلقائياً عند الحفظ أو اضغط إضافة عنصر."
+            : "No custom items — automatic fallback will render the 6 default stats unless you add items above."}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-3">
+          {items.map((stat, idx) => (
+            <div
+              key={idx}
+              className="p-3.5 rounded-xl bg-[#0F243A] border border-slate-700/80 grid grid-cols-1 md:grid-cols-12 gap-3 items-end"
+            >
+              <div className="md:col-span-2 flex flex-col gap-1">
+                <label className="text-[11px] font-semibold text-slate-300">
+                  {isAr ? `#${idx + 1} القيمة / الرقم` : `#${idx + 1} Value`}
+                </label>
+                <input
+                  type="text"
+                  dir="ltr"
+                  value={stat.value}
+                  onChange={(e) => updateItem(idx, { value: e.target.value })}
+                  placeholder="400+"
+                  className="w-full h-9 px-3 rounded-lg bg-[#15304B] border border-slate-700 focus:border-[#D97706] text-white font-mono text-xs focus:outline-none"
+                />
+              </div>
+
+              <div className="md:col-span-4 flex flex-col gap-1">
+                <label className="text-[11px] font-semibold text-slate-300">
+                  {isAr ? "الوصف بالإنجليزية (EN)" : "English Label (EN)"}
+                </label>
+                <input
+                  type="text"
+                  dir="ltr"
+                  value={stat.label.en}
+                  onChange={(e) => updateItem(idx, { en: e.target.value })}
+                  placeholder="Total Seat Capacity"
+                  className="w-full h-9 px-3 rounded-lg bg-[#15304B] border border-slate-700 focus:border-[#D97706] text-white text-xs focus:outline-none"
+                />
+              </div>
+
+              <div className="md:col-span-5 flex flex-col gap-1">
+                <label className="text-[11px] font-semibold text-slate-300">
+                  {isAr ? "الوصف بالعربية (AR)" : "Arabic Label (العربية)"}
+                </label>
+                <input
+                  type="text"
+                  dir="rtl"
+                  value={stat.label.ar}
+                  onChange={(e) => updateItem(idx, { ar: e.target.value })}
+                  placeholder="إجمالي السعة الاستيعابية"
+                  className="w-full h-9 px-3 rounded-lg bg-[#15304B] border border-slate-700 focus:border-[#D97706] text-white text-xs focus:outline-none"
+                />
+              </div>
+
+              <div className="md:col-span-1 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => deleteItem(idx)}
+                  title={isAr ? "حذف العنصر" : "Delete stat item"}
+                  aria-label={isAr ? "حذف العنصر" : "Delete stat item"}
+                  className="h-9 px-2.5 rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-colors inline-flex items-center justify-center cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -6,7 +6,7 @@ import TiltCard from "@/components/TiltCard";
 import GalleryShowcase from "@/components/GalleryShowcase";
 import DualHallAgenda from "@/components/DualHallAgenda";
 import { getLocalizedCms } from "@/lib/cms/arabic";
-import type { FullCmsData } from "@/lib/cms/types";
+import { DEFAULT_EVENT_STATS, type FullCmsData } from "@/lib/cms/types";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import {
@@ -30,7 +30,9 @@ export default function HomeLandingClient({ cms }: HomeLandingClientProps) {
   const { lang } = useLanguage();
   const t = getDictionary(lang);
   const viewCms = getLocalizedCms(cms, lang);
-  const { landing, highlights, gallery, agenda } = viewCms;
+  const { landing, gallery, agenda } = viewCms;
+  const statsItems =
+    cms.eventStats && cms.eventStats.length > 0 ? cms.eventStats : DEFAULT_EVENT_STATS;
 
   return (
     <div className="relative overflow-hidden flex-1 flex flex-col bg-[#15304B]">
@@ -178,12 +180,16 @@ export default function HomeLandingClient({ cms }: HomeLandingClientProps) {
       >
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 text-center">
-            {highlights.map((h, i) => (
+            {statsItems.map((stat, i) => (
               <div key={i} className="flex flex-col items-center">
                 <span dir="ltr" className="text-2xl sm:text-3xl font-black text-white">
-                  {h.value}
+                  {stat.value}
                 </span>
-                <span className="text-xs text-slate-300 font-medium mt-1">{h.label}</span>
+                <span className="text-xs text-slate-300 font-medium mt-1">
+                  {lang === "ar"
+                    ? stat.label.ar || stat.label.en
+                    : stat.label.en || stat.label.ar}
+                </span>
               </div>
             ))}
           </div>

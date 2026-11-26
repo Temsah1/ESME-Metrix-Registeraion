@@ -3,11 +3,11 @@ import { DEFAULT_ARABIC_CMS } from "@/lib/cms/arabic";
 import {
   DEFAULT_AGENDA_CMS,
   DEFAULT_CONFIRMATION_CMS,
+  DEFAULT_EVENT_STATS_CMS,
   DEFAULT_FOOTER_CMS,
   DEFAULT_FORM_CMS,
   DEFAULT_FULL_CMS,
   DEFAULT_GALLERY_CMS,
-  DEFAULT_HIGHLIGHTS_CMS,
   DEFAULT_LANDING_CMS,
 } from "@/lib/cms/defaults";
 import type {
@@ -16,6 +16,7 @@ import type {
   ArabicCmsData,
   ConfirmationCmsConfig,
   DualHallAgendaConfig,
+  EventStatItem,
   FooterCmsConfig,
   FullCmsData,
   GalleryItem,
@@ -28,6 +29,7 @@ import type {
 export const CMS_KEYS = {
   landing: "cms_landing",
   highlights: "cms_highlights",
+  eventStats: "eventStats",
   gallery: "cms_gallery",
   agenda: "cms_agenda",
   form: "cms_form_config",
@@ -181,6 +183,9 @@ function normalizeCommitteesList(items: unknown): string[] {
  */
 export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
   const parsedLanding = safeJsonParse<LandingCmsConfig>(raw[CMS_KEYS.landing]);
+  const parsedEventStats = safeJsonArray<EventStatItem>(
+    raw[CMS_KEYS.eventStats] || raw.event_stats || raw.cms_event_stats
+  );
   const parsedHighlights = safeJsonArray<HighlightMetric>(raw[CMS_KEYS.highlights]);
   const parsedGallery = safeJsonArray<GalleryItem>(raw[CMS_KEYS.gallery]);
   const parsedAgenda = safeJsonParse<LegacyAgendaShape>(raw[CMS_KEYS.agenda]);
@@ -213,13 +218,49 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
     landing.subtitle = raw.hero_subtitle.trim();
   }
 
-  const highlights: HighlightMetric[] =
-    parsedHighlights && parsedHighlights.length > 0
-      ? parsedHighlights.map((h, i) => ({
-          value: h?.value || DEFAULT_HIGHLIGHTS_CMS[i]?.value || "—",
-          label: h?.label || DEFAULT_HIGHLIGHTS_CMS[i]?.label || "Metric",
-        }))
-      : DEFAULT_HIGHLIGHTS_CMS;
+  const eventStats: EventStatItem[] =
+    parsedEventStats && parsedEventStats.length > 0
+      ? parsedEventStats
+          .map((item, i) => {
+            const def = DEFAULT_EVENT_STATS_CMS[i];
+            const val = typeof item?.value === "string" ? item.value.trim() : "";
+            const en = typeof item?.label?.en === "string" ? item.label.en.trim() : "";
+            const arLabel = typeof item?.label?.ar === "string" ? item.label.ar.trim() : "";
+            return {
+              value: val || def?.value || "—",
+              label: {
+                en: en || def?.label.en || "Metric",
+                ar: arLabel || def?.label.ar || en || "مؤشر",
+              },
+            };
+          })
+          .filter((item) => item.value || item.label.en || item.label.ar)
+      : parsedHighlights && parsedHighlights.length > 0
+      ? parsedHighlights.map((h, i) => {
+          const def = DEFAULT_EVENT_STATS_CMS[i];
+          const val = typeof h?.value === "string" ? h.value.trim() : "";
+          const en = typeof h?.label === "string" ? h.label.trim() : "";
+          const arExisting =
+            typeof parsedArabic?.highlights?.[i]?.label === "string"
+              ? parsedArabic.highlights[i].label.trim()
+              : "";
+          return {
+            value: val || def?.value || "—",
+            label: {
+              en: en || def?.label.en || "Metric",
+              ar: arExisting || def?.label.ar || en || "مؤشر",
+            },
+          };
+        })
+      : DEFAULT_EVENT_STATS_CMS.map((item) => ({
+          value: item.value,
+          label: { ...item.label },
+        }));
+
+  const highlights: HighlightMetric[] = eventStats.map((s) => ({
+    value: s.value,
+    label: s.label.en,
+  }));
 
   const gallery: GalleryItem[] = Array.from({ length: 8 }, (_, idx) => {
     const def = DEFAULT_GALLERY_CMS[idx];
@@ -369,10 +410,10 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
           ? parsedArabic.landing.experienceBullets
           : DEFAULT_ARABIC_CMS.landing.experienceBullets,
     },
-    highlights:
-      Array.isArray(parsedArabic?.highlights) && parsedArabic.highlights.length > 0
-        ? parsedArabic.highlights
-        : DEFAULT_ARABIC_CMS.highlights,
+    highlights: eventStats.map((s) => ({
+      value: s.value,
+      label: s.label.ar,
+    })),
     gallery:
       Array.isArray(parsedArabic?.gallery) && parsedArabic.gallery.length > 0
         ? parsedArabic.gallery
@@ -435,6 +476,7 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
     ticketBgUrl: raw.ticket_bg_url?.trim() || DEFAULT_FULL_CMS.ticketBgUrl,
     landing,
     highlights,
+    eventStats,
     gallery,
     agenda,
     form,
@@ -462,6 +504,31 @@ export function serializeFullCmsToSiteContentRows(cms: FullCmsData): SiteContent
   const sortedAgenda: DualHallAgendaConfig = {
     ...cms.agenda,
     sessions: [...cms.agenda.sessions].sort((a, b) => a.sortOrder - b.sortOrder),
+  };
+  const normalizedEventStats: EventStatItem[] =
+    cms.eventStats && cms.eventStats.length > 0
+      ? cms.eventStats.map((item, i) => {
+          const def = DEFAULT_EVENT_STATS_CMS[i];
+          const val = item?.value?.trim() || def?.value || "—";
+          const en = item?.label?.en?.trim() || def?.label.en || "Metric";
+          const arLabel = item?.label?.ar?.trim() || def?.label.ar || en || "مؤشر";
+          return { value: val, label: { en, ar: arLabel } };
+        })
+      : DEFAULT_EVENT_STATS_CMS.map((item) => ({
+          value: item.value,
+          label: { ...item.label },
+        }));
+  const syncedHighlights = normalizedEventStats.map((s) => ({
+    value: s.value,
+    label: s.label.en,
+  }));
+  const baseArabic = cms.ar ?? DEFAULT_ARABIC_CMS;
+  const syncedArabic: ArabicCmsData = {
+    ...baseArabic,
+    highlights: normalizedEventStats.map((s) => ({
+      value: s.value,
+      label: s.label.ar,
+    })),
   };
 
   return [
@@ -579,8 +646,16 @@ export function serializeFullCmsToSiteContentRows(cms: FullCmsData): SiteContent
     },
     {
       key: CMS_KEYS.highlights,
-      value: JSON.stringify(cms.highlights),
+      value: JSON.stringify(syncedHighlights),
       label: "Highlights Metrics Strip (JSON)",
+      category: "CMS JSON",
+      field_type: "json",
+      updated_at: now,
+    },
+    {
+      key: CMS_KEYS.eventStats,
+      value: JSON.stringify(normalizedEventStats),
+      label: "Landing Event Stats Bar (Bilingual JSON)",
       category: "CMS JSON",
       field_type: "json",
       updated_at: now,
@@ -627,7 +702,7 @@ export function serializeFullCmsToSiteContentRows(cms: FullCmsData): SiteContent
     },
     {
       key: CMS_KEYS.arabic,
-      value: JSON.stringify(cms.ar ?? DEFAULT_ARABIC_CMS),
+      value: JSON.stringify(syncedArabic),
       label: "Arabic Bilingual Content Config (JSON)",
       category: "CMS JSON",
       field_type: "json",

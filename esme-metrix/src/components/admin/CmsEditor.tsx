@@ -23,8 +23,10 @@ import {
   CmsImageField,
   CmsTextArea,
   CmsTextInput,
+  EventStatsEditorSection,
   FormBuilderSection,
   WireframeAgendaEditor,
+  withUpdatedEventStats,
 } from "@/components/admin/cms/CmsFormFields";
 import ArabicCmsEditorSections from "@/components/admin/cms/ArabicCmsEditorSections";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -504,24 +506,10 @@ export default function CmsEditor({
             <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono border-b border-slate-800 pb-2">
               Metrics Strip, Certificate Spotlight &amp; Final CTA
             </h3>
-            <CmsTextArea
-              label="Homepage 6-Column Highlights (Format: Value | Label per line)"
-              rows={6}
-              mono
-              value={cms.highlights.map((h) => `${h.value} | ${h.label}`).join("\n")}
-              onChange={(v) =>
-                onChange({
-                  ...cms,
-                  highlights: v
-                    .split("\n")
-                    .map((line) => line.trim())
-                    .filter(Boolean)
-                    .map((line) => {
-                      const [val, lbl] = line.split("|").map((s) => s.trim());
-                      return { value: val || "—", label: lbl || "Metric" };
-                    }),
-                })
-              }
+            <EventStatsEditorSection
+              eventStats={cms.eventStats}
+              lang={lang}
+              onChange={(nextStats) => onChange(withUpdatedEventStats(cms, nextStats))}
             />
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

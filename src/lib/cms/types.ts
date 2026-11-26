@@ -36,6 +36,23 @@ export interface HighlightMetric {
   label: string;
 }
 
+export interface EventStatItem {
+  value: string;
+  label: {
+    en: string;
+    ar: string;
+  };
+}
+
+export const DEFAULT_EVENT_STATS: EventStatItem[] = [
+  { value: "400+", label: { en: "Total Seat Capacity", ar: "إجمالي السعة الاستيعابية" } },
+  { value: "15+", label: { en: "Keynote & Tech Speakers", ar: "متحدث رئيسي وتقني" } },
+  { value: "2", label: { en: "Parallel Conference Halls", ar: "قاعات مؤتمرات متوازية" } },
+  { value: "8+", label: { en: "Specialized Workshops", ar: "ورش عمل متخصصة" } },
+  { value: "15+", label: { en: "Industry Partners", ar: "شريك صناعي" } },
+  { value: "100%", label: { en: "Accredited Certificate", ar: "شهادة معتمدة" } },
+];
+
 export interface GalleryItem {
   id: string;
   url: string;
@@ -262,6 +279,7 @@ export interface FullCmsData {
   ticketBgUrl: string;
   landing: LandingCmsConfig;
   highlights: HighlightMetric[];
+  eventStats: EventStatItem[];
   gallery: GalleryItem[];
   agenda: DualHallAgendaConfig;
   form: RegistrationFormConfig;

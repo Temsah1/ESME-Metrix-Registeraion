@@ -8,15 +8,17 @@ import {
   LINKEDIN_POST_TEXT,
   OFFICIAL_ESME_LINKEDIN_URL,
 } from "@/config/registration";
-import type {
-  ConfirmationCmsConfig,
-  DualHallAgendaConfig,
-  FooterCmsConfig,
-  FullCmsData,
-  GalleryItem,
-  HighlightMetric,
-  LandingCmsConfig,
-  RegistrationFormConfig,
+import {
+  DEFAULT_EVENT_STATS,
+  type ConfirmationCmsConfig,
+  type DualHallAgendaConfig,
+  type EventStatItem,
+  type FooterCmsConfig,
+  type FullCmsData,
+  type GalleryItem,
+  type HighlightMetric,
+  type LandingCmsConfig,
+  type RegistrationFormConfig,
 } from "@/lib/cms/types";
 import { DEFAULT_ARABIC_CMS } from "@/lib/cms/arabic";
 
@@ -81,14 +83,15 @@ export const DEFAULT_LANDING_CMS: LandingCmsConfig = {
   ctaButtonLabel: "REGISTER NOW — FREE ADMISSION",
 };
 
-export const DEFAULT_HIGHLIGHTS_CMS: HighlightMetric[] = [
-  { value: "400+", label: "Total Seat Capacity" },
-  { value: "15+", label: "Keynote & Tech Speakers" },
-  { value: "2", label: "Parallel Conference Halls" },
-  { value: "8+", label: "Specialized Workshops" },
-  { value: "15+", label: "Industry Partners" },
-  { value: "100%", label: "Accredited Certificate" },
-];
+export const DEFAULT_EVENT_STATS_CMS: EventStatItem[] = DEFAULT_EVENT_STATS.map((item) => ({
+  value: item.value,
+  label: { ...item.label },
+}));
+
+export const DEFAULT_HIGHLIGHTS_CMS: HighlightMetric[] = DEFAULT_EVENT_STATS_CMS.map((item) => ({
+  value: item.value,
+  label: item.label.en,
+}));
 
 export const DEFAULT_GALLERY_CMS: GalleryItem[] = [
   {
@@ -507,6 +510,7 @@ export const DEFAULT_FULL_CMS: FullCmsData = {
   ticketBgUrl: "/images/ticket-bg.jpg",
   landing: DEFAULT_LANDING_CMS,
   highlights: DEFAULT_HIGHLIGHTS_CMS,
+  eventStats: DEFAULT_EVENT_STATS_CMS,
   gallery: DEFAULT_GALLERY_CMS,
   agenda: DEFAULT_AGENDA_CMS,
   form: DEFAULT_FORM_CMS,

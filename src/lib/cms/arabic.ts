@@ -1,5 +1,5 @@
 import type { AppLanguage } from "@/lib/i18n/types";
-import type { ArabicCmsData, FullCmsData } from "@/lib/cms/types";
+import { DEFAULT_EVENT_STATS, type ArabicCmsData, type FullCmsData } from "@/lib/cms/types";
 
 export const DEFAULT_ARABIC_CMS: ArabicCmsData = {
   eventDate: "12 ديسمبر 2026",
@@ -63,14 +63,10 @@ export const DEFAULT_ARABIC_CMS: ArabicCmsData = {
       "أكمل خطوات التسجيل الأربع للحصول فوراً على تذكرة QR الرقمية، لوحة المشارك الخاصة بك، وبطاقة المشاركة على LinkedIn.",
     ctaButtonLabel: "سجّل الآن — الدعوة مجانية",
   },
-  highlights: [
-    { value: "400+", label: "السعة الاستيعابية الإجمالية" },
-    { value: "15+", label: "متحدثاً وخبيراً صناعياً" },
-    { value: "2", label: "قاعات مؤتمرات متوازية" },
-    { value: "8+", label: "ورش عمل وجلسات متخصصة" },
-    { value: "15+", label: "شريكاً وجهة صناعية" },
-    { value: "100%", label: "شهادة حضور معتمدة" },
-  ],
+  highlights: DEFAULT_EVENT_STATS.map((item) => ({
+    value: item.value,
+    label: item.label.ar,
+  })),
   gallery: [
     {
       id: "gal-1",
@@ -489,10 +485,19 @@ export function getLocalizedCms(cms: FullCmsData, lang: AppLanguage): FullCmsDat
       ctaDescription: strOrFallback(arLanding.ctaDescription, fallback.landing.ctaDescription),
       ctaButtonLabel: strOrFallback(arLanding.ctaButtonLabel, fallback.landing.ctaButtonLabel),
     },
-    highlights: cms.highlights.map((h, idx) => ({
-      value: strOrFallback(ar.highlights?.[idx]?.value ?? fallback.highlights[idx]?.value, h.value),
-      label: strOrFallback(ar.highlights?.[idx]?.label ?? fallback.highlights[idx]?.label, h.label),
-    })),
+    highlights:
+      cms.eventStats && cms.eventStats.length > 0
+        ? cms.eventStats.map((stat, idx) => ({
+            value: stat.value,
+            label: strOrFallback(
+              stat.label.ar || ar.highlights?.[idx]?.label || fallback.highlights[idx]?.label,
+              stat.label.en
+            ),
+          }))
+        : cms.highlights.map((h, idx) => ({
+            value: strOrFallback(ar.highlights?.[idx]?.value ?? fallback.highlights[idx]?.value, h.value),
+            label: strOrFallback(ar.highlights?.[idx]?.label ?? fallback.highlights[idx]?.label, h.label),
+          })),
     gallery: mergedGallery,
     agenda: {
       eyebrow: strOrFallback(arAgenda.eyebrow, fallback.agenda.eyebrow),
