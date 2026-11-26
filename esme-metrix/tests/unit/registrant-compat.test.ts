@@ -21,10 +21,9 @@ describe("Registrant Supabase schema compatibility helpers", () => {
         faculty: "Engineering (الهندسة)",
         department: "Chemical Engineering",
         isEsmeMember: true,
-        committee: "IT",
-        role: "Head",
+        committee: "Quality Sector",
       })
-    ).toBe("Engineering (الهندسة) — Chemical Engineering [ESME: IT / Head]");
+    ).toBe("Engineering (الهندسة) — Chemical Engineering [ESME: Quality Sector]");
   });
 
   it("extracts missing column names from PostgREST and Postgres errors", () => {
@@ -57,15 +56,14 @@ describe("Registrant Supabase schema compatibility helpers", () => {
       faculty: "Engineering (الهندسة)",
       department: "Materials & Metallurgical Engineering",
       is_esme_member: true,
-      committee: "IT",
-      role: "Member",
+      committee: "Quality Sector",
       id_photo_url: "https://proj.supabase.co/storage/v1/object/public/photos/id.jpg",
     };
 
     const ctx = {
       idPhotoUrl: baseRow.id_photo_url,
       legacyFaculty:
-        "Engineering (الهندسة) — Materials & Metallurgical Engineering [ESME: IT / Member]",
+        "Engineering (الهندسة) — Materials & Metallurgical Engineering [ESME: Quality Sector]",
     };
 
     const step1 = adaptInsertRowForSchemaError(

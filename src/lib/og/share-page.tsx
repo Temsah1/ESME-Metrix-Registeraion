@@ -59,7 +59,7 @@ async function resolveShareAttendee(
       const { data: primaryData, error: primaryError } = await supabase
         .from("registrants")
         .select(
-          "full_name, university, faculty, department, job_title, is_esme_member, committee, role, avatar_url"
+          "full_name, university, faculty, department, job_title, is_esme_member, committee, avatar_url"
         )
         .eq("registration_id", ticketId)
         .maybeSingle();
@@ -77,7 +77,6 @@ async function resolveShareAttendee(
             department: legacyRes.data.faculty,
             is_esme_member: false,
             committee: null,
-            role: null,
           };
         }
       }
@@ -94,7 +93,6 @@ async function resolveShareAttendee(
           faculty: data.faculty,
           isEsmeMember: data.is_esme_member,
           committee: data.committee,
-          role: data.role,
         });
       }
     }

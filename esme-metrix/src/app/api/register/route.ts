@@ -99,7 +99,6 @@ export async function POST(request: NextRequest) {
       department: resolvedDepartment,
       isEsmeMember: Boolean(data.isEsmeMember),
       committee,
-      role,
     });
 
     let insertError: { code?: string; message?: string } | null = null;

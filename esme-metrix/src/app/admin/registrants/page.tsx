@@ -97,7 +97,11 @@ export default function RegistrantsPage() {
       City: r.city,
       "Job Title": r.job_title,
       Company: r.company || "N/A",
-      "ESME Member": r.is_esme_member ? "Yes" : "No",
+      "ESME Member": r.is_esme_member
+        ? r.committee
+          ? `ESME Member — ${r.committee}`
+          : "ESME Member"
+        : "No",
       Committee: r.is_esme_member ? r.committee || "N/A" : "N/A",
       "LinkedIn Shared": r.linkedin_shared ? "Yes" : "No",
       "Registration Date": new Date(r.created_at).toLocaleString(),
@@ -389,7 +393,11 @@ export default function RegistrantsPage() {
               <div>
                 <strong className="text-slate-400">{t.register.reviewEsmeLabel}:</strong>{" "}
                 {selectedRegistrant.is_esme_member
-                  ? t.register.yesEsmeMember
+                  ? selectedRegistrant.committee
+                    ? lang === "ar"
+                      ? `عضو ESME — ${localizeCommittee(selectedRegistrant.committee, lang)}`
+                      : `ESME Member — ${selectedRegistrant.committee}`
+                    : t.register.yesEsmeMember
                   : t.register.noEsmeMember}
               </div>
               {selectedRegistrant.is_esme_member && (
