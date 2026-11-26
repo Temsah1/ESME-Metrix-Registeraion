@@ -223,6 +223,13 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
         : DEFAULT_LANDING_CMS.experienceBullets,
   };
 
+  if (
+    landing.subtitle.includes("هندسة الكيمياء") ||
+    landing.subtitle.includes("الميكانيكا")
+  ) {
+    landing.subtitle = DEFAULT_LANDING_CMS.subtitle;
+  }
+
   if (parsedLanding?.aboutText == null && raw.about_text?.trim()) {
     landing.aboutText = raw.about_text.trim();
   }
@@ -576,7 +583,12 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
 
   return {
     eventDate: pickString(raw.event_date, DEFAULT_FULL_CMS.eventDate),
-    eventVenue: pickString(raw.event_venue, DEFAULT_FULL_CMS.eventVenue),
+    eventVenue: (() => {
+      const saved = pickString(raw.event_venue, DEFAULT_FULL_CMS.eventVenue);
+      return /faculty of engineering|كلية الهندسة/i.test(saved)
+        ? DEFAULT_FULL_CMS.eventVenue
+        : saved;
+    })(),
     eventTime: pickString(raw.event_time, DEFAULT_FULL_CMS.eventTime),
     eventMapsUrl: raw[CMS_KEYS.eventMapsUrl]?.trim() || DEFAULT_FULL_CMS.eventMapsUrl,
     heroLogoUrl,
