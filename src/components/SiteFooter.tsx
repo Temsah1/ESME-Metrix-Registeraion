@@ -164,6 +164,7 @@ export default function SiteFooter({
             {activeFooter.portalUrl && (
               <motion.a
                 whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.97 }}
                 transition={{ duration: 0.15 }}
                 href={activeFooter.portalUrl}
                 target="_blank"
@@ -185,6 +186,7 @@ export default function SiteFooter({
                   <motion.a
                     key={item.id}
                     whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.92 }}
                     transition={{ duration: 0.15 }}
                     href={item.url}
                     target={isMail ? undefined : "_blank"}

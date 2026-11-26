@@ -261,12 +261,12 @@ export interface OgHighlightItem {
 }
 
 export const DEFAULT_OG_HIGHLIGHTS: OgHighlightItem[] = [
-  { value: "500+", label: "ATTENDEES" },
-  { value: "15+", label: "SPEAKERS" },
-  { value: "10+", label: "WORKSHOPS" },
-  { value: "12+", label: "PARTNERS" },
+  { value: "370", label: "SEATS" },
+  { value: "11", label: "TECH SESSIONS" },
+  { value: "1", label: "HR SESSION" },
+  { value: "8", label: "HOURS" },
   { value: "2", label: "HALLS" },
-  { value: "1", label: "CONFERENCE" },
+  { value: "1", label: "ATTENDANCE CERTIFICATE" },
 ];
 
 export const DEFAULT_OG_HIGHLIGHTS_TEXT = DEFAULT_OG_HIGHLIGHTS.map(
@@ -304,7 +304,7 @@ export const OFFICIAL_ESME_LINKEDIN_URL =
 
 export const LINKEDIN_POST_TEXT = `I'm attending ESME METRIX!
 
-Join us on 12 December 2026 at Cairo University for an exciting event exploring the world of Materials Engineering, innovation, and advanced materials.
+Join us on Saturday, December 12, 2026, from 9:00 AM to 5:00 PM at DRTPC, Cairo University. Explore 11 technical sessions across two halls, plus a practical HR session on CV writing and interviews.
 
 Discover, learn, and connect with fellow engineering students.
 

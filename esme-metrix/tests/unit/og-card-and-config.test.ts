@@ -80,7 +80,7 @@ describe("OG Card template slots, highlights & LinkedIn copy", () => {
     expect(rendered).toContain("I'm attending ESME METRIX!");
     expect(rendered).not.toContain("*ESME METRIX*");
     expect(rendered).toContain(
-      "Join us on 12 December 2026 at Cairo University for an exciting event exploring the world of Materials Engineering, innovation, and advanced materials."
+      "Join us on Saturday, December 12, 2026, from 9:00 AM to 5:00 PM at DRTPC, Cairo University. Explore 11 technical sessions across two halls, plus a practical HR session on CV writing and interviews."
     );
     expect(rendered).toContain(
       "Discover, learn, and connect with fellow engineering students."

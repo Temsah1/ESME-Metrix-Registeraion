@@ -76,6 +76,7 @@ export default function GalleryShowcase({
             type="button"
             onClick={() => setActiveLightbox({ ...item, url: resolveSrc(item, idx) })}
             whileHover={{ y: -4 }}
+            whileTap={{ scale: 0.985 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
             aria-label={`${item.caption} — ${t.gallery.zoomPhoto}`}
             className="group relative aspect-[4/3] rounded-2xl overflow-hidden bg-[#0F243A] border border-slate-800 hover:border-[#F59E0B]/55 shadow-lg text-start cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F59E0B]"
@@ -135,7 +136,7 @@ export default function GalleryShowcase({
               <button
                 type="button"
                 onClick={() => setActiveLightbox({ ...item, url: resolveSrc(item, idx) })}
-                className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-[#0F243A] border border-slate-800 shadow-lg text-start block"
+                className="touch-press relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-[#0F243A] border border-slate-800 shadow-lg text-start block"
               >
                 <Image
                   src={resolveSrc(item, idx)}

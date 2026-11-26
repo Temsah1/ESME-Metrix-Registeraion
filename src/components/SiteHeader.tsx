@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getDictionary } from "@/lib/i18n/dictionary";
 
@@ -61,17 +60,15 @@ export default function SiteHeader({ heroLogoUrl }: SiteHeaderProps) {
             {t.nav.agenda}
           </Link>
 
-          <LanguageSwitcher compact />
-
           <Link
             href="/dashboard"
-            className="text-[11px] sm:text-sm px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-200 hover:text-white hover:border-emerald-400 transition-all font-semibold whitespace-nowrap"
+            className="touch-press hidden sm:inline-flex text-[11px] sm:text-sm px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-200 hover:text-white hover:border-emerald-400 transition-all font-semibold whitespace-nowrap"
           >
             {t.nav.memberDashboard}
           </Link>
           <Link
             href="/register"
-            className="text-[11px] sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold hover:brightness-110 transition-all shadow-[0_0_15px_rgba(217,119,6,0.3)] whitespace-nowrap"
+            className="touch-press text-[11px] sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold hover:brightness-110 transition-all shadow-[0_0_15px_rgba(217,119,6,0.3)] whitespace-nowrap"
           >
             {t.nav.registerNow}
           </Link>

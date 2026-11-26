@@ -45,12 +45,12 @@ export interface EventStatItem {
 }
 
 export const DEFAULT_EVENT_STATS: EventStatItem[] = [
-  { value: "400+", label: { en: "Total Seat Capacity", ar: "إجمالي السعة الاستيعابية" } },
-  { value: "15+", label: { en: "Keynote & Tech Speakers", ar: "متحدث رئيسي وتقني" } },
-  { value: "2", label: { en: "Parallel Conference Halls", ar: "قاعات مؤتمرات متوازية" } },
-  { value: "8+", label: { en: "Specialized Workshops", ar: "ورش عمل متخصصة" } },
-  { value: "15+", label: { en: "Industry Partners", ar: "شريك صناعي" } },
-  { value: "100%", label: { en: "Accredited Certificate", ar: "شهادة معتمدة" } },
+  { value: "370", label: { en: "Total Seats", ar: "إجمالي المقاعد" } },
+  { value: "11", label: { en: "Technical Sessions", ar: "جلسة تقنية" } },
+  { value: "2", label: { en: "Parallel Halls", ar: "قاعتان بالتوازي" } },
+  { value: "1", label: { en: "HR Career Session", ar: "جلسة مهنية HR" } },
+  { value: "8", label: { en: "Hours of Programming", ar: "ساعات الفعالية" } },
+  { value: "✓", label: { en: "Certificate for Full-Day Attendance", ar: "شهادة للحضور طوال اليوم" } },
 ];
 
 export interface GalleryItem {

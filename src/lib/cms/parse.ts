@@ -36,6 +36,7 @@ export const CMS_KEYS = {
   confirmation: "cms_confirmation",
   footer: "cms_footer",
   arabic: "cms_arabic",
+  contentVersion: "cms_event_content_version",
   eventMapsUrl: "event_maps_url",
   postRegistrationWhatsappUrl: "post_registration_whatsapp_url",
 } as const;
@@ -163,6 +164,7 @@ function parseAgendaConfig(parsed: LegacyAgendaShape | null): DualHallAgendaConf
 }
 
 const LEGACY_LINKEDIN_COMPANY_URL = "https://www.linkedin.com/company/esme-cairo-university/";
+const CURRENT_EVENT_CONTENT_VERSION = "2026-12-drtpc-v1";
 const LEGACY_COMMITTEES_SIGNATURES = new Set([
   "digital|it|marketing",
   "digital|high board|it|marketing",
@@ -209,17 +211,55 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
   const parsedConfirmation = safeJsonParse<ConfirmationCmsConfig>(raw[CMS_KEYS.confirmation]);
   const parsedFooter = safeJsonParse<FooterCmsConfig>(raw[CMS_KEYS.footer]);
   const parsedArabic = safeJsonParse<ArabicCmsData>(raw[CMS_KEYS.arabic]);
+  const isLegacyPublishedEvent =
+    raw[CMS_KEYS.contentVersion] !== CURRENT_EVENT_CONTENT_VERSION &&
+    raw.event_venue?.trim() === "Cairo University" &&
+    Array.isArray(parsedAgenda?.sessions) &&
+    parsedAgenda.sessions.some(
+      (session) =>
+        session !== null &&
+        typeof session === "object" &&
+        "title" in session &&
+        session.title === "Future of Smart & Green Metallurgy"
+    );
+  const cmsLanding = isLegacyPublishedEvent ? null : parsedLanding;
+  const cmsEventStats = isLegacyPublishedEvent ? null : parsedEventStats;
+  const cmsHighlights = isLegacyPublishedEvent ? null : parsedHighlights;
+  const cmsAgenda = isLegacyPublishedEvent ? null : parsedAgenda;
+  const cmsConfirmation = isLegacyPublishedEvent ? null : parsedConfirmation;
+  const cmsArabic: Partial<ArabicCmsData> | null = isLegacyPublishedEvent
+    ? {
+        ...parsedArabic,
+        eventDate: DEFAULT_ARABIC_CMS.eventDate,
+        eventVenue: DEFAULT_ARABIC_CMS.eventVenue,
+        eventTime: DEFAULT_ARABIC_CMS.eventTime,
+        landing: DEFAULT_ARABIC_CMS.landing,
+        highlights: DEFAULT_ARABIC_CMS.highlights,
+        agenda: DEFAULT_ARABIC_CMS.agenda,
+        confirmation: {
+          ...DEFAULT_ARABIC_CMS.confirmation,
+          ...parsedArabic?.confirmation,
+          linkedinCaption: DEFAULT_ARABIC_CMS.confirmation.linkedinCaption,
+          checklist: DEFAULT_ARABIC_CMS.confirmation.checklist,
+        },
+        footer: {
+          ...DEFAULT_ARABIC_CMS.footer,
+          ...parsedArabic?.footer,
+          eventMeta: DEFAULT_ARABIC_CMS.footer.eventMeta,
+        },
+      }
+    : parsedArabic;
 
   const landing: LandingCmsConfig = {
     ...DEFAULT_LANDING_CMS,
-    ...stripNullish(parsedLanding),
+    ...stripNullish(cmsLanding),
     storyPillars:
-      Array.isArray(parsedLanding?.storyPillars) && parsedLanding.storyPillars.length > 0
-        ? parsedLanding.storyPillars
+      Array.isArray(cmsLanding?.storyPillars) && cmsLanding.storyPillars.length > 0
+        ? cmsLanding.storyPillars
         : DEFAULT_LANDING_CMS.storyPillars,
     experienceBullets:
-      Array.isArray(parsedLanding?.experienceBullets) && parsedLanding.experienceBullets.length > 0
-        ? parsedLanding.experienceBullets
+      Array.isArray(cmsLanding?.experienceBullets) && cmsLanding.experienceBullets.length > 0
+        ? cmsLanding.experienceBullets
         : DEFAULT_LANDING_CMS.experienceBullets,
   };
 
@@ -230,19 +270,19 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
     landing.subtitle = DEFAULT_LANDING_CMS.subtitle;
   }
 
-  if (parsedLanding?.aboutText == null && raw.about_text?.trim()) {
+  if (!isLegacyPublishedEvent && parsedLanding?.aboutText == null && raw.about_text?.trim()) {
     landing.aboutText = raw.about_text.trim();
   }
-  if (parsedLanding?.titleHighlight == null && raw.hero_headline?.trim()) {
+  if (!isLegacyPublishedEvent && parsedLanding?.titleHighlight == null && raw.hero_headline?.trim()) {
     landing.titleHighlight = raw.hero_headline.trim();
   }
-  if (parsedLanding?.subtitle == null && raw.hero_subtitle?.trim()) {
+  if (!isLegacyPublishedEvent && parsedLanding?.subtitle == null && raw.hero_subtitle?.trim()) {
     landing.subtitle = raw.hero_subtitle.trim();
   }
 
   const eventStats: EventStatItem[] =
-    parsedEventStats && parsedEventStats.length > 0
-      ? parsedEventStats
+    cmsEventStats && cmsEventStats.length > 0
+      ? cmsEventStats
           .map((item, i) => {
             const def = DEFAULT_EVENT_STATS_CMS[i];
             const val = typeof item?.value === "string" ? item.value.trim() : "";
@@ -257,8 +297,8 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
             };
           })
           .filter((item) => item.value || item.label.en || item.label.ar)
-      : parsedHighlights && parsedHighlights.length > 0
-      ? parsedHighlights.map((h, i) => {
+      : cmsHighlights && cmsHighlights.length > 0
+      ? cmsHighlights.map((h, i) => {
           const def = DEFAULT_EVENT_STATS_CMS[i];
           const val = typeof h?.value === "string" ? h.value.trim() : "";
           const en = typeof h?.label === "string" ? h.label.trim() : "";
@@ -324,7 +364,7 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
           };
         });
 
-  const agenda = parseAgendaConfig(parsedAgenda);
+  const agenda = parseAgendaConfig(cmsAgenda);
 
   const form: RegistrationFormConfig = {
     ...DEFAULT_FORM_CMS,
@@ -455,23 +495,29 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
 
   const confirmation: ConfirmationCmsConfig = {
     ...DEFAULT_CONFIRMATION_CMS,
-    ...stripNullish(parsedConfirmation),
+    ...stripNullish(cmsConfirmation),
     postRegistrationWhatsappUrl:
       parsedConfirmation?.postRegistrationWhatsappUrl?.trim() ||
       raw[CMS_KEYS.postRegistrationWhatsappUrl]?.trim() ||
       raw.whatsapp_group_url?.trim() ||
       DEFAULT_CONFIRMATION_CMS.postRegistrationWhatsappUrl,
-    linkedinCaption: normalizeLinkedinCaption(
-      parsedConfirmation?.linkedinCaption?.trim() || raw.linkedin_caption?.trim()
-    ),
+    linkedinCaption: isLegacyPublishedEvent
+      ? DEFAULT_CONFIRMATION_CMS.linkedinCaption
+      : normalizeLinkedinCaption(
+          parsedConfirmation?.linkedinCaption?.trim() || raw.linkedin_caption?.trim()
+        ),
     ogHighlightsText:
-      typeof parsedConfirmation?.ogHighlightsText === "string"
+      isLegacyPublishedEvent
+        ? DEFAULT_CONFIRMATION_CMS.ogHighlightsText
+        : typeof parsedConfirmation?.ogHighlightsText === "string"
         ? parsedConfirmation.ogHighlightsText
         : typeof raw.og_highlights === "string"
         ? raw.og_highlights
         : DEFAULT_CONFIRMATION_CMS.ogHighlightsText,
     checklist:
-      Array.isArray(parsedConfirmation?.checklist) && parsedConfirmation.checklist.length > 0
+      !isLegacyPublishedEvent &&
+      Array.isArray(parsedConfirmation?.checklist) &&
+      parsedConfirmation.checklist.length > 0
         ? parsedConfirmation.checklist
         : DEFAULT_CONFIRMATION_CMS.checklist,
   };
@@ -493,6 +539,9 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
   const footer: FooterCmsConfig = {
     ...DEFAULT_FOOTER_CMS,
     ...stripNullish(parsedFooter),
+    eventMeta: isLegacyPublishedEvent
+      ? DEFAULT_FOOTER_CMS.eventMeta
+      : pickString(parsedFooter?.eventMeta, DEFAULT_FOOTER_CMS.eventMeta),
     socialLinks,
   };
 
@@ -501,21 +550,26 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
   void _legacyArRole;
 
   const ar: ArabicCmsData = {
-    eventDate: pickString(parsedArabic?.eventDate, DEFAULT_ARABIC_CMS.eventDate),
-    eventVenue: pickString(parsedArabic?.eventVenue, DEFAULT_ARABIC_CMS.eventVenue),
-    eventTime: pickString(parsedArabic?.eventTime, DEFAULT_ARABIC_CMS.eventTime),
+    eventDate: pickString(cmsArabic?.eventDate, DEFAULT_ARABIC_CMS.eventDate),
+    eventVenue: (() => {
+      const saved = pickString(cmsArabic?.eventVenue, DEFAULT_ARABIC_CMS.eventVenue);
+      return /جامعة القاهرة|faculty of engineering|كلية الهندسة/i.test(saved)
+        ? DEFAULT_ARABIC_CMS.eventVenue
+        : saved;
+    })(),
+    eventTime: pickString(cmsArabic?.eventTime, DEFAULT_ARABIC_CMS.eventTime),
     landing: {
       ...DEFAULT_ARABIC_CMS.landing,
-      ...stripNullish(parsedArabic?.landing),
+      ...stripNullish(cmsArabic?.landing),
       storyPillars:
-        Array.isArray(parsedArabic?.landing?.storyPillars) &&
-        parsedArabic.landing.storyPillars.length > 0
-          ? parsedArabic.landing.storyPillars
+        Array.isArray(cmsArabic?.landing?.storyPillars) &&
+        cmsArabic.landing.storyPillars.length > 0
+          ? cmsArabic.landing.storyPillars
           : DEFAULT_ARABIC_CMS.landing.storyPillars,
       experienceBullets:
-        Array.isArray(parsedArabic?.landing?.experienceBullets) &&
-        parsedArabic.landing.experienceBullets.length > 0
-          ? parsedArabic.landing.experienceBullets
+        Array.isArray(cmsArabic?.landing?.experienceBullets) &&
+        cmsArabic.landing.experienceBullets.length > 0
+          ? cmsArabic.landing.experienceBullets
           : DEFAULT_ARABIC_CMS.landing.experienceBullets,
     },
     highlights: eventStats.map((s) => ({
@@ -528,10 +582,10 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
         : DEFAULT_ARABIC_CMS.gallery,
     agenda: {
       ...DEFAULT_ARABIC_CMS.agenda,
-      ...stripNullish(parsedArabic?.agenda),
+      ...stripNullish(cmsArabic?.agenda),
       sessions: {
         ...DEFAULT_ARABIC_CMS.agenda.sessions,
-        ...(parsedArabic?.agenda?.sessions || {}),
+        ...(cmsArabic?.agenda?.sessions || {}),
       },
     },
     form: {
@@ -582,15 +636,22 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
       : rawHeroLogo;
 
   return {
-    eventDate: pickString(raw.event_date, DEFAULT_FULL_CMS.eventDate),
+    eventDate: isLegacyPublishedEvent
+      ? DEFAULT_FULL_CMS.eventDate
+      : pickString(raw.event_date, DEFAULT_FULL_CMS.eventDate),
     eventVenue: (() => {
       const saved = pickString(raw.event_venue, DEFAULT_FULL_CMS.eventVenue);
-      return /faculty of engineering|كلية الهندسة/i.test(saved)
+      if (isLegacyPublishedEvent) return DEFAULT_FULL_CMS.eventVenue;
+      return /Cairo University|faculty of engineering|كلية الهندسة/i.test(saved)
         ? DEFAULT_FULL_CMS.eventVenue
         : saved;
     })(),
-    eventTime: pickString(raw.event_time, DEFAULT_FULL_CMS.eventTime),
-    eventMapsUrl: raw[CMS_KEYS.eventMapsUrl]?.trim() || DEFAULT_FULL_CMS.eventMapsUrl,
+    eventTime: isLegacyPublishedEvent
+      ? DEFAULT_FULL_CMS.eventTime
+      : pickString(raw.event_time, DEFAULT_FULL_CMS.eventTime),
+    eventMapsUrl: isLegacyPublishedEvent
+      ? DEFAULT_FULL_CMS.eventMapsUrl
+      : raw[CMS_KEYS.eventMapsUrl]?.trim() || DEFAULT_FULL_CMS.eventMapsUrl,
     heroLogoUrl,
     ticketBgUrl: raw.ticket_bg_url?.trim() || DEFAULT_FULL_CMS.ticketBgUrl,
     landing,
@@ -656,6 +717,14 @@ export function serializeFullCmsToSiteContentRows(cms: FullCmsData): SiteContent
       value: cms.eventDate,
       label: "Event Date",
       category: "Event Details",
+      field_type: "text",
+      updated_at: now,
+    },
+    {
+      key: CMS_KEYS.contentVersion,
+      value: CURRENT_EVENT_CONTENT_VERSION,
+      label: "Event Content Version",
+      category: "System",
       field_type: "text",
       updated_at: now,
     },

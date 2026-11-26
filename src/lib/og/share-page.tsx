@@ -126,7 +126,7 @@ export async function buildShareMetadata(
     attendee.name === "ESME METRIX Attendee" ? "Attendee" : attendee.name;
   const title = `${displayName} is attending ESME METRIX!`;
   const description =
-    "Join us on 12 December 2026 at Cairo University for an exciting event exploring the world of Materials Engineering, innovation, and advanced materials.";
+    "Join us on December 12, 2026, from 9 AM to 5 PM at DRTPC, Cairo University for parallel technical sessions and a practical HR session.";
   const ogImageUrl = `${baseUrl}/api/og?${ogQuery.toString()}`;
   const canonicalUrl = `${baseUrl}/${routePrefix}/${encodeURIComponent(ticketId)}`;
 

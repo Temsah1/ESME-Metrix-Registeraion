@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { ArrowRight, Calendar, Download, MapPin, Ticket } from "lucide-react";
 import { FaLinkedin } from "react-icons/fa";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { OFFICIAL_ESME_LINKEDIN_URL } from "@/config/registration";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getDictionary } from "@/lib/i18n/dictionary";
@@ -34,7 +33,6 @@ export default function ShareBadgeClient({
               ? "ESME METRIX 2026 • بطاقة الحضور الرسمية"
               : "ESME METRIX 2026 • OFFICIAL ATTENDING CARD"}
           </div>
-          <LanguageSwitcher compact />
         </div>
 
         <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mb-2">
@@ -75,7 +73,7 @@ export default function ShareBadgeClient({
           </span>
           <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0F243A] border border-slate-800">
             <MapPin className="w-4 h-4 text-[#F59E0B]" />
-            {lang === "ar" ? "جامعة القاهرة" : "Cairo University"}
+            {lang === "ar" ? "مركز DRTPC، جامعة القاهرة" : "DRTPC, Cairo University"}
           </span>
         </div>
 

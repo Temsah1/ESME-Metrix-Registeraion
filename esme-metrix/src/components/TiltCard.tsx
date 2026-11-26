@@ -15,6 +15,7 @@ export default function TiltCard({ children, className = "" }: TiltCardProps) {
   return (
     <motion.div
       whileHover={{ y: -4 }}
+      whileTap={{ scale: 0.985 }}
       transition={{ duration: 0.22, ease: "easeOut" }}
       className={`card-hover-lift relative ${className}`}
     >

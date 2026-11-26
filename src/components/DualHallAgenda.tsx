@@ -72,6 +72,7 @@ function SharedPlenaryCard({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -2 }}
+      whileTap={{ scale: 0.99 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
       className="col-span-2 w-full p-4 sm:p-5 rounded-2xl bg-[#0D2136]/95 border-2 border-emerald-500/55 hover:border-emerald-400 shadow-[0_8px_28px_rgba(16,185,129,0.12)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-start"
     >
@@ -124,6 +125,7 @@ function HallSessionCard({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -2 }}
+      whileTap={{ scale: 0.99 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
       className={`p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-[#0F243A]/95 border transition-all flex flex-col gap-2 min-w-0 text-start ${
         isHall1

@@ -15,22 +15,76 @@ describe("Comprehensive CMS defaults, parsing & serialization", () => {
     const shared = cms.agenda.sessions.filter((s) => s.hallType === "shared");
     const hall1 = cms.agenda.sessions.filter((s) => s.hallType === "hall1");
     const hall2 = cms.agenda.sessions.filter((s) => s.hallType === "hall2");
-    expect(shared.length).toBeGreaterThan(2); // Opening, Giveaways, Closing
+    expect(shared.length).toBeGreaterThan(2);
     expect(hall1.length).toBeGreaterThan(2);
     expect(hall2.length).toBeGreaterThan(2);
     expect(cms.agenda.hall1Capacity).toContain("250");
-    expect(cms.agenda.hall2Capacity).toContain("150");
+    expect(cms.agenda.hall2Capacity).toContain("120");
 
-    // Landing preserves original Arabic accents while keeping registration form English
-    expect(cms.landing.certificateBadge).toBe("معتمد");
-    expect(cms.landing.subtitle).toMatch(/[\u0600-\u06FF]/);
-    expect(cms.agenda.subtitle).toMatch(/[\u0600-\u06FF]/);
+    expect(cms.landing.certificateBadge).toBe("FULL DAY");
+    expect(cms.ar?.landing.subtitle).toMatch(/[\u0600-\u06FF]/);
+    expect(cms.ar?.agenda.subtitle).toMatch(/[\u0600-\u06FF]/);
     expect(JSON.stringify(cms.form)).not.toMatch(/[\u0600-\u06FF]/);
 
     expect(cms.footer.portalUrl).toBe(
       "https://eslamemadportfolio22.my.canva.site/esmecairo"
     );
-    expect(cms.eventMapsUrl).toBe("https://maps.app.goo.gl/rZuGj1EEioQNB8K5A?g_st=ic");
+    expect(cms.eventMapsUrl).toBe(
+      "https://www.google.com/maps/search/?api=1&query=Development+Research+and+Technological+Planning+Center+DRTPC+Cairo+University"
+    );
+  });
+
+  it("normalizes legacy venue values to DRTPC, Cairo University in both languages", () => {
+    const cms = buildFullCmsData({
+      event_venue: "Cairo University",
+      [CMS_KEYS.arabic]: JSON.stringify({ eventVenue: "جامعة القاهرة" }),
+    });
+
+    expect(cms.eventVenue).toBe(DEFAULT_FULL_CMS.eventVenue);
+    expect(cms.ar?.eventVenue).toContain("DRTPC");
+  });
+
+  it("upgrades the published legacy event once and keeps future CMS edits editable", () => {
+    const oldCms = buildFullCmsData({
+      event_date: "12 December 2026",
+      event_venue: "Cairo University",
+      event_time: "Saturday 12 / 12 / 2026",
+      [CMS_KEYS.landing]: JSON.stringify({
+        titleLine1: "The Annual Materials & Engineering Conference",
+        titleHighlight: "ESME METRIX 2026",
+      }),
+      [CMS_KEYS.agenda]: JSON.stringify({
+        sessions: [
+          {
+            id: "h1-s1",
+            hallType: "hall1",
+            title: "Future of Smart & Green Metallurgy",
+            speaker: "Legacy speaker",
+          },
+        ],
+      }),
+      [CMS_KEYS.arabic]: JSON.stringify({
+        eventVenue: "جامعة القاهرة",
+        agenda: { title: "جدول الفعاليات" },
+      }),
+    });
+
+    expect(oldCms.eventVenue).toBe("DRTPC, Cairo University");
+    expect(oldCms.agenda.sessions).toHaveLength(17);
+    expect(oldCms.agenda.sessions.every((session) => !session.speaker && !session.role)).toBe(true);
+    expect(oldCms.eventStats[0].value).toBe("370");
+    expect(oldCms.ar?.eventVenue).toContain("DRTPC");
+
+    const editedCms = {
+      ...oldCms,
+      landing: { ...oldCms.landing, titleLine1: "CMS-managed custom headline" },
+    };
+    const rows = serializeFullCmsToSiteContentRows(editedCms);
+    const rawMap = Object.fromEntries(rows.map((row) => [row.key, row.value]));
+    const persistedCms = buildFullCmsData(rawMap);
+
+    expect(rawMap[CMS_KEYS.contentVersion]).toBeTruthy();
+    expect(persistedCms.landing.titleLine1).toBe("CMS-managed custom headline");
   });
 
   it("upgrades legacy split hall1Sessions/hall2Sessions payloads seamlessly", () => {
@@ -139,12 +193,12 @@ describe("Comprehensive CMS defaults, parsing & serialization", () => {
     const fallback = buildFullCmsData({ [CMS_KEYS.eventStats]: "[]" });
     expect(fallback.eventStats).toHaveLength(6);
     expect(fallback.eventStats[0]).toEqual({
-      value: "400+",
-      label: { en: "Total Seat Capacity", ar: "إجمالي السعة الاستيعابية" },
+      value: "370",
+      label: { en: "Total Seats", ar: "إجمالي المقاعد" },
     });
     expect(fallback.eventStats[5]).toEqual({
-      value: "100%",
-      label: { en: "Accredited Certificate", ar: "شهادة معتمدة" },
+      value: "✓",
+      label: { en: "Certificate for Full-Day Attendance", ar: "شهادة للحضور طوال اليوم" },
     });
 
     const customStats = [

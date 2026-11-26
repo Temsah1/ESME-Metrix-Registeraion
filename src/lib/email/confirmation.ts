@@ -38,9 +38,9 @@ function escapeHtml(value: string): string {
 
 export function buildConfirmationEmail(input: ConfirmationEmailInput): ConfirmationEmail {
   const from = process.env.RESEND_FROM_EMAIL || "ESME Metrix <onboarding@resend.dev>";
-  const eventDate = process.env.EVENT_DATE || "12 December 2026";
-  const eventVenue = process.env.EVENT_VENUE || "Cairo University, Faculty of Engineering";
-  const eventTime = process.env.EVENT_TIME || "Saturday 12 / 12 / 2026 — 09:00 AM";
+  const eventDate = process.env.EVENT_DATE || "Saturday, December 12, 2026";
+  const eventVenue = process.env.EVENT_VENUE || "DRTPC, Cairo University";
+  const eventTime = process.env.EVENT_TIME || "09:00 AM – 05:00 PM";
   const whatsappUrl =
     input.whatsappUrl?.trim() || "https://chat.whatsapp.com/KOT8wY8h2lK5p0mNN7NcNW";
 

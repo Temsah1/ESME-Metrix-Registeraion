@@ -78,15 +78,15 @@ describe("Bilingual EN/AR approved glossary & i18n integrity", () => {
     );
 
     // Agenda & Halls
-    expect(arCms.agenda.title).toBe("جدول الفعاليات");
-    expect(arCms.agenda.hall1Name).toBe("القاعة الأولى (Hall 1)");
+    expect(arCms.agenda.title).toBe("الأجندة المقسمة بين القاعتين");
+    expect(arCms.agenda.hall1Name).toBe("القاعة الرئيسية");
     expect(arCms.agenda.hall1Capacity).toBe("السعة: 250 مشارك");
-    expect(arCms.agenda.hall2Name).toBe("القاعة الثانية (Hall 2)");
-    expect(arCms.agenda.hall2Capacity).toBe("السعة: 150 مشارك");
+    expect(arCms.agenda.hall2Name).toBe("القاعة الصغيرة");
+    expect(arCms.agenda.hall2Capacity).toBe("السعة: 120 مشارك");
     const opening = arCms.agenda.sessions.find((s) => s.id === "shared-opening");
     const closing = arCms.agenda.sessions.find((s) => s.id === "shared-closing");
-    expect(opening?.title).toBe("الجلسة الافتتاحية");
-    expect(closing?.title).toBe("الجلسة الختامية");
+    expect(opening?.title).toBe("الافتتاح والكلمة الرئيسية");
+    expect(closing?.title).toBe("الختام وتوزيع الشهادات");
 
     // Member Dashboard & Ticket actions
     expect(arDict.dashboard.loginTitle).toBe("الدخول إلى لوحة المشارك");

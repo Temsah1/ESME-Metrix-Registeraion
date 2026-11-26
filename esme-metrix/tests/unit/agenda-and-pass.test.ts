@@ -7,24 +7,32 @@ import {
 } from "@/lib/registrants/public-pass";
 
 describe("Wireframe Agenda Block Layout", () => {
-  it("groups shared Opening top block, parallel Hall 1 & Hall 2 middle block, and shared bottom blocks", () => {
+  it("keeps check-in, opening, parallel sessions, breaks, and plenaries in schedule order", () => {
     const blocks = buildAgendaBlocks(DEFAULT_AGENDA_CMS.sessions);
     expect(blocks[0]?.type).toBe("shared");
     if (blocks[0]?.type === "shared") {
-      expect(blocks[0].session.title).toBe("Opening");
+      expect(blocks[0].session.title).toBe("Registration, Welcome & Catering");
     }
 
-    expect(blocks[1]?.type).toBe("parallel");
-    if (blocks[1]?.type === "parallel") {
-      expect(blocks[1].hall1.length).toBeGreaterThan(2);
-      expect(blocks[1].hall2.length).toBeGreaterThan(2);
+    expect(blocks[1]?.type).toBe("shared");
+    if (blocks[1]?.type === "shared") {
+      expect(blocks[1].session.title).toBe("Opening Ceremony & Keynote");
     }
 
-    const tail = blocks.slice(2);
-    expect(tail.every((b) => b.type === "shared")).toBe(true);
-    const tailTitles = tail.map((b) => (b.type === "shared" ? b.session.title : ""));
-    expect(tailTitles).toContain("Giveaways / Awards Distribution");
-    expect(tailTitles).toContain("Closing");
+    expect(blocks[2]?.type).toBe("parallel");
+    if (blocks[2]?.type === "parallel") {
+      expect(blocks[2].hall1).toHaveLength(2);
+      expect(blocks[2].hall2).toHaveLength(2);
+    }
+
+    const sharedTitles = blocks
+      .filter((block) => block.type === "shared")
+      .map((block) => (block.type === "shared" ? block.session.title : ""));
+    expect(sharedTitles).toContain("Dhuhr Break");
+    expect(sharedTitles).toContain("HR Session — Interviews & CVs");
+    expect(sharedTitles).toContain("Asr Break");
+    expect(sharedTitles).toContain("Sponsor Talks");
+    expect(sharedTitles).toContain("Closing & Certificates");
   });
 });
 

@@ -66,10 +66,11 @@ export default function HomeLandingClient({ cms }: HomeLandingClientProps) {
 
     const ctx = gsap.context(() => {
       gsap.from(".hero-stagger", {
-        y: 20,
+        y: 34,
+        scale: 0.97,
         opacity: 0,
-        duration: 0.65,
-        stagger: 0.08,
+        duration: 0.78,
+        stagger: 0.1,
         ease: "power3.out",
         clearProps: "transform,opacity",
       });
@@ -194,6 +195,7 @@ export default function HomeLandingClient({ cms }: HomeLandingClientProps) {
 
       {/* Tech grid background */}
       <div className="fixed inset-0 tech-grid pointer-events-none z-0 opacity-30" />
+      <div className="home-ambient-light" aria-hidden="true" />
 
       {/* ── HERO SECTION ── */}
       <section
@@ -250,21 +252,21 @@ export default function HomeLandingClient({ cms }: HomeLandingClientProps) {
         <div className="hero-stagger flex flex-col sm:flex-row items-center justify-center gap-3.5 w-full sm:w-auto mb-12">
           <Link
             href="/register"
-            className="liquid-btn w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold text-sm tracking-wide shadow-[0_0_25px_rgba(217,119,6,0.4)] hover:brightness-110 transition-all flex items-center justify-center gap-2"
+            className="liquid-btn touch-press w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold text-sm tracking-wide shadow-[0_0_25px_rgba(217,119,6,0.4)] hover:brightness-110 transition-all flex items-center justify-center gap-2"
           >
             {landing.primaryCtaLabel}
             <ChevronRight className="w-4 h-4 rtl:rotate-180" />
           </Link>
           <a
             href="#agenda"
-            className="w-full sm:w-auto px-7 py-4 rounded-xl border border-slate-700 bg-[#0F243A]/85 text-slate-200 hover:text-white hover:border-[#D97706] font-semibold text-sm transition-all flex items-center justify-center gap-2"
+            className="touch-press w-full sm:w-auto px-7 py-4 rounded-xl border border-slate-700 bg-[#0F243A]/85 text-slate-200 hover:text-white hover:border-[#D97706] font-semibold text-sm transition-all flex items-center justify-center gap-2"
           >
             {landing.secondaryCtaLabel}
             <ArrowRight className="w-4 h-4 rtl:rotate-180" />
           </a>
           <Link
             href="/dashboard"
-            className="w-full sm:w-auto px-6 py-4 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-200 hover:text-white hover:border-emerald-400 font-semibold text-sm transition-all flex items-center justify-center gap-2"
+            className="touch-press w-full sm:w-auto px-6 py-4 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-200 hover:text-white hover:border-emerald-400 font-semibold text-sm transition-all flex items-center justify-center gap-2"
           >
             <Ticket className="w-4 h-4 text-emerald-300" />
             {t.nav.memberDashboard}
@@ -413,14 +415,14 @@ export default function HomeLandingClient({ cms }: HomeLandingClientProps) {
             <div className="flex flex-wrap items-center gap-3 pt-1">
               <Link
                 href="/register"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold text-xs uppercase tracking-wider hover:brightness-110 transition-all shadow-lg"
+                className="touch-press inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold text-xs uppercase tracking-wider hover:brightness-110 transition-all shadow-lg"
               >
                 {landing.primaryCtaLabel}
                 <ArrowRight className="w-4 h-4 rtl:rotate-180" />
               </Link>
               <Link
                 href="/dashboard"
-                className="inline-flex items-center gap-2 px-5 py-3.5 rounded-xl border border-slate-700 bg-[#15304B]/80 text-slate-200 hover:text-white hover:border-[#D97706] text-xs font-bold uppercase tracking-wider transition-colors"
+                className="touch-press inline-flex items-center gap-2 px-5 py-3.5 rounded-xl border border-slate-700 bg-[#15304B]/80 text-slate-200 hover:text-white hover:border-[#D97706] text-xs font-bold uppercase tracking-wider transition-colors"
               >
                 {t.landing.heroPortalCta}
               </Link>
@@ -455,7 +457,7 @@ export default function HomeLandingClient({ cms }: HomeLandingClientProps) {
           </p>
           <Link
             href="/register"
-            className="liquid-btn inline-flex items-center gap-2 px-9 py-4 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold text-sm tracking-wide shadow-[0_0_20px_rgba(217,119,6,0.3)] hover:brightness-110 transition-all"
+            className="liquid-btn touch-press inline-flex items-center gap-2 px-9 py-4 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold text-sm tracking-wide shadow-[0_0_20px_rgba(217,119,6,0.3)] hover:brightness-110 transition-all"
           >
             {landing.ctaButtonLabel}
             <ChevronRight className="w-4 h-4 rtl:rotate-180" />
