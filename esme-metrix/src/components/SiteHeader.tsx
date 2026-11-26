@@ -70,12 +70,6 @@ export default function SiteHeader({ heroLogoUrl }: SiteHeaderProps) {
             {t.nav.memberDashboard}
           </Link>
           <Link
-            href="/admin"
-            className="hidden md:inline-block text-xs sm:text-sm px-3.5 py-2 rounded-lg border border-[#D97706]/35 text-slate-200 hover:text-white hover:border-[#D97706] hover:bg-[#0F243A] transition-all font-semibold whitespace-nowrap"
-          >
-            {t.nav.adminLogin}
-          </Link>
-          <Link
             href="/register"
             className="text-[11px] sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-gradient-to-r from-[#D97706] to-[#F59E0B] text-white font-bold hover:brightness-110 transition-all shadow-[0_0_15px_rgba(217,119,6,0.3)] whitespace-nowrap"
           >
