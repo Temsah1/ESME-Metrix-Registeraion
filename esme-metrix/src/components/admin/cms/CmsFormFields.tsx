@@ -414,21 +414,11 @@ export function WireframeAgendaEditor({
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <CmsTextInput
                     label="Lecture / Session Title"
                     value={session.title}
                     onChange={(title) => updateSession(session.id, { title })}
-                  />
-                  <CmsTextInput
-                    label="Speaker Name"
-                    value={session.speaker}
-                    onChange={(speaker) => updateSession(session.id, { speaker })}
-                  />
-                  <CmsTextInput
-                    label="Speaker Role / Note"
-                    value={session.role}
-                    onChange={(role) => updateSession(session.id, { role })}
                   />
                 </div>
 

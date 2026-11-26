@@ -3,7 +3,7 @@ import { DEFAULT_EVENT_STATS, type ArabicCmsData, type FullCmsData } from "@/lib
 
 export const DEFAULT_ARABIC_CMS: ArabicCmsData = {
   eventDate: "12 ديسمبر 2026",
-  eventVenue: "جامعة القاهرة — كلية الهندسة",
+  eventVenue: "مركز بحوث جامعة القاهرة",
   eventTime: "السبت 12 / 12 / 2026 • 09:30 صباحاً",
   landing: {
     statusBadge: "باب التسجيل مفتوح الآن — المقاعد محدودة",

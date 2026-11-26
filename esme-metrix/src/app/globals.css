@@ -617,3 +617,23 @@ button, a, input, select {
 .animate-shake {
   animation: shakeError 0.5s ease-in-out;
 }
+
+.stats-mobile-slider {
+  width: 100%;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+.stats-mobile-slider .swiper-slide {
+  border-inline-end: 1px solid rgba(217, 119, 6, 0.12);
+}
+.stats-mobile-slider .swiper-slide:last-child {
+  border-inline-end: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -361,6 +361,7 @@ export default function RegisterFormClient({
       localStorage.setItem("esme_metrix_registration", serialized);
       if (result.registration_id) {
         localStorage.setItem("esme_metrix_ticket_id", String(result.registration_id));
+        sessionStorage.setItem("esme_metrix_post_registration", String(result.registration_id));
       }
       router.push(`/dashboard?id=${encodeURIComponent(result.registration_id)}`);
     } catch {

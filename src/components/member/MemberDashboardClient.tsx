@@ -51,6 +51,7 @@ import {
 
 const STORAGE_KEY = "esme_metrix_registration";
 const TICKET_ID_STORAGE_KEY = "esme_metrix_ticket_id";
+const POST_REGISTRATION_KEY = "esme_metrix_post_registration";
 
 interface MemberDashboardClientProps {
   initialData?: PublicAttendeePass | null;
@@ -250,14 +251,39 @@ export default function MemberDashboardClient({
 
   // Celebratory confetti right after completing registration
   useEffect(() => {
-    if (isPostRegistration && activePass && !confettiFired.current) {
+    const postRegistrationId =
+      typeof window !== "undefined" ? sessionStorage.getItem(POST_REGISTRATION_KEY) : null;
+    const verified =
+      isPostRegistration ||
+      (Boolean(postRegistrationId) && postRegistrationId === activePass?.registration_id);
+
+    if (verified && activePass && !confettiFired.current) {
       confettiFired.current = true;
+      if (typeof window !== "undefined") sessionStorage.removeItem(POST_REGISTRATION_KEY);
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+      const colors = ["#D97706", "#F59E0B", "#10B981", "#FFFFFF"];
+      const mobile = window.innerWidth < 640;
       confetti({
-        particleCount: 100,
-        spread: 85,
-        origin: { y: 0.6 },
-        colors: ["#D97706", "#F59E0B", "#10B981", "#FFFFFF"],
+        particleCount: mobile ? 90 : 150,
+        spread: 95,
+        startVelocity: 42,
+        origin: { x: 0.5, y: 0.62 },
+        colors,
+        shapes: ["square", "circle"],
+        ticks: 220,
+        scalar: mobile ? 0.9 : 1.05,
       });
+      const timers = [
+        window.setTimeout(() => {
+          confetti({ particleCount: mobile ? 35 : 55, angle: 60, spread: 70, startVelocity: 38, origin: { x: 0, y: 0.72 }, colors, ticks: 180 });
+          confetti({ particleCount: mobile ? 35 : 55, angle: 120, spread: 70, startVelocity: 38, origin: { x: 1, y: 0.72 }, colors, ticks: 180 });
+        }, 260),
+        window.setTimeout(() => {
+          confetti({ particleCount: mobile ? 24 : 40, spread: 100, startVelocity: 28, origin: { x: 0.5, y: 0.42 }, colors, ticks: 170, scalar: 0.85 });
+        }, 720),
+      ];
+      return () => timers.forEach((timer) => window.clearTimeout(timer));
     }
   }, [isPostRegistration, activePass]);
 

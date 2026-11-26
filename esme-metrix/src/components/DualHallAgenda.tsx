@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Clock, Layers, Mic, Sparkles, UserCheck, Users } from "lucide-react";
+import { Clock, Layers, Mic, Sparkles, Users } from "lucide-react";
 import type { AgendaSession, DualHallAgendaConfig } from "@/lib/cms/types";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getDictionary } from "@/lib/i18n/dictionary";
@@ -103,11 +103,6 @@ function SharedPlenaryCard({
           <Clock className="w-3.5 h-3.5 shrink-0" />
           {session.time}
         </span>
-        {session.speaker && (
-          <span className="text-[11px] font-medium text-slate-300 sm:text-end">
-            {session.speaker}
-          </span>
-        )}
       </div>
     </motion.article>
   );
@@ -173,29 +168,6 @@ function HallSessionCard({
         </p>
       )}
 
-      {(session.speaker || session.role) && (
-        <div className="pt-2 mt-auto border-t border-slate-800/90 flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs min-w-0">
-          <div
-            className={`w-5 h-5 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center shrink-0 border ${
-              isHall1
-                ? "bg-emerald-500/15 border-emerald-500/35 text-emerald-300"
-                : "bg-orange-500/15 border-orange-500/35 text-orange-300"
-            }`}
-          >
-            <UserCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-          </div>
-          <div className="min-w-0">
-            {session.speaker && (
-              <div className="font-semibold text-white truncate">{session.speaker}</div>
-            )}
-            {session.role && (
-              <div className="hidden sm:block text-[11px] text-slate-400 truncate">
-                {session.role}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </motion.article>
   );
 }

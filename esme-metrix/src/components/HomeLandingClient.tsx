@@ -4,6 +4,10 @@ import React, { useEffect, useRef } from "react";
 import Link from "next/link";
 import gsap from "gsap";
 import { animate, type JSAnimation } from "animejs";
+import { MotionConfig, motion } from "framer-motion";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay, FreeMode } from "swiper/modules";
+import "swiper/css";
 import HeroParticles from "@/components/HeroParticles";
 import TiltCard from "@/components/TiltCard";
 import GalleryShowcase from "@/components/GalleryShowcase";
@@ -183,6 +187,7 @@ export default function HomeLandingClient({ cms }: HomeLandingClientProps) {
   }, []);
 
   return (
+    <MotionConfig reducedMotion="user">
     <div ref={rootRef} className="relative overflow-hidden flex-1 flex flex-col bg-[#15304B]">
       {/* Lightweight 2D Ambient Backdrop */}
       <HeroParticles />
@@ -308,24 +313,39 @@ export default function HomeLandingClient({ cms }: HomeLandingClientProps) {
         className="relative z-10 w-full bg-[#0A1F33] border-y border-slate-800 py-8"
       >
         <div className="max-w-6xl mx-auto px-4">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 text-center">
+          <Swiper
+            dir={lang === "ar" ? "rtl" : "ltr"}
+            key={lang}
+            modules={[Autoplay, FreeMode]}
+            freeMode
+            speed={900}
+            slidesPerView={2}
+            spaceBetween={10}
+            loop={statsItems.length > 2}
+            autoplay={{ delay: 2400, disableOnInteraction: false, pauseOnMouseEnter: true }}
+            breakpoints={{
+              640: { slidesPerView: 3, spaceBetween: 18 },
+              1024: { slidesPerView: 6, spaceBetween: 20 },
+            }}
+            className="stats-mobile-slider"
+          >
             {statsItems.map((stat, i) => (
-              <div key={i} className="flex flex-col items-center">
-                <span
-                  dir="ltr"
-                  data-stat-value={stat.value}
-                  className="text-2xl sm:text-3xl font-black text-white tabular-nums"
+              <SwiperSlide key={`${stat.value}-${i}`}>
+                <motion.div
+                  initial={{ opacity: 0, y: 18, scale: 0.92 }}
+                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                  viewport={{ once: false, amount: 0.35 }}
+                  transition={{ delay: i * 0.06, duration: 0.45 }}
+                  className="min-h-[92px] px-2 flex flex-col items-center justify-center text-center"
                 >
-                  {stat.value}
-                </span>
-                <span className="text-xs text-slate-300 font-medium mt-1">
-                  {lang === "ar"
-                    ? stat.label.ar || stat.label.en
-                    : stat.label.en || stat.label.ar}
-                </span>
-              </div>
+                  <span dir="ltr" data-stat-value={stat.value} className="text-2xl sm:text-3xl font-black text-white tabular-nums">{stat.value}</span>
+                  <span className="text-[11px] sm:text-xs text-slate-300 font-medium mt-1 leading-snug">
+                    {lang === "ar" ? stat.label.ar || stat.label.en : stat.label.en || stat.label.ar}
+                  </span>
+                </motion.div>
+              </SwiperSlide>
             ))}
-          </div>
+          </Swiper>
         </div>
       </section>
 
@@ -443,5 +463,6 @@ export default function HomeLandingClient({ cms }: HomeLandingClientProps) {
         </div>
       </section>
     </div>
+    </MotionConfig>
   );
 }

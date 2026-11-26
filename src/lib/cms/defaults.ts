@@ -29,7 +29,7 @@ export const DEFAULT_LANDING_CMS: LandingCmsConfig = {
   titleLine1: "The Annual Materials & Engineering Conference",
   titleHighlight: "ESME METRIX 2026",
   subtitle:
-    "Hosted by the ESME Cairo University Student Chapter. Uniting students, researchers, and industrial pioneers across هندسة الكيمياء، الميكانيكا، الهندسة المدنية، و المواد والبترول.",
+    "تنظم الجمعية المصرية لمهندسي المواد فرع طلاب جامعة القاهرة ملتقى سنويًا للهندسة والابتكار والصناعة.",
   primaryCtaLabel: "REGISTER FOR ADMISSION",
   secondaryCtaLabel: "Explore Event Agenda",
   certificateBadge: "معتمد",
@@ -503,7 +503,7 @@ export const DEFAULT_FOOTER_CMS: FooterCmsConfig = {
 
 export const DEFAULT_FULL_CMS: FullCmsData = {
   eventDate: "12 December 2026",
-  eventVenue: "Cairo University — Faculty of Engineering",
+  eventVenue: "Cairo University Research Center",
   eventTime: "Saturday 12 / 12 / 2026 • 09:30 AM",
   eventMapsUrl: DEFAULT_EVENT_MAPS_URL,
   heroLogoUrl: "/esme-icon.jpg",
