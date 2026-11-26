@@ -9,7 +9,6 @@ import {
   EGYPTIAN_PHONE_REGEX,
   FACULTIES,
   ESME_COMMITTEES,
-  ESME_ROLES,
   getDepartmentsForFaculty,
   resolveDepartment,
 } from "@/lib/validations/registration";
@@ -33,7 +32,6 @@ const validStep2 = {
   company: "",
   isEsmeMember: false,
   committee: "",
-  role: "",
 };
 
 describe("REG-01/02 Egyptian phone validation", () => {
@@ -182,56 +180,53 @@ describe("REG-05b conditional ESME Chapter membership", () => {
     expect(step2Schema.safeParse(withoutMember).success).toBe(false);
   });
 
-  it("skips committee/role validation when isEsmeMember is false", () => {
+  it("skips committee validation when isEsmeMember is false", () => {
     expect(
       step2Schema.safeParse({
         ...validStep2,
         isEsmeMember: false,
         committee: "",
-        role: "",
       }).success
     ).toBe(true);
   });
 
-  it("requires valid committee and role when isEsmeMember is true", () => {
-    expect(ESME_COMMITTEES).toEqual(["High Board", "IT", "Marketing", "Digital"]);
-    expect(ESME_ROLES).toEqual(["Member", "Director", "Head"]);
+  it("requires valid committee (8 official committees/sectors, no role) when isEsmeMember is true", () => {
+    expect(ESME_COMMITTEES).toEqual([
+      "High Board",
+      "Business & Finance Sector",
+      "IT & Digital Transformation Sector",
+      "Marketing & Media Sector",
+      "Operations & Supply Chain Sector",
+      "Quality Sector",
+      "Technical & Engineering Sector",
+      "SID Sector",
+    ]);
 
     expect(
       step2Schema.safeParse({
         ...validStep2,
         isEsmeMember: true,
         committee: "",
-        role: "",
       }).success
     ).toBe(false);
-
-    expect(
-      step2Schema.safeParse({
-        ...validStep2,
-        isEsmeMember: true,
-        committee: "High Board",
-        role: "",
-      }).success
-    ).toBe(false);
-
-    expect(
-      step2Schema.safeParse({
-        ...validStep2,
-        isEsmeMember: true,
-        committee: "High Board",
-        role: "Director",
-      }).success
-    ).toBe(true);
 
     expect(
       step2Schema.safeParse({
         ...validStep2,
         isEsmeMember: true,
         committee: "Digital",
-        role: "Head",
       }).success
-    ).toBe(true);
+    ).toBe(false);
+
+    for (const comm of ESME_COMMITTEES) {
+      expect(
+        step2Schema.safeParse({
+          ...validStep2,
+          isEsmeMember: true,
+          committee: comm,
+        }).success
+      ).toBe(true);
+    }
   });
 });
 
@@ -241,7 +236,6 @@ describe("REG-06 CMS-driven dynamic schema builder", () => {
       faculties: [{ name: "Energy Studies", departments: ["Solar Grid Lab"] }],
       academicYears: [{ value: "5th", label: "5th Year" }],
       esmeCommittees: ["PR"],
-      esmeRoles: ["Director"],
       fields: {
         nationalId: { label: "National ID", placeholder: "", required: false },
       },
@@ -259,7 +253,6 @@ describe("REG-06 CMS-driven dynamic schema builder", () => {
         academicYear: "5th",
         isEsmeMember: true,
         committee: "PR",
-        role: "Director",
       }).success
     ).toBe(true);
   });

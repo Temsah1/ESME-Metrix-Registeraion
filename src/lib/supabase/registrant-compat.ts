@@ -28,7 +28,6 @@ export function buildLegacyFacultyValue(input: {
   department: string;
   isEsmeMember: boolean;
   committee?: string | null;
-  role?: string | null;
 }): string {
   const parts: string[] = [];
   if (input.faculty.trim()) parts.push(input.faculty.trim());
@@ -41,9 +40,8 @@ export function buildLegacyFacultyValue(input: {
 
   let base = parts.join(" — ") || "General";
 
-  if (input.isEsmeMember && (input.committee || input.role)) {
-    const esmeInfo = [input.committee, input.role].filter(Boolean).join(" / ");
-    base = `${base} [ESME: ${esmeInfo}]`;
+  if (input.isEsmeMember && input.committee) {
+    base = `${base} [ESME: ${input.committee}]`;
   }
 
   return base.length > 250 ? `${base.slice(0, 247)}...` : base;

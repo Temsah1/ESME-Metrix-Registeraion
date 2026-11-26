@@ -59,10 +59,9 @@ describe("OG Card template slots, highlights & LinkedIn copy", () => {
         jobTitle: "Student",
         department: "Computer Science (CS)",
         isEsmeMember: true,
-        committee: "IT",
-        role: "Head",
+        committee: "High Board",
       })
-    ).toBe("Head • IT | Computer Science (CS)");
+    ).toBe("ESME Member — High Board | Computer Science (CS)");
   });
 
   it("formats date & venue bar uppercase", () => {

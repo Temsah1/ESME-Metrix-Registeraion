@@ -49,7 +49,6 @@ export interface RegistrationFormData {
   company?: string;
   isEsmeMember: boolean;
   committee?: string;
-  role?: string;
   idPhotoUrl: string;
   avatarUrl?: string;
   termsAccepted: boolean;

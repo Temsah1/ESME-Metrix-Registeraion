@@ -301,10 +301,6 @@ export const DEFAULT_ARABIC_CMS: ArabicCmsData = {
         label: "اللجنة",
         placeholder: "اختر اللجنة...",
       },
-      role: {
-        label: "المنصب",
-        placeholder: "اختر المنصب...",
-      },
       idPhotoUrl: {
         label: "صورة بطاقة الرقم القومي (الوجه الأمامي)",
         helperText: "ارفع صورة واضحة للوجه الأمامي لبطاقة الرقم القومي (JPEG أو PNG بحد أقصى 5 ميجابايت).",
@@ -553,7 +549,6 @@ export function getLocalizedCms(cms: FullCmsData, lang: AppLanguage): FullCmsDat
         company: mergeField("company"),
         isEsmeMember: mergeField("isEsmeMember"),
         committee: mergeField("committee"),
-        role: mergeField("role"),
         idPhotoUrl: mergeField("idPhotoUrl"),
         avatarUrl: mergeField("avatarUrl"),
       },
@@ -677,7 +672,6 @@ export function getLocalizedFormConfig(
       company: mergeField("company"),
       isEsmeMember: mergeField("isEsmeMember"),
       committee: mergeField("committee"),
-      role: mergeField("role"),
       idPhotoUrl: mergeField("idPhotoUrl"),
       avatarUrl: mergeField("avatarUrl"),
     },

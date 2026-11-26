@@ -25,7 +25,6 @@ export async function POST(request: NextRequest) {
       faculties: cms.form.faculties,
       academicYears: cms.form.academicYears,
       esmeCommittees: cms.form.esmeCommittees,
-      esmeRoles: cms.form.esmeRoles,
     });
 
     const validationResult = completeRegistrationSchema.safeParse(body);
@@ -69,7 +68,6 @@ export async function POST(request: NextRequest) {
       customMajor: data.customMajor,
     });
     const committee = data.isEsmeMember ? data.committee || null : null;
-    const role = data.isEsmeMember ? data.role || null : null;
 
     const supabase = createAdminClient();
 
@@ -100,7 +98,6 @@ export async function POST(request: NextRequest) {
       department: resolvedDepartment,
       isEsmeMember: Boolean(data.isEsmeMember),
       committee,
-      role,
     });
 
     let insertError: { code?: string; message?: string } | null = null;
@@ -134,7 +131,7 @@ export async function POST(request: NextRequest) {
         company: data.company || null,
         is_esme_member: Boolean(data.isEsmeMember),
         committee,
-        role,
+        role: null,
         id_photo_url: data.idPhotoUrl || "",
         avatar_url: data.avatarUrl || null,
         qr_code: qrBase64,
@@ -202,7 +199,6 @@ export async function POST(request: NextRequest) {
       nationalId: data.nationalId,
       isEsmeMember: data.isEsmeMember,
       committee,
-      role,
       qrDataUrl: qrBase64,
       whatsappUrl: cms.confirmation.postRegistrationWhatsappUrl,
     });
@@ -228,7 +224,6 @@ export async function POST(request: NextRequest) {
       company: data.company || null,
       is_esme_member: data.isEsmeMember,
       committee,
-      role,
       avatar_url: data.avatarUrl || null,
       qr_code: qrBase64,
     });

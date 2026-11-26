@@ -461,7 +461,6 @@ const EDITABLE_FIELD_KEYS: Array<{
   { key: "jobTitle", title: "Step 2 — Role / Job Title" },
   { key: "company", title: "Step 2 — Company / Organization" },
   { key: "committee", title: "Step 2 — ESME Committee" },
-  { key: "role", title: "Step 2 — ESME Role / Position" },
   { key: "idPhotoUrl", title: "Step 3 — National ID Photo Upload" },
   { key: "avatarUrl", title: "Step 3 — Profile Badge Photo Upload" },
 ];
@@ -704,7 +703,7 @@ export function FormBuilderSection({
       <div className="p-6 rounded-2xl bg-[#0F243A] border border-[#D97706]/20 space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-2">
           <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
-            Dropdown Lists (Faculties, Majors, Years, Committees &amp; Roles)
+            Dropdown Lists (Faculties, Majors, Years &amp; Committees)
           </h3>
           <button
             type="button"
@@ -788,28 +787,13 @@ export function FormBuilderSection({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <CmsTextArea
             label="ESME Chapter Committees (one per line)"
-            rows={4}
+            rows={8}
             mono
             value={form.esmeCommittees.join("\n")}
             onChange={(v) =>
               onChange({
                 ...form,
                 esmeCommittees: v
-                  .split("\n")
-                  .map((x) => x.trim())
-                  .filter(Boolean),
-              })
-            }
-          />
-          <CmsTextArea
-            label="ESME Chapter Roles / Positions (one per line)"
-            rows={4}
-            mono
-            value={form.esmeRoles.join("\n")}
-            onChange={(v) =>
-              onChange({
-                ...form,
-                esmeRoles: v
                   .split("\n")
                   .map((x) => x.trim())
                   .filter(Boolean),

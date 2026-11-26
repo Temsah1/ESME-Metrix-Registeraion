@@ -82,23 +82,43 @@ describe("Comprehensive CMS defaults, parsing & serialization", () => {
     expect(parsed.gallery).toHaveLength(8);
   });
 
-  it("auto-upgrades legacy linkedin_caption, committees/roles, and company URL", () => {
+  it("auto-upgrades legacy linkedin_caption, legacy committees/roles, and company URL", () => {
     const legacyCaption =
       "I'm attending *ESME METRIX*!\n\nRegister now: https://esme-metrix-registeration.vercel.app/\n\n#ESMEMetrix";
     const legacyForm = JSON.stringify({
       esmeCommittees: ["IT", "Marketing", "Digital"],
       esmeRoles: ["High Board", "Head", "Member"],
     });
+    const legacyFormWithHighBoard = JSON.stringify({
+      esmeCommittees: ["High Board", "IT", "Marketing", "Digital"],
+      esmeRoles: ["Member", "Director", "Head"],
+    });
     const cms = buildFullCmsData({
       linkedin_caption: legacyCaption,
       [CMS_KEYS.form]: legacyForm,
     });
+    const cms2 = buildFullCmsData({
+      [CMS_KEYS.form]: legacyFormWithHighBoard,
+    });
+
     expect(cms.confirmation.linkedinCaption).toContain("/share/[ticketId]");
     expect(cms.confirmation.linkedinCaption).toContain(
       "Follow ESME Cairo University: https://www.linkedin.com/company/esme-cairo-university-student-chapter/"
     );
-    expect(cms.form.esmeCommittees).toEqual(["High Board", "IT", "Marketing", "Digital"]);
-    expect(cms.form.esmeRoles).toEqual(["Member", "Director", "Head"]);
+    const expected8Committees = [
+      "High Board",
+      "Business & Finance Sector",
+      "IT & Digital Transformation Sector",
+      "Marketing & Media Sector",
+      "Operations & Supply Chain Sector",
+      "Quality Sector",
+      "Technical & Engineering Sector",
+      "SID Sector",
+    ];
+    expect(cms.form.esmeCommittees).toEqual(expected8Committees);
+    expect(cms2.form.esmeCommittees).toEqual(expected8Committees);
+    expect("esmeRoles" in cms.form).toBe(false);
+    expect("role" in cms.form.fields).toBe(false);
 
     const linkedInSoc = cms.footer.socialLinks.find((s) => s.platform === "linkedin");
     expect(linkedInSoc?.url).toBe(

@@ -146,8 +146,10 @@ function parseAgendaConfig(parsed: LegacyAgendaShape | null): DualHallAgendaConf
 }
 
 const LEGACY_LINKEDIN_COMPANY_URL = "https://www.linkedin.com/company/esme-cairo-university/";
-const LEGACY_COMMITTEES_KEY = "digital|it|marketing";
-const LEGACY_ROLES_KEY = "head|high board|member";
+const LEGACY_COMMITTEES_SIGNATURES = new Set([
+  "digital|it|marketing",
+  "digital|high board|it|marketing",
+]);
 
 function normalizeLinkedinCaption(rawCaption: string | undefined): string {
   const trimmed = rawCaption?.trim() || "";
@@ -167,20 +169,8 @@ function normalizeCommitteesList(items: unknown): string[] {
   if (cleaned.length === 0) return DEFAULT_FORM_CMS.esmeCommittees;
 
   const sortedSignature = [...cleaned].map((c) => c.toLowerCase()).sort().join("|");
-  if (sortedSignature === LEGACY_COMMITTEES_KEY) {
+  if (LEGACY_COMMITTEES_SIGNATURES.has(sortedSignature)) {
     return DEFAULT_FORM_CMS.esmeCommittees;
-  }
-  return cleaned;
-}
-
-function normalizeRolesList(items: unknown): string[] {
-  if (!Array.isArray(items)) return DEFAULT_FORM_CMS.esmeRoles;
-  const cleaned = items.map((r) => String(r).trim()).filter(Boolean);
-  if (cleaned.length === 0) return DEFAULT_FORM_CMS.esmeRoles;
-
-  const sortedSignature = [...cleaned].map((r) => r.toLowerCase()).sort().join("|");
-  if (sortedSignature === LEGACY_ROLES_KEY) {
-    return DEFAULT_FORM_CMS.esmeRoles;
   }
   return cleaned;
 }
@@ -248,9 +238,17 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
 
   const agenda = parseAgendaConfig(parsedAgenda);
 
+  const rawFormFields = (parsedForm?.fields || {}) as Record<string, unknown>;
+  const { esmeRoles: _legacyEsmeRoles, ...cleanParsedForm } = (parsedForm || {}) as Partial<
+    RegistrationFormConfig
+  > & {
+    esmeRoles?: unknown;
+  };
+  void _legacyEsmeRoles;
+
   const form: RegistrationFormConfig = {
     ...DEFAULT_FORM_CMS,
-    ...(parsedForm || {}),
+    ...cleanParsedForm,
     steps: {
       step1: { ...DEFAULT_FORM_CMS.steps.step1, ...(parsedForm?.steps?.step1 || {}) },
       step2: { ...DEFAULT_FORM_CMS.steps.step2, ...(parsedForm?.steps?.step2 || {}) },
@@ -258,33 +256,32 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
       step4: { ...DEFAULT_FORM_CMS.steps.step4, ...(parsedForm?.steps?.step4 || {}) },
     },
     fields: {
-      fullName: { ...DEFAULT_FORM_CMS.fields.fullName, ...(parsedForm?.fields?.fullName || {}) },
-      nationalId: { ...DEFAULT_FORM_CMS.fields.nationalId, ...(parsedForm?.fields?.nationalId || {}) },
-      phone: { ...DEFAULT_FORM_CMS.fields.phone, ...(parsedForm?.fields?.phone || {}) },
-      email: { ...DEFAULT_FORM_CMS.fields.email, ...(parsedForm?.fields?.email || {}) },
-      city: { ...DEFAULT_FORM_CMS.fields.city, ...(parsedForm?.fields?.city || {}) },
-      university: { ...DEFAULT_FORM_CMS.fields.university, ...(parsedForm?.fields?.university || {}) },
-      faculty: { ...DEFAULT_FORM_CMS.fields.faculty, ...(parsedForm?.fields?.faculty || {}) },
-      department: { ...DEFAULT_FORM_CMS.fields.department, ...(parsedForm?.fields?.department || {}) },
-      customMajor: { ...DEFAULT_FORM_CMS.fields.customMajor, ...(parsedForm?.fields?.customMajor || {}) },
+      fullName: { ...DEFAULT_FORM_CMS.fields.fullName, ...((rawFormFields.fullName as object) || {}) },
+      nationalId: { ...DEFAULT_FORM_CMS.fields.nationalId, ...((rawFormFields.nationalId as object) || {}) },
+      phone: { ...DEFAULT_FORM_CMS.fields.phone, ...((rawFormFields.phone as object) || {}) },
+      email: { ...DEFAULT_FORM_CMS.fields.email, ...((rawFormFields.email as object) || {}) },
+      city: { ...DEFAULT_FORM_CMS.fields.city, ...((rawFormFields.city as object) || {}) },
+      university: { ...DEFAULT_FORM_CMS.fields.university, ...((rawFormFields.university as object) || {}) },
+      faculty: { ...DEFAULT_FORM_CMS.fields.faculty, ...((rawFormFields.faculty as object) || {}) },
+      department: { ...DEFAULT_FORM_CMS.fields.department, ...((rawFormFields.department as object) || {}) },
+      customMajor: { ...DEFAULT_FORM_CMS.fields.customMajor, ...((rawFormFields.customMajor as object) || {}) },
       academicYear: {
         ...DEFAULT_FORM_CMS.fields.academicYear,
-        ...(parsedForm?.fields?.academicYear || {}),
+        ...((rawFormFields.academicYear as object) || {}),
       },
       graduationYear: {
         ...DEFAULT_FORM_CMS.fields.graduationYear,
-        ...(parsedForm?.fields?.graduationYear || {}),
+        ...((rawFormFields.graduationYear as object) || {}),
       },
-      jobTitle: { ...DEFAULT_FORM_CMS.fields.jobTitle, ...(parsedForm?.fields?.jobTitle || {}) },
-      company: { ...DEFAULT_FORM_CMS.fields.company, ...(parsedForm?.fields?.company || {}) },
+      jobTitle: { ...DEFAULT_FORM_CMS.fields.jobTitle, ...((rawFormFields.jobTitle as object) || {}) },
+      company: { ...DEFAULT_FORM_CMS.fields.company, ...((rawFormFields.company as object) || {}) },
       isEsmeMember: {
         ...DEFAULT_FORM_CMS.fields.isEsmeMember,
-        ...(parsedForm?.fields?.isEsmeMember || {}),
+        ...((rawFormFields.isEsmeMember as object) || {}),
       },
-      committee: { ...DEFAULT_FORM_CMS.fields.committee, ...(parsedForm?.fields?.committee || {}) },
-      role: { ...DEFAULT_FORM_CMS.fields.role, ...(parsedForm?.fields?.role || {}) },
-      idPhotoUrl: { ...DEFAULT_FORM_CMS.fields.idPhotoUrl, ...(parsedForm?.fields?.idPhotoUrl || {}) },
-      avatarUrl: { ...DEFAULT_FORM_CMS.fields.avatarUrl, ...(parsedForm?.fields?.avatarUrl || {}) },
+      committee: { ...DEFAULT_FORM_CMS.fields.committee, ...((rawFormFields.committee as object) || {}) },
+      idPhotoUrl: { ...DEFAULT_FORM_CMS.fields.idPhotoUrl, ...((rawFormFields.idPhotoUrl as object) || {}) },
+      avatarUrl: { ...DEFAULT_FORM_CMS.fields.avatarUrl, ...((rawFormFields.avatarUrl as object) || {}) },
     },
     faculties:
       Array.isArray(parsedForm?.faculties) && parsedForm.faculties.length > 0
@@ -310,7 +307,6 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
         ? parsedForm.graduationYears.filter((g) => g?.value && g?.label)
         : DEFAULT_FORM_CMS.graduationYears,
     esmeCommittees: normalizeCommitteesList(parsedForm?.esmeCommittees),
-    esmeRoles: normalizeRolesList(parsedForm?.esmeRoles),
   };
 
   const confirmation: ConfirmationCmsConfig = {

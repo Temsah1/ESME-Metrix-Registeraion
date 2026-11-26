@@ -88,14 +88,11 @@ export interface UiDictionary {
     selectAcademicYear: string;
     selectGraduationYear: string;
     selectCommittee: string;
-    selectRole: string;
     esmeMemberQuestion: string;
     yesEsmeMember: string;
     noEsmeMember: string;
     committeeLabel: string;
-    roleLabel: string;
     committeePlaceholder: string;
-    rolePlaceholder: string;
     privacyHint: string;
     reviewNamesLabel: string;
     reviewNationalIdLabel: string;
@@ -140,7 +137,6 @@ export interface UiDictionary {
     facultyLabel: string;
     departmentLabel: string;
     committeeLabel: string;
-    roleLabel: string;
     esmeMemberBadge: string;
     quickActionsTitle: string;
     downloadTicketPdf: string;
@@ -337,14 +333,11 @@ export const DICTIONARY: Record<AppLanguage, UiDictionary> = {
       selectAcademicYear: "Select Academic Year",
       selectGraduationYear: "Select Expected Graduation Year",
       selectCommittee: "Select Committee",
-      selectRole: "Select Role / Position",
       esmeMemberQuestion: "Are you a member of the ESME Chapter?",
       yesEsmeMember: "Yes — ESME Member",
       noEsmeMember: "No",
       committeeLabel: "Committee",
-      roleLabel: "Role / Position",
       committeePlaceholder: "Choose your committee",
-      rolePlaceholder: "Choose your role",
       privacyHint: "Encrypted via TLS — used strictly for identity verification at the Cairo University summit gate.",
       reviewNamesLabel: "Full Name",
       reviewNationalIdLabel: "National ID (14 digits)",
@@ -389,8 +382,7 @@ export const DICTIONARY: Record<AppLanguage, UiDictionary> = {
       facultyLabel: "Faculty",
       departmentLabel: "Department",
       committeeLabel: "Committee",
-      roleLabel: "Role / Position",
-      esmeMemberBadge: "ESME Chapter Member",
+      esmeMemberBadge: "ESME Member",
       quickActionsTitle: "Quick Actions & Event Tools",
       downloadTicketPdf: "Download Ticket (PDF)",
       downloadQrPng: "Download QR (PNG)",
@@ -584,14 +576,11 @@ export const DICTIONARY: Record<AppLanguage, UiDictionary> = {
       selectAcademicYear: "اختر الفرقة الدراسية",
       selectGraduationYear: "اختر سنة التخرج المتوقعة",
       selectCommittee: "اختر اللجنة",
-      selectRole: "اختر المنصب",
       esmeMemberQuestion: "هل أنت عضو في شابتر ESME؟",
       yesEsmeMember: "نعم — عضو في الشابتر",
       noEsmeMember: "لا",
       committeeLabel: "اللجنة",
-      roleLabel: "المنصب",
       committeePlaceholder: "اختر لجنتك داخل الشابتر",
-      rolePlaceholder: "اختر منصبك",
       privacyHint: "جميع البيانات ومستندات الهوية محمية ومشفّرة وتُستخدم حصرياً لتوثيق الدخول في بوابة كلية الهندسة.",
       reviewNamesLabel: "الاسم بالكامل",
       reviewNationalIdLabel: "الرقم القومي (14 رقم)",
@@ -636,7 +625,6 @@ export const DICTIONARY: Record<AppLanguage, UiDictionary> = {
       facultyLabel: "الكلية",
       departmentLabel: "القسم",
       committeeLabel: "اللجنة",
-      roleLabel: "المنصب",
       esmeMemberBadge: "عضو شابتر ESME",
       quickActionsTitle: "أدوات المشارك والإجراءات السريعة",
       downloadTicketPdf: "تحميل التذكرة (PDF)",

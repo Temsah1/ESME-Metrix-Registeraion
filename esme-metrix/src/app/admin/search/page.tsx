@@ -14,7 +14,6 @@ import {
   localizeCommittee,
   localizeDepartment,
   localizeFaculty,
-  localizeRole,
 } from "@/lib/i18n/registrationLabels";
 
 const PHONE_REGEX = /^01[0125][0-9]{8}$/;
@@ -250,7 +249,11 @@ export default function AdminSearchPage() {
                 <div>
                   <span className="text-slate-400">{t.register.reviewEsmeLabel}:</span>{" "}
                   {result.registrant.is_esme_member
-                    ? t.register.yesEsmeMember
+                    ? `${t.dashboard.esmeMemberBadge}${
+                        result.registrant.committee
+                          ? ` — ${localizeCommittee(result.registrant.committee, lang)}`
+                          : ""
+                      }`
                     : t.register.noEsmeMember}
                 </div>
                 {result.registrant.is_esme_member && (
@@ -258,8 +261,7 @@ export default function AdminSearchPage() {
                     <span className="text-slate-400">{t.register.committeeLabel}:</span>{" "}
                     {result.registrant.committee
                       ? localizeCommittee(result.registrant.committee, lang)
-                      : "—"}{" "}
-                    ({result.registrant.role ? localizeRole(result.registrant.role, lang) : "—"})
+                      : "—"}
                   </div>
                 )}
               </div>

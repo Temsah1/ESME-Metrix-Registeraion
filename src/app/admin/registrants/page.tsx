@@ -14,7 +14,6 @@ import {
   localizeCommittee,
   localizeDepartment,
   localizeFaculty,
-  localizeRole,
 } from "@/lib/i18n/registrationLabels";
 
 export default function RegistrantsPage() {
@@ -98,9 +97,12 @@ export default function RegistrantsPage() {
       City: r.city,
       "Job Title": r.job_title,
       Company: r.company || "N/A",
-      "ESME Member": r.is_esme_member ? "Yes" : "No",
+      "ESME Member": r.is_esme_member
+        ? r.committee
+          ? `ESME Member — ${r.committee}`
+          : "ESME Member"
+        : "No",
       Committee: r.is_esme_member ? r.committee || "N/A" : "N/A",
-      Role: r.is_esme_member ? r.role || "N/A" : "N/A",
       "LinkedIn Shared": r.linkedin_shared ? "Yes" : "No",
       "Registration Date": new Date(r.created_at).toLocaleString(),
     }));
@@ -267,8 +269,8 @@ export default function RegistrantsPage() {
                     <td className="p-3.5">
                       {item.is_esme_member ? (
                         <span className="inline-block px-2 py-0.5 rounded bg-[#D97706]/15 border border-[#D97706]/30 text-[#F59E0B] text-[10px] font-bold">
-                          {item.committee ? localizeCommittee(item.committee, lang) : t.register.yesEsmeMember}
-                          {item.role ? ` • ${localizeRole(item.role, lang)}` : ""}
+                          {t.dashboard.esmeMemberBadge}
+                          {item.committee ? ` — ${localizeCommittee(item.committee, lang)}` : ""}
                         </span>
                       ) : (
                         <span className="inline-block px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-[10px]">
@@ -388,22 +390,20 @@ export default function RegistrantsPage() {
               <div>
                 <strong className="text-slate-400">{t.register.reviewEsmeLabel}:</strong>{" "}
                 {selectedRegistrant.is_esme_member
-                  ? t.register.yesEsmeMember
+                  ? `${t.dashboard.esmeMemberBadge}${
+                      selectedRegistrant.committee
+                        ? ` — ${localizeCommittee(selectedRegistrant.committee, lang)}`
+                        : ""
+                    }`
                   : t.register.noEsmeMember}
               </div>
               {selectedRegistrant.is_esme_member && (
-                <>
-                  <div>
-                    <strong className="text-slate-400">{t.register.committeeLabel}:</strong>{" "}
-                    {selectedRegistrant.committee
-                      ? localizeCommittee(selectedRegistrant.committee, lang)
-                      : "—"}
-                  </div>
-                  <div>
-                    <strong className="text-slate-400">{t.register.roleLabel}:</strong>{" "}
-                    {selectedRegistrant.role ? localizeRole(selectedRegistrant.role, lang) : "—"}
-                  </div>
-                </>
+                <div>
+                  <strong className="text-slate-400">{t.register.committeeLabel}:</strong>{" "}
+                  {selectedRegistrant.committee
+                    ? localizeCommittee(selectedRegistrant.committee, lang)
+                    : "—"}
+                </div>
               )}
             </div>
 
