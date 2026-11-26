@@ -104,6 +104,9 @@ describe("Comprehensive CMS defaults, parsing & serialization", () => {
     const cms3 = buildFullCmsData({
       linkedin_caption: legacyCaption,
       [CMS_KEYS.form]: legacy3Form,
+      [CMS_KEYS.arabic]: JSON.stringify({
+        form: { fields: { role: { label: "المنصب", placeholder: "اختر المنصب..." } } },
+      }),
     });
     expect(cms3.confirmation.linkedinCaption).toContain("/share/[ticketId]");
     expect(cms3.confirmation.linkedinCaption).toContain(
@@ -112,6 +115,7 @@ describe("Comprehensive CMS defaults, parsing & serialization", () => {
     expect(cms3.form.esmeCommittees).toEqual(expected8Committees);
     expect("esmeRoles" in cms3.form).toBe(false);
     expect("role" in cms3.form.fields).toBe(false);
+    expect("role" in (cms3.ar?.form?.fields || {})).toBe(false);
 
     const legacy4Form = JSON.stringify({
       esmeCommittees: ["High Board", "IT", "Marketing", "Digital"],

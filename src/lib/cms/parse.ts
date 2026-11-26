@@ -347,6 +347,10 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
     socialLinks,
   };
 
+  const { role: _legacyArRole, ...cleanArFields } = (parsedArabic?.form?.fields ||
+    {}) as Record<string, unknown>;
+  void _legacyArRole;
+
   const ar: ArabicCmsData = {
     eventDate: parsedArabic?.eventDate?.trim() || DEFAULT_ARABIC_CMS.eventDate,
     eventVenue: parsedArabic?.eventVenue?.trim() || DEFAULT_ARABIC_CMS.eventVenue,
@@ -404,7 +408,7 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
       },
       fields: {
         ...DEFAULT_ARABIC_CMS.form.fields,
-        ...(parsedArabic?.form?.fields || {}),
+        ...cleanArFields,
       },
     },
     confirmation: {
