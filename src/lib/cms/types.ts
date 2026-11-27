@@ -45,7 +45,7 @@ export interface EventStatItem {
 }
 
 export const DEFAULT_EVENT_STATS: EventStatItem[] = [
-  { value: "370", label: { en: "Total Seats", ar: "إجمالي المقاعد" } },
+  { value: "500", label: { en: "Total Seats", ar: "إجمالي المقاعد" } },
   { value: "11", label: { en: "Technical Sessions", ar: "جلسة تقنية" } },
   { value: "2", label: { en: "Parallel Halls", ar: "قاعتان بالتوازي" } },
   { value: "1", label: { en: "HR Career Session", ar: "جلسة مهنية HR" } },

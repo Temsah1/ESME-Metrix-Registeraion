@@ -164,7 +164,11 @@ function parseAgendaConfig(parsed: LegacyAgendaShape | null): DualHallAgendaConf
 }
 
 const LEGACY_LINKEDIN_COMPANY_URL = "https://www.linkedin.com/company/esme-cairo-university/";
-const CURRENT_EVENT_CONTENT_VERSION = "2026-12-drtpc-v1";
+const CURRENT_EVENT_CONTENT_VERSION = "2026-12-drtpc-v3";
+const PREVIOUS_EVENT_CONTENT_VERSIONS = new Set([
+  "2026-12-drtpc-v1",
+  "2026-12-drtpc-v2",
+]);
 const LEGACY_COMMITTEES_SIGNATURES = new Set([
   "digital|it|marketing",
   "digital|high board|it|marketing",
@@ -192,6 +196,34 @@ function normalizeCommitteesList(items: unknown): string[] {
     return DEFAULT_FORM_CMS.esmeCommittees;
   }
   return cleaned;
+}
+
+function updateCapacityFigures(value: string): string {
+  return value.replace(/\b370\b/g, "500").replace(/\b250\b/g, "300").replace(/\b120\b/g, "200");
+}
+
+function upgradeLandingCapacityCopy(
+  landing: Partial<LandingCmsConfig> | null | undefined
+): Partial<LandingCmsConfig> | null | undefined {
+  if (!landing) return landing;
+  return {
+    ...landing,
+    statusBadge: landing.statusBadge ? updateCapacityFigures(landing.statusBadge) : undefined,
+    storyPillars: landing.storyPillars?.map((pillar) => ({
+      ...pillar,
+      description: updateCapacityFigures(pillar.description),
+    })),
+    storyLead: landing.storyLead ? updateCapacityFigures(landing.storyLead) : undefined,
+    aboutText: landing.aboutText ? updateCapacityFigures(landing.aboutText) : undefined,
+    experienceBullets: landing.experienceBullets?.map(updateCapacityFigures),
+    ctaDescription: landing.ctaDescription
+      ? updateCapacityFigures(landing.ctaDescription)
+      : undefined,
+  };
+}
+
+function isSeatMetricLabel(label: string): boolean {
+  return /seats?|capacity|مقاعد|مقعد|السعة|سعة/i.test(label);
 }
 
 /**
@@ -222,10 +254,31 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
         "title" in session &&
         session.title === "Future of Smart & Green Metallurgy"
     );
-  const cmsLanding = isLegacyPublishedEvent ? null : parsedLanding;
-  const cmsEventStats = isLegacyPublishedEvent ? null : parsedEventStats;
-  const cmsHighlights = isLegacyPublishedEvent ? null : parsedHighlights;
-  const cmsAgenda = isLegacyPublishedEvent ? null : parsedAgenda;
+  const isPreviousAgendaVersion =
+    PREVIOUS_EVENT_CONTENT_VERSIONS.has(raw[CMS_KEYS.contentVersion] || "");
+  const cmsLanding = isLegacyPublishedEvent
+    ? null
+    : isPreviousAgendaVersion
+      ? upgradeLandingCapacityCopy(parsedLanding)
+      : parsedLanding;
+  const cmsEventStats = isLegacyPublishedEvent
+    ? null
+    : isPreviousAgendaVersion
+      ? parsedEventStats?.map((item) =>
+          isSeatMetricLabel(`${item?.label?.en || ""} ${item?.label?.ar || ""}`)
+            ? { ...item, value: "500" }
+            : item
+        ) || null
+      : parsedEventStats;
+  const cmsHighlights = isLegacyPublishedEvent
+    ? null
+    : isPreviousAgendaVersion
+      ? parsedHighlights?.map((item) =>
+          isSeatMetricLabel(item?.label || "") ? { ...item, value: "500" } : item
+        ) || null
+      : parsedHighlights;
+  const cmsAgenda =
+    isLegacyPublishedEvent || isPreviousAgendaVersion ? null : parsedAgenda;
   const cmsConfirmation = isLegacyPublishedEvent ? null : parsedConfirmation;
   const cmsArabic: Partial<ArabicCmsData> | null = isLegacyPublishedEvent
     ? {
@@ -248,7 +301,17 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
           eventMeta: DEFAULT_ARABIC_CMS.footer.eventMeta,
         },
       }
-    : parsedArabic;
+    : isPreviousAgendaVersion && parsedArabic
+      ? {
+          ...parsedArabic,
+          landing: {
+            ...DEFAULT_ARABIC_CMS.landing,
+            ...parsedArabic.landing,
+            ...upgradeLandingCapacityCopy(parsedArabic.landing),
+          },
+          agenda: DEFAULT_ARABIC_CMS.agenda,
+        }
+      : parsedArabic;
 
   const landing: LandingCmsConfig = {
     ...DEFAULT_LANDING_CMS,

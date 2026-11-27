@@ -26,7 +26,7 @@ export const DEFAULT_EVENT_MAPS_URL =
   "https://www.google.com/maps/search/?api=1&query=Development+Research+and+Technological+Planning+Center+DRTPC+Cairo+University";
 
 export const DEFAULT_LANDING_CMS: LandingCmsConfig = {
-  statusBadge: "REGISTRATION OPEN — 370 SEATS",
+  statusBadge: "REGISTRATION OPEN — 500 SEATS",
   titleLine1: "ESME METRIX — 2nd Edition",
   titleHighlight: "One day. Closer to real industry.",
   subtitle:
@@ -67,7 +67,7 @@ export const DEFAULT_LANDING_CMS: LandingCmsConfig = {
   aboutEyebrow: "Saturday • December 12, 2026",
   aboutTitle: "ESME METRIX returns for its second edition",
   aboutText:
-    "Join the ESME Cairo University Student Chapter at the Development Research and Technological Planning Center (DRTPC), Cairo University, from 9:00 AM to 5:00 PM. The program features two parallel halls with capacities of 250 and 120, 11 technical sessions, and a dedicated HR session.",
+    "Join the ESME Cairo University Student Chapter at the Development Research and Technological Planning Center (DRTPC), Cairo University, from 9:00 AM to 5:00 PM. The program features two parallel halls with capacities of 300 and 200, 11 technical sessions, and a dedicated HR session.",
   experienceBullets: [
     "Attendance certificate for participants who complete the full day and collect stamps at all three stations.",
     "A practical HR session on CV writing and interview skills.",
@@ -80,7 +80,7 @@ export const DEFAULT_LANDING_CMS: LandingCmsConfig = {
     "Authentic moments from our Cairo University auditorium sessions, speaker briefings, student organizing teams, and industrial talks.",
   ctaTitle: "Book your seat at ESME METRIX",
   ctaDescription:
-    "Only 370 seats are available. Register now for the December 12 program at DRTPC, Cairo University. Registration closes when capacity is reached.",
+    "Only 500 seats are available. Register now for the December 12 program at DRTPC, Cairo University. Registration closes when capacity is reached.",
   ctaButtonLabel: "REGISTER NOW — FREE ADMISSION",
 };
 
@@ -150,10 +150,10 @@ export const DEFAULT_AGENDA_CMS: DualHallAgendaConfig = {
   title: "Two-Hall Agenda",
   subtitle: "Saturday, December 12, 2026 • 9:00 AM–5:00 PM • DRTPC, Cairo University.",
   hall1Name: "MAIN HALL",
-  hall1Capacity: "250 Capacity",
-  hall1Subtitle: "Main Hall • Cairo University faculty and industry sessions",
+  hall1Capacity: "300 Capacity",
+  hall1Subtitle: "Main Hall • Keynote, technical sessions, HR, sponsor slots",
   hall2Name: "SMALL HALL",
-  hall2Capacity: "120 Capacity",
+  hall2Capacity: "200 Capacity",
   hall2Subtitle: "Small Hall • Parallel technical sessions",
   sessions: [
     {
@@ -161,29 +161,30 @@ export const DEFAULT_AGENDA_CMS: DualHallAgendaConfig = {
       hallType: "shared",
       sortOrder: 1,
       time: "09:00 AM – 09:30 AM",
-      title: "Registration, Welcome & Catering",
+      title: "Registration, Reception & Brunch",
       speaker: "",
       role: "",
       tag: "Registration",
-      description: "Attendee check-in and welcome catering.",
+      description: "Attendee check-in, welcome reception, brunch, and Ahmed Tea catering.",
     },
     {
       id: "shared-opening",
       hallType: "shared",
       sortOrder: 2,
       time: "09:30 AM – 10:10 AM",
-      title: "Opening Ceremony & Keynote",
+      title: "Chapter Opening & Keynote",
       speaker: "",
       role: "",
-      tag: "Opening",
-      description: "Opening remarks and keynote session for all attendees in the Main Hall.",
+      tag: "Main Hall • Small Hall Closed",
+      description:
+        "Chapter and academic supervisor remarks, a 10-minute keynote speaker slot, and one sponsor slot. The keynote speaker is to be announced; the Small Hall is closed.",
     },
     {
       id: "h1-ai-visual-inspection",
       hallType: "hall1",
       sortOrder: 3,
       time: "10:15 AM – 11:00 AM",
-      title: "AI Visual Inspection & Defect Detection",
+      title: "AI Visual Inspection",
       speaker: "",
       role: "",
       tag: "Technical Session",
@@ -205,7 +206,7 @@ export const DEFAULT_AGENDA_CMS: DualHallAgendaConfig = {
       hallType: "hall1",
       sortOrder: 5,
       time: "11:05 AM – 11:50 AM",
-      title: "Robotics & Automation in Manufacturing",
+      title: "Robotics & Automation",
       speaker: "",
       role: "",
       tag: "Technical Session",
@@ -227,11 +228,11 @@ export const DEFAULT_AGENDA_CMS: DualHallAgendaConfig = {
       hallType: "shared",
       sortOrder: 7,
       time: "11:50 AM – 12:25 PM",
-      title: "Dhuhr Break",
+      title: "Dhuhr Break • 35 min",
       speaker: "",
       role: "",
       tag: "Prayer • Catering • Networking",
-      description: "Shared break for prayer, catering, and networking.",
+      description: "Prayer, catering, and networking. Both halls are closed during the break.",
     },
     {
       id: "h1-ndt-ai",
@@ -249,7 +250,7 @@ export const DEFAULT_AGENDA_CMS: DualHallAgendaConfig = {
       hallType: "hall2",
       sortOrder: 9,
       time: "12:25 PM – 01:10 PM",
-      title: "Nanomaterials in Industry",
+      title: "Nanomaterials",
       speaker: "",
       role: "",
       tag: "Technical Session",
@@ -260,7 +261,7 @@ export const DEFAULT_AGENDA_CMS: DualHallAgendaConfig = {
       hallType: "hall1",
       sortOrder: 10,
       time: "01:15 PM – 02:00 PM",
-      title: "Predictive Maintenance with AI/ML",
+      title: "Predictive Maintenance",
       speaker: "",
       role: "",
       tag: "Technical Session",
@@ -285,19 +286,20 @@ export const DEFAULT_AGENDA_CMS: DualHallAgendaConfig = {
       title: "HR Session — Interviews & CVs",
       speaker: "",
       role: "",
-      tag: "All Attendees • Main Hall",
-      description: "A practical career session on CV writing and interview skills.",
+      tag: "Main Hall • Small Hall Closed",
+      description:
+        "One shared session for all attendees covering CVs and interview skills. The Small Hall is closed.",
     },
     {
       id: "shared-asr-break",
       hallType: "shared",
       sortOrder: 13,
       time: "02:40 PM – 03:10 PM",
-      title: "Asr Break",
+      title: "Asr Break • 30 min",
       speaker: "",
       role: "",
       tag: "Prayer • Tea",
-      description: "Shared break for prayer and tea.",
+      description: "Afternoon prayer and Ahmed Tea. Both halls are closed during the break.",
     },
     {
       id: "h1-ai-cad",
@@ -319,7 +321,7 @@ export const DEFAULT_AGENDA_CMS: DualHallAgendaConfig = {
       speaker: "",
       role: "",
       tag: "Technical Session",
-      description: "",
+      description: "Additive Manufacturing is reserved as a backup topic.",
     },
     {
       id: "shared-sponsor-talks",
@@ -329,8 +331,9 @@ export const DEFAULT_AGENDA_CMS: DualHallAgendaConfig = {
       title: "Sponsor Talks",
       speaker: "",
       role: "",
-      tag: "Main Hall",
-      description: "Sponsor talks take place in the Main Hall.",
+      tag: "2 Slots • 15 min each • Small Hall Closed",
+      description:
+        "Two 15-minute sponsor talk slots in the Main Hall. Company names will be announced after confirmation.",
     },
     {
       id: "shared-closing",
@@ -341,7 +344,8 @@ export const DEFAULT_AGENDA_CMS: DualHallAgendaConfig = {
       speaker: "",
       role: "",
       tag: "Main Hall • All Attendees",
-      description: "Closing, certificate distribution, and group photo in the Main Hall.",
+      description:
+        "Closing, certificate distribution, and group photo in the Main Hall. The Small Hall is closed.",
     },
   ],
 };

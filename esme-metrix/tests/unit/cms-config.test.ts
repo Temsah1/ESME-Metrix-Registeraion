@@ -18,8 +18,9 @@ describe("Comprehensive CMS defaults, parsing & serialization", () => {
     expect(shared.length).toBeGreaterThan(2);
     expect(hall1.length).toBeGreaterThan(2);
     expect(hall2.length).toBeGreaterThan(2);
-    expect(cms.agenda.hall1Capacity).toContain("250");
-    expect(cms.agenda.hall2Capacity).toContain("120");
+    expect(cms.agenda.hall1Capacity).toContain("300");
+    expect(cms.agenda.hall2Capacity).toContain("200");
+    expect(cms.eventStats[0].value).toBe("500");
 
     expect(cms.landing.certificateBadge).toBe("FULL DAY");
     expect(cms.ar?.landing.subtitle).toMatch(/[\u0600-\u06FF]/);
@@ -72,7 +73,7 @@ describe("Comprehensive CMS defaults, parsing & serialization", () => {
     expect(oldCms.eventVenue).toBe("DRTPC, Cairo University");
     expect(oldCms.agenda.sessions).toHaveLength(17);
     expect(oldCms.agenda.sessions.every((session) => !session.speaker && !session.role)).toBe(true);
-    expect(oldCms.eventStats[0].value).toBe("370");
+    expect(oldCms.eventStats[0].value).toBe("500");
     expect(oldCms.ar?.eventVenue).toContain("DRTPC");
 
     const editedCms = {
@@ -83,8 +84,86 @@ describe("Comprehensive CMS defaults, parsing & serialization", () => {
     const rawMap = Object.fromEntries(rows.map((row) => [row.key, row.value]));
     const persistedCms = buildFullCmsData(rawMap);
 
-    expect(rawMap[CMS_KEYS.contentVersion]).toBeTruthy();
+    expect(rawMap[CMS_KEYS.contentVersion]).toBe("2026-12-drtpc-v3");
     expect(persistedCms.landing.titleLine1).toBe("CMS-managed custom headline");
+  });
+
+  it("upgrades the saved v1 agenda without replacing other CMS edits", () => {
+    const raw = Object.fromEntries(
+      serializeFullCmsToSiteContentRows(DEFAULT_FULL_CMS).map((row) => [row.key, row.value])
+    );
+    raw[CMS_KEYS.contentVersion] = "2026-12-drtpc-v1";
+    raw[CMS_KEYS.landing] = JSON.stringify({
+      ...DEFAULT_FULL_CMS.landing,
+      titleLine1: "A CMS-managed headline",
+      statusBadge: "REGISTRATION OPEN — 370 SEATS",
+      aboutText: "Two halls with capacities of 250 and 120.",
+      ctaDescription: "Only 370 seats are available.",
+    });
+    raw[CMS_KEYS.eventStats] = JSON.stringify([
+      { value: "370", label: { en: "Total Seats", ar: "إجمالي المقاعد" } },
+      ...DEFAULT_FULL_CMS.eventStats.slice(1),
+    ]);
+    raw[CMS_KEYS.agenda] = JSON.stringify({
+      ...DEFAULT_FULL_CMS.agenda,
+      sessions: [
+        {
+          id: "shared-registration",
+          hallType: "shared",
+          sortOrder: 1,
+          time: "09:00 AM – 09:30 AM",
+          title: "Registration, Welcome & Catering",
+          speaker: "",
+          role: "",
+          tag: "Registration",
+          description: "Old agenda content",
+        },
+      ],
+    });
+    raw[CMS_KEYS.arabic] = JSON.stringify({
+      ...DEFAULT_FULL_CMS.ar,
+      landing: {
+        ...DEFAULT_FULL_CMS.ar?.landing,
+        titleLine1: "عنوان محفوظ في CMS",
+        statusBadge: "التسجيل مفتوح — 370 مقعداً",
+        aboutText: "قاعتان بسعتي 250 و120 مقعداً.",
+      },
+      agenda: {
+        ...DEFAULT_FULL_CMS.ar?.agenda,
+        sessions: {
+          "shared-registration": {
+            ...DEFAULT_FULL_CMS.ar?.agenda.sessions["shared-registration"],
+            description: "محتوى الأجندة القديم",
+          },
+        },
+      },
+    });
+
+    const upgraded = buildFullCmsData(raw);
+
+    expect(upgraded.agenda.sessions).toHaveLength(17);
+    expect(upgraded.agenda.sessions[1]?.time).toBe("09:30 AM – 10:10 AM");
+    expect(upgraded.agenda.sessions.find((session) => session.id === "h1-predictive-maintenance")?.title)
+      .toBe("Predictive Maintenance");
+    expect(upgraded.agenda.sessions.find((session) => session.id === "shared-sponsor-talks")?.tag)
+      .toContain("2 Slots");
+    expect(upgraded.agenda.sessions.every((session) => !session.speaker && !session.role)).toBe(true);
+    expect(upgraded.landing.titleLine1).toBe("A CMS-managed headline");
+    expect(upgraded.landing.statusBadge).toContain("500");
+    expect(upgraded.landing.aboutText).toContain("300 and 200");
+    expect(upgraded.landing.ctaDescription).toContain("500");
+    expect(upgraded.eventStats[0].value).toBe("500");
+    expect(upgraded.ar?.landing.titleLine1).toBe("عنوان محفوظ في CMS");
+    expect(upgraded.ar?.landing.statusBadge).toContain("500");
+    expect(upgraded.ar?.landing.aboutText).toContain("300 و200");
+    expect(upgraded.agenda.hall1Capacity).toBe("300 Capacity");
+    expect(upgraded.agenda.hall2Capacity).toBe("200 Capacity");
+    expect(upgraded.ar?.agenda.hall1Capacity).toBe("السعة: 300 مشارك");
+    expect(upgraded.ar?.agenda.hall2Capacity).toBe("السعة: 200 مشارك");
+    expect(upgraded.ar?.agenda.sessions["shared-registration"]?.title).toBe("التسجيل والاستقبال والبرانش");
+
+    raw[CMS_KEYS.contentVersion] = "2026-12-drtpc-v2";
+    expect(buildFullCmsData(raw).agenda.hall1Capacity).toBe("300 Capacity");
   });
 
   it("upgrades legacy split hall1Sessions/hall2Sessions payloads seamlessly", () => {
@@ -193,7 +272,7 @@ describe("Comprehensive CMS defaults, parsing & serialization", () => {
     const fallback = buildFullCmsData({ [CMS_KEYS.eventStats]: "[]" });
     expect(fallback.eventStats).toHaveLength(6);
     expect(fallback.eventStats[0]).toEqual({
-      value: "370",
+      value: "500",
       label: { en: "Total Seats", ar: "إجمالي المقاعد" },
     });
     expect(fallback.eventStats[5]).toEqual({

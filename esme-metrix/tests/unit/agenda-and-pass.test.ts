@@ -11,28 +11,41 @@ describe("Wireframe Agenda Block Layout", () => {
     const blocks = buildAgendaBlocks(DEFAULT_AGENDA_CMS.sessions);
     expect(blocks[0]?.type).toBe("shared");
     if (blocks[0]?.type === "shared") {
-      expect(blocks[0].session.title).toBe("Registration, Welcome & Catering");
+      expect(blocks[0].session.title).toBe("Registration, Reception & Brunch");
     }
 
     expect(blocks[1]?.type).toBe("shared");
     if (blocks[1]?.type === "shared") {
-      expect(blocks[1].session.title).toBe("Opening Ceremony & Keynote");
+      expect(blocks[1].session.title).toBe("Chapter Opening & Keynote");
     }
 
     expect(blocks[2]?.type).toBe("parallel");
     if (blocks[2]?.type === "parallel") {
       expect(blocks[2].hall1).toHaveLength(2);
       expect(blocks[2].hall2).toHaveLength(2);
+      expect(blocks[2].hall1.map((session) => session.title)).toEqual([
+        "AI Visual Inspection",
+        "Robotics & Automation",
+      ]);
+      expect(blocks[2].hall2.map((session) => session.title)).toEqual([
+        "Earthquake-Resistant Structures",
+        "Water Treatment",
+      ]);
     }
 
     const sharedTitles = blocks
       .filter((block) => block.type === "shared")
       .map((block) => (block.type === "shared" ? block.session.title : ""));
-    expect(sharedTitles).toContain("Dhuhr Break");
+    expect(sharedTitles).toContain("Dhuhr Break • 35 min");
     expect(sharedTitles).toContain("HR Session — Interviews & CVs");
-    expect(sharedTitles).toContain("Asr Break");
+    expect(sharedTitles).toContain("Asr Break • 30 min");
     expect(sharedTitles).toContain("Sponsor Talks");
     expect(sharedTitles).toContain("Closing & Certificates");
+    const reserveSession = DEFAULT_AGENDA_CMS.sessions.find(
+      (session) => session.id === "h2-corrosion-protection"
+    );
+    expect(reserveSession?.description).toContain("Additive Manufacturing");
+    expect(DEFAULT_AGENDA_CMS.sessions.every((session) => !session.speaker && !session.role)).toBe(true);
   });
 });
 

@@ -306,9 +306,9 @@ export const DICTIONARY: Record<AppLanguage, UiDictionary> = {
     },
     agenda: {
       hall1DefaultName: "Hall 1",
-      hall1CapacityLabel: "Capacity: 250 Attendees",
+      hall1CapacityLabel: "Capacity: 300 Attendees",
       hall2DefaultName: "Hall 2",
-      hall2CapacityLabel: "Capacity: 150 Attendees",
+      hall2CapacityLabel: "Capacity: 200 Attendees",
       allHallsTab: "All Halls (Side-by-Side)",
       hall1Tab: "Hall 1",
       hall2Tab: "Hall 2",
@@ -549,9 +549,9 @@ export const DICTIONARY: Record<AppLanguage, UiDictionary> = {
     },
     agenda: {
       hall1DefaultName: "القاعة الأولى (Hall 1)",
-      hall1CapacityLabel: "السعة: 250 مشارك",
+      hall1CapacityLabel: "السعة: 300 مشارك",
       hall2DefaultName: "القاعة الثانية (Hall 2)",
-      hall2CapacityLabel: "السعة: 150 مشارك",
+      hall2CapacityLabel: "السعة: 200 مشارك",
       allHallsTab: "جميع القاعات معاً",
       hall1Tab: "القاعة الأولى (Hall 1)",
       hall2Tab: "القاعة الثانية (Hall 2)",

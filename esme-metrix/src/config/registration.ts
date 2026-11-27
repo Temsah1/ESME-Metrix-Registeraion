@@ -261,7 +261,7 @@ export interface OgHighlightItem {
 }
 
 export const DEFAULT_OG_HIGHLIGHTS: OgHighlightItem[] = [
-  { value: "370", label: "SEATS" },
+  { value: "500", label: "SEATS" },
   { value: "11", label: "TECH SESSIONS" },
   { value: "1", label: "HR SESSION" },
   { value: "8", label: "HOURS" },

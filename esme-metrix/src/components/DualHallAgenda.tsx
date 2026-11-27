@@ -69,11 +69,12 @@ function SharedPlenaryCard({
 }) {
   return (
     <motion.article
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y: 18, scale: 0.975 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, amount: 0.18 }}
       whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.99 }}
-      transition={{ duration: 0.2, ease: "easeOut" }}
+      whileTap={{ scale: 0.985 }}
+      transition={{ duration: 0.38, ease: "easeOut" }}
       className="col-span-2 w-full p-4 sm:p-5 rounded-2xl bg-[#0D2136]/95 border-2 border-emerald-500/55 hover:border-emerald-400 shadow-[0_8px_28px_rgba(16,185,129,0.12)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-start"
     >
       <div className="space-y-1.5 min-w-0">
@@ -122,11 +123,12 @@ function HallSessionCard({
 
   return (
     <motion.article
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y: 16, scale: 0.975 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, amount: 0.18 }}
       whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.99 }}
-      transition={{ duration: 0.2, ease: "easeOut" }}
+      whileTap={{ scale: 0.985 }}
+      transition={{ duration: 0.34, ease: "easeOut" }}
       className={`p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-[#0F243A]/95 border transition-all flex flex-col gap-2 min-w-0 text-start ${
         isHall1
           ? "border-emerald-500/45 hover:border-emerald-400/85 shadow-[0_6px_22px_rgba(16,185,129,0.08)]"
@@ -165,7 +167,7 @@ function HallSessionCard({
       </h4>
 
       {session.description && (
-        <p className="hidden sm:block text-xs text-slate-300 leading-relaxed">
+        <p className="text-[10px] sm:text-xs text-slate-300 leading-relaxed">
           {session.description}
         </p>
       )}
@@ -297,11 +299,12 @@ export default function DualHallAgenda({
           aria-label="Filter agenda by conference hall"
           className="inline-flex flex-wrap justify-center items-center gap-1.5 p-1.5 rounded-2xl bg-[#0F243A] border border-slate-800 mt-6 shadow-lg"
         >
-          <button
+          <motion.button
             type="button"
             role="tab"
             aria-selected={filter === "all"}
             onClick={() => setFilter("all")}
+            whileTap={{ scale: 0.96 }}
             className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               filter === "all"
                 ? "bg-slate-700 text-white shadow-sm"
@@ -309,13 +312,14 @@ export default function DualHallAgenda({
             }`}
           >
             {t.agenda.allHallsTab}
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
             type="button"
             role="tab"
             aria-selected={filter === "hall1"}
             onClick={() => setFilter("hall1")}
+            whileTap={{ scale: 0.96 }}
             className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
               filter === "hall1"
                 ? "bg-gradient-to-r from-emerald-600 to-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.35)]"
@@ -324,13 +328,14 @@ export default function DualHallAgenda({
           >
             <Mic className="w-3.5 h-3.5" />
             {hall1BadgeLabel}
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
             type="button"
             role="tab"
             aria-selected={filter === "hall2"}
             onClick={() => setFilter("hall2")}
+            whileTap={{ scale: 0.96 }}
             className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
               filter === "hall2"
                 ? "bg-gradient-to-r from-orange-600 to-amber-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.35)]"
@@ -339,7 +344,7 @@ export default function DualHallAgenda({
           >
             <Sparkles className="w-3.5 h-3.5" />
             {hall2BadgeLabel}
-          </button>
+          </motion.button>
         </div>
       </div>
 
