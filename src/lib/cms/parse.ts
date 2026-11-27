@@ -226,6 +226,12 @@ function isSeatMetricLabel(label: string): boolean {
   return /seats?|capacity|مقاعد|مقعد|السعة|سعة/i.test(label);
 }
 
+function hasOutdatedHallCapacity(agenda: LegacyAgendaShape | null): boolean {
+  const hall1Capacity = typeof agenda?.hall1Capacity === "string" ? agenda.hall1Capacity : "";
+  const hall2Capacity = typeof agenda?.hall2Capacity === "string" ? agenda.hall2Capacity : "";
+  return /\b250\b/.test(hall1Capacity) || /\b(?:120|150)\b/.test(hall2Capacity);
+}
+
 /**
  * Merges raw `site_content` key-value pairs with full defaults so public pages,
  * `/register`, `/dashboard`, `/member`, `/api/register`, and Admin CMS share one source of truth.
@@ -255,7 +261,8 @@ export function buildFullCmsData(raw: Record<string, string>): FullCmsData {
         session.title === "Future of Smart & Green Metallurgy"
     );
   const isPreviousAgendaVersion =
-    PREVIOUS_EVENT_CONTENT_VERSIONS.has(raw[CMS_KEYS.contentVersion] || "");
+    PREVIOUS_EVENT_CONTENT_VERSIONS.has(raw[CMS_KEYS.contentVersion] || "") ||
+    hasOutdatedHallCapacity(parsedAgenda);
   const cmsLanding = isLegacyPublishedEvent
     ? null
     : isPreviousAgendaVersion

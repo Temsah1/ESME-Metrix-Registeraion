@@ -166,6 +166,26 @@ describe("Comprehensive CMS defaults, parsing & serialization", () => {
     expect(buildFullCmsData(raw).agenda.hall1Capacity).toBe("300 Capacity");
   });
 
+  it("upgrades old CMS hall capacities even when the version marker is missing", () => {
+    const cms = buildFullCmsData({
+      [CMS_KEYS.agenda]: JSON.stringify({
+        ...DEFAULT_FULL_CMS.agenda,
+        hall1Capacity: "250 Capacity",
+        hall2Capacity: "120 Capacity",
+      }),
+      [CMS_KEYS.landing]: JSON.stringify({
+        ...DEFAULT_FULL_CMS.landing,
+        aboutText: "The halls have capacities of 250 and 120.",
+        ctaDescription: "Only 370 seats are available.",
+      }),
+    });
+
+    expect(cms.agenda.hall1Capacity).toBe("300 Capacity");
+    expect(cms.agenda.hall2Capacity).toBe("200 Capacity");
+    expect(cms.landing.aboutText).toContain("300 and 200");
+    expect(cms.landing.ctaDescription).toContain("500");
+  });
+
   it("upgrades legacy split hall1Sessions/hall2Sessions payloads seamlessly", () => {
     const legacyAgenda = JSON.stringify({
       title: "Custom Agenda",
